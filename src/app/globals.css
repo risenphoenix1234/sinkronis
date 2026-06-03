@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Use Tailwind defaults (no custom theme required) */
+:root { --primary: #2183c6; }
+html, body, #__next { height: 100%; }
+body { @apply bg-gray-100 text-gray-900; }
+.card { @apply bg-white rounded-lg shadow-sm border border-gray-200; }
+.h1 { @apply text-2xl font-semibold; }
+.h2 { @apply text-xl font-semibold; }
