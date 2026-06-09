@@ -1,14 +1,29 @@
-import Sidebar from './Sidebar'
-import Topbar from './Topbar'
+// src/components/layout/DashboardLayout.tsx
+import Navbar from "./Navbar";
+import Sidebar, { SidebarItem } from "./Sidebar";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+interface DashboardLayoutProps {
+  navbarTitle: string;
+  sidebarTitle: string;
+  sidebarItems: SidebarItem[];
+  children: React.ReactNode;
+}
+
+export default function DashboardLayout({
+  navbarTitle,
+  sidebarTitle,
+  sidebarItems,
+  children,
+}: DashboardLayoutProps) {
   return (
-    <div className="flex">
-      <Sidebar />
-      <div className="min-h-screen flex-1">
-        <Topbar />
-        <main className="mx-auto w-full max-w-7xl p-6">{children}</main>
+    <div className="flex min-h-screen">
+      <Sidebar title={sidebarTitle} items={sidebarItems} />
+      <div className="flex flex-1 flex-col">
+        <Navbar title={navbarTitle} />
+        <main className="flex-1 bg-slate-50 p-4">
+          <div className="mx-auto max-w-6xl">{children}</div>
+        </main>
       </div>
     </div>
-  )
+  );
 }

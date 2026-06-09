@@ -1,20 +1,39 @@
-import Link from 'next/link'
-import Button from '@/components/ui/Button'
+// src/app/page.tsx
+import Link from "next/link";
 
-export default function Home() {
+export default function HomePage() {
+  const sections = [
+    { href: "/login", label: "Auth - Login" },
+    { href: "/platform-admin/overview", label: "Platform Admin" },
+    { href: "/tenant-admin/overview", label: "Tenant Admin" },
+    { href: "/hris/overview", label: "HRIS" },
+    { href: "/hr/overview", label: "HR" },
+    { href: "/manager/overview", label: "Manager" },
+    { href: "/employee/overview", label: "Employee" },
+    { href: "/payroll/overview", label: "Payroll" },
+    { href: "/accounting/dashboard", label: "Accounting" },
+  ];
+
   return (
-    <div className="grid min-h-screen place-items-center p-6">
-      <div className="card w-full max-w-xl p-8 text-center">
-        <h1 className="h1 mb-2">Sinkronis Prototype</h1>
-        <p className="mb-6 text-gray-600">Pick a role to explore dashboards. Static only, no APIs.</p>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {['ceo','hr','hod','employee','payroll','account'].map(r => (
-            <Link key={r} href={`/login?role=${r}`}>
-              <Button className="w-full capitalize" variant="outline">{r}</Button>
-            </Link>
-          ))}
-        </div>
+    <main className="flex min-h-screen flex-col items-center justify-center gap-8">
+      <div className="text-center space-y-3">
+        <h1 className="text-3xl font-bold">Multi-Role Dashboard Prototype</h1>
+        <p className="text-slate-500">
+          Static Next.js + TypeScript + Tailwind app with multiple dashboards.
+        </p>
       </div>
-    </div>
-  )
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-4xl">
+        {sections.map((section) => (
+          <Link
+            key={section.href}
+            href={section.href}
+            className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-center text-sm font-medium shadow-sm hover:bg-slate-50"
+          >
+            {section.label}
+          </Link>
+        ))}
+      </div>
+    </main>
+  );
 }

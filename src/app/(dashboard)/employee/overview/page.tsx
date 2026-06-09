@@ -1,3 +1,0 @@
-import DashboardLayout from '@/components/layout/DashboardLayout'
-import PageHeader from '@/components/shared/PageHeader'
-export default function Page(){return(<DashboardLayout><PageHeader title="Employee · Overview" /><div className="grid gap-4 sm:grid-cols-3"><div className="card p-4"><div className="text-sm text-gray-500">My Attendance</div><div className="mt-2 text-2xl font-semibold">98%</div></div><div className="card p-4"><div className="text-sm text-gray-500">Leaves Left</div><div className="mt-2 text-2xl font-semibold">8</div></div><div className="card p-4"><div className="text-sm text-gray-500">Payslips</div><div className="mt-2 text-2xl font-semibold">12</div></div></div></DashboardLayout>)}

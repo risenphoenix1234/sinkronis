@@ -1,36 +1,73 @@
-'use client'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Input from '@/components/ui/Input'
-import Button from '@/components/ui/Button'
-import { useAuth } from '@/hooks/useAuth'
-import type { Role } from '@/types/auth'
+// src/app/(auth)/login/page.tsx
+import Link from "next/link";
 
-export default function Login() {
-  const sp = useSearchParams()
-  const suggest = (sp.get('role') as Role) || 'hr'
-  const router = useRouter()
-  const { loginAs } = useAuth()
-
-  async function handle(role: Role) {
-    await loginAs(role)
-    router.push(`/${role}${role==='account' ? '/dashboard' : role==='ceo' ? '/profile' : '/overview'}`)
-  }
-
+export default function LoginPage() {
   return (
-    <div className="grid min-h-screen place-items-center p-6">
-      <div className="card w-full max-w-md p-8">
-        <h1 className="h1 mb-6">Sign in</h1>
-        <div className="space-y-3">
-          <Input placeholder="Email" />
-          <Input placeholder="Password" type="password" />
-          <Button className="w-full" onClick={() => handle(suggest)}>Continue as {suggest.toUpperCase()}</Button>
-          <div className="grid grid-cols-2 gap-2">
-            {(['ceo','hr','hod','employee','payroll','account'] as Role[]).map(r =>
-              <Button key={r} variant="outline" onClick={() => handle(r)} className="capitalize">{r}</Button>
-            )}
+    <main className="flex min-h-screen items-center justify-center bg-slate-50">
+      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow">
+        <h1 className="mb-1 text-2xl font-semibold">Login</h1>
+        <p className="mb-4 text-sm text-slate-500">
+          Static form – no real auth. Navigate to any dashboard via links.
+        </p>
+
+        <form className="space-y-3">
+          <input
+            type="email"
+            placeholder="Email"
+            className="w-full rounded border border-slate-200 px-3 py-2 text-sm"
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            className="w-full rounded border border-slate-200 px-3 py-2 text-sm"
+          />
+          <button
+            type="button"
+            className="w-full rounded bg-slate-900 py-2 text-sm font-medium text-white"
+          >
+            Sign in (static)
+          </button>
+        </form>
+
+        <div className="mt-4 flex justify-between text-xs text-slate-500">
+          <Link href="/(auth)/forgot-password" className="hover:underline">
+            Forgot password?
+          </Link>
+          <Link href="/(auth)/register" className="hover:underline">
+            Create account
+          </Link>
+        </div>
+
+        <div className="mt-6 space-y-1 text-xs">
+          <p className="font-semibold">Quick navigation:</p>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/platform-admin/overview"
+              className="rounded bg-slate-100 px-2 py-1"
+            >
+              Platform Admin
+            </Link>
+            <Link
+              href="/tenant-admin/overview"
+              className="rounded bg-slate-100 px-2 py-1"
+            >
+              Tenant Admin
+            </Link>
+            <Link
+              href="/hris/overview"
+              className="rounded bg-slate-100 px-2 py-1"
+            >
+              HRIS
+            </Link>
+            <Link
+              href="/accounting/dashboard"
+              className="rounded bg-slate-100 px-2 py-1"
+            >
+              Accounting
+            </Link>
           </div>
         </div>
       </div>
-    </div>
-  )
+    </main>
+  );
 }
