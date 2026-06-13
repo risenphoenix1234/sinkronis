@@ -31,7 +31,7 @@ export default function Sidebar({ title, items }: SidebarProps) {
               href={item.href}
               className={`block rounded px-3 py-2 ${
                 active
-                  ? "bg-slate-900 text-white"
+                  ? "bg-[#2183C6] text-white"
                   : "text-slate-700 hover:bg-slate-100"
               }`}
             >

@@ -18,9 +18,7 @@ export default function HomePage() {
     <main className="flex min-h-screen flex-col items-center justify-center gap-8">
       <div className="text-center space-y-3">
         <h1 className="text-3xl font-bold">Multi-Role Dashboard Prototype</h1>
-        <p className="text-slate-500">
-          Static Next.js + TypeScript + Tailwind app with multiple dashboards.
-        </p>
+      
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-4xl">
