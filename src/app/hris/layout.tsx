@@ -1,9 +1,16 @@
+// src/app/hris/layout.tsx
 import DashboardLayout from "@/components/layout/DashboardLayout";
 
 const sidebarItems = [
   { label: "Overview", href: "/hris/overview" },
-  { label: "Add Employee", href: "/hris/add-employee" },
-  { label: "Invite Employee", href: "/hris/invite-employee" },
+  {
+    label: "Employee",
+    href: "/hris/employees",          // ← clicking the group label goes to list
+    children: [
+      { label: "Add Employee", href: "/hris/employees/add" },
+      { label: "Invite Employee", href: "/hris/invite-employee" },
+    ],
+  },
   { label: "Attendance", href: "/hris/attendance" },
   { label: "Leave Tracking", href: "/hris/leave-tracking" },
   { label: "Appraisal", href: "/hris/appraisal" },
