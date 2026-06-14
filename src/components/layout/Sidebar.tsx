@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
@@ -19,11 +19,15 @@ interface SidebarProps {
 
 export default function Sidebar({ title, items }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     items.forEach((item) => {
-      if (item.children?.some((c) => pathname.startsWith(c.href))) {
+      if (
+        (item.href && pathname.startsWith(item.href)) ||
+        item.children?.some((c) => pathname.startsWith(c.href))
+      ) {
         initial[item.label] = true;
       }
     });
@@ -41,6 +45,7 @@ export default function Sidebar({ title, items }: SidebarProps) {
       </div>
       <nav className="flex-1 space-y-0.5 px-2 py-3 text-sm">
         {items.map((item) => {
+          // Group with children
           if (item.children && item.children.length > 0) {
             const isOpen = openGroups[item.label] ?? false;
             const isGroupActive =
@@ -49,25 +54,31 @@ export default function Sidebar({ title, items }: SidebarProps) {
 
             return (
               <div key={item.label}>
-                <div
+                <button
+                  onClick={() => {
+                    toggleGroup(item.label);
+                    if (item.href) router.push(item.href);
+                  }}
                   className={`flex w-full items-center justify-between rounded px-3 py-2 transition-colors ${
                     isGroupActive
                       ? "bg-[#2183C6] text-white"
                       : "text-slate-700 hover:bg-slate-100"
                   }`}
                 >
-                  <Link href={item.href ?? "#"} className="flex-1">
-                    {item.label}
-                  </Link>
-                  <button onClick={() => toggleGroup(item.label)} className="pl-2">
-                    {isOpen ? <FiChevronDown size={14} /> : <FiChevronRight size={14} />}
-                  </button>
-                </div>
+                  <span>{item.label}</span>
+                  {isOpen ? (
+                    <FiChevronDown size={14} />
+                  ) : (
+                    <FiChevronRight size={14} />
+                  )}
+                </button>
 
                 {isOpen && (
                   <div className="ml-3 mt-0.5 space-y-0.5 border-l border-slate-200 pl-3">
                     {item.children.map((child) => {
-                      const childActive = pathname === child.href || pathname.startsWith(child.href);
+                      const childActive =
+                        pathname === child.href ||
+                        pathname.startsWith(child.href);
                       return (
                         <Link
                           key={child.href}
@@ -88,7 +99,7 @@ export default function Sidebar({ title, items }: SidebarProps) {
             );
           }
 
-          // Regular item — active computed inline here
+          // Regular item
           const isActive = item.href
             ? pathname === item.href || pathname.startsWith(item.href)
             : false;
