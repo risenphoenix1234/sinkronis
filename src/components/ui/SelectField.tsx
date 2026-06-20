@@ -1,12 +1,14 @@
 interface SelectFieldProps {
   label: string;
   name: string;
+  value: string;
   options: string[];
 }
 
 export default function SelectField({
   label,
   name,
+  value,
   options,
 }: SelectFieldProps) {
   return (
@@ -18,6 +20,7 @@ export default function SelectField({
       <select
         id={name}
         name={name}
+        value={value}
         className="w-full text-xs rounded-md border border-gray-300 px-3 py-2"
       >
         <option value="">Select {label}</option>
