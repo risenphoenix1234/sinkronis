@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 
-import ApplyForLeaveModal from "@/components/modals/ApplyForLeaveModal";
-import LeaveSummaryCard from "@/components/Leave/LeaveSummaryCard";
-import LeaveTable from "@/components/Leave/LeaveTable";
-import LeaveTabs from "@/components/Leave/LeaveTabs";
+import ApplyForLeaveModal from "@/components/modals/Hris/ApplyForLeaveModal";
+import LeaveSummaryCard from "@/components/hris/Leave/LeaveSummaryCard";
+import LeaveTable from "@/components/hris/Leave/LeaveTable";
+import LeaveTabs from "@/components/hris/Leave/LeaveTabs";
 
 export default function LeaveManagementPage() {
   const [showModal, setShowModal] = useState(false);
@@ -30,14 +30,10 @@ export default function LeaveManagementPage() {
 
   return (
     <section className="min-h-screen bg-[#f8f9fb] p-6 space-y-6">
-
       {/* Header */}
 
       <div className="mb-6 flex items-center justify-between">
-
-        <h1 className="text-3xl font-semibold">
-          Leave Management
-        </h1>
+        <h1 className="text-3xl font-semibold">Leave Management</h1>
 
         <button
           onClick={() => setShowModal(true)}
@@ -45,34 +41,27 @@ export default function LeaveManagementPage() {
         >
           + Apply for Leave
         </button>
-
       </div>
 
       {/* Summary Cards */}
 
       <div className="mb-6 grid md:grid-cols-3 gap-4">
-
         {summary.map((item) => (
-
           <LeaveSummaryCard
             key={item.title}
             title={item.title}
             value={item.value}
             color={item.color}
           />
-
         ))}
-
       </div>
 
       {/* Table */}
 
       <div className="rounded-md border bg-white p-5">
-
         <LeaveTabs />
 
         <LeaveTable />
-
       </div>
 
       {/* Modal */}
@@ -81,7 +70,6 @@ export default function LeaveManagementPage() {
         isOpen={showModal}
         onClose={() => setShowModal(false)}
       />
-
     </section>
   );
 }

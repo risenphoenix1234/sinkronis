@@ -32,7 +32,7 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     ".next/types/**/*.ts"
-  ],
+, "src/components/payroll/overview"  ],
   "exclude": [
     "node_modules"
   ]

@@ -1,8 +1,8 @@
 // app/appraisal/[id]/page.tsx
 "use client";
-import EmployeeHeader from "@/components/appraisal-details/EmployeeHeader";
-import GoalsSection from "@/components/appraisal-details/GoalsSection";
-import ReviewTimeline from "@/components/appraisal-details/ReviewTimeline";
+import EmployeeHeader from "@/components/hris/appraisal-details/EmployeeHeader";
+import GoalsSection from "@/components/hris/appraisal-details/GoalsSection";
+import ReviewTimeline from "@/components/hris/appraisal-details/ReviewTimeline";
 
 export default function AppraisalDetailsPage() {
   return (

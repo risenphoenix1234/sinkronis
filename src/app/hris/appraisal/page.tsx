@@ -1,12 +1,12 @@
 "use client";
 
-import CycleOverview from "@/components/appraisal/CycleOverview";
-import EmployeeTable from "@/components/appraisal/EmployeeTable";
-import StatsCard from "@/components/appraisal/StatsCard";
-import AppraisalCyclePage from "@/components/modals/AppraisalCyclePage";
-import AppraisalModal from "@/components/modals/AppraisalModal";
-import AppraisalReviewPage from "@/components/modals/AppraisalReviewPage";
-import AppraisalSettingPage from "@/components/modals/AppraisalSettingPage";
+import CycleOverview from "@/components/hris/appraisal/CycleOverview";
+import EmployeeTable from "@/components/hris/appraisal/EmployeeTable";
+import StatsCard from "@/components/hris/appraisal/StatsCard";
+import AppraisalCyclePage from "@/components/modals/Hris/AppraisalCyclePage";
+import AppraisalModal from "@/components/modals/Hris/AppraisalModal";
+import AppraisalReviewPage from "@/components/modals/Hris/AppraisalReviewPage";
+import AppraisalSettingPage from "@/components/modals/Hris/AppraisalSettingPage";
 import { Users, CheckCircle2, Clock3, Shield } from "lucide-react";
 import { useState } from "react";
 

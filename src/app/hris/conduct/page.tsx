@@ -4,14 +4,14 @@
 import { useMemo, useState } from "react";
 import { Search, Download, Plus, Filter, Pencil } from "lucide-react";
 
-import { queries } from "@/data/conduct";
+import { queries } from "@/data/hris/conduct";
 
-import QueryDetailsDrawer from "@/components/conduct/QueryDetailsDrawer";
-import { StatusBadge } from "@/components/conduct/StatusBadge";
-import { TableHead } from "@/components/conduct/TableHead";
-import AddQueryModal from "@/components/modals/AddQueryModal";
-import ConductSuspensionModal from "@/components/modals/ConductSuspensionModal";
-import AddSuspensionModal from "@/components/modals/AddSuspensionModal";
+import QueryDetailsDrawer from "@/components/hris/conduct/QueryDetailsDrawer";
+import { TableHead } from "@/components/hris/conduct/TableHead";
+import AddQueryModal from "@/components/modals/Hris/AddQueryModal";
+import AddSuspensionModal from "@/components/modals/Hris/AddSuspensionModal";
+import StatusBadge from "@/components/ui/StatusBadge";
+import ConductSuspensionModal from "@/components/modals/Hris/ConductSuspensionModal";
 
 export default function HRISConductPage() {
   const [activeTab, setActiveTab] = useState<"query" | "suspension">("query");

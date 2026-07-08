@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import NewProjectModal from "@/components/modals/NewProjectModal";
+import NewProjectModal from "@/components/modals/Hris/NewProjectModal";
 
 type Project = {
   id: string;
@@ -66,7 +66,9 @@ export default function ProjectsPage() {
       ? staticProjects
       : staticProjects.filter((p) => p.status === filter);
 
-  const activeCount = staticProjects.filter((p) => p.status === "Active").length;
+  const activeCount = staticProjects.filter(
+    (p) => p.status === "Active",
+  ).length;
 
   return (
     <section className="space-y-6 p-6 max-w-8xl mx-auto">

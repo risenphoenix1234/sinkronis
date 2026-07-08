@@ -1,17 +1,30 @@
 // src/app/employee/attendance/page.tsx
-export default function EmployeeAttendancePage() {
-  return (
-    <section className="space-y-3">
-      <h1 className="text-2xl font-semibold">My Attendance</h1>
-      <p className="text-sm text-slate-500">
-        Static placeholder for your personal attendance history.
-      </p>
 
-      <div className="rounded-lg bg-white p-4 shadow-sm text-sm">
-        <p className="text-slate-500">
-          Later, show check-in/check-out times, days present, absences and
-          overtime here.
-        </p>
+import AttendanceFilters from "@/components/employee/attendance/AttendanceFilters";
+import SummaryCards from "@/components/employee/attendance/SummaryCards";
+import AttendanceTable from "@/components/employee/attendance/AttendanceTable";
+import { presentSummary, totalSummary } from "@/data/employee/attendance";
+import Pagination from "@/components/employee/attendance/Pagination";
+
+export default function AttendancePage() {
+  return (
+    <section className="space-y-6 p-6">
+      <div className="min-h-screen bg-[#FAFAFA]">
+        <h1 className="text-5xl font-bold">Attendance</h1>
+        <div className="w-full justify-between grid grid-cols-2 gap-20 mt-6">
+          <div>
+            <SummaryCards title="Present Summary" data={presentSummary} />
+          </div>
+          <div>
+            <SummaryCards title="Total Summary" data={totalSummary} />
+          </div>
+        </div>
+
+        <AttendanceFilters />
+
+        <AttendanceTable />
+
+        <Pagination />
       </div>
     </section>
   );

@@ -1,4 +1,4 @@
-import AddEmployeeForm from "@/components/employees/AddEmployeeForm";
+import AddEmployeeForm from "@/components/hris/employees/AddEmployeeForm";
 
 export default function AddEmployeePage() {
   return (

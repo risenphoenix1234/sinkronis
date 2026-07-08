@@ -1,8 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { attendanceData, staticAttendance, disputes } from "@/data/attendance";
-import { Attendance } from "@/types/attendance";
+import {
+  attendanceData,
+  staticAttendance,
+  disputes,
+} from "@/data/hris/attendance";
+import { Attendance } from "@/types/hris/attendance";
 import {
   Search,
   Download,
@@ -12,11 +16,11 @@ import {
 } from "lucide-react";
 import ManualOverrideModal from "@/components/modals/ManualOverideModal";
 import { FiEdit2 } from "react-icons/fi";
-import RaiseAttendanceDisputeModal from "@/components/modals/RaiseAttendanceDisputeModal";
+import RaiseAttendanceDisputeModal from "@/components/modals/Hris/RaiseAttendanceDisputeModal";
 import { useRouter } from "next/navigation";
-import { DisputeCard } from "@/components/attendance/DisputeCard";
-import AttendanceTable from "@/components/modals/AttendanceTable";
-import DisputesList from "@/components/attendance/DisputesList";
+import { DisputeCard } from "@/components/hris/attendance/DisputeCard";
+import AttendanceTable from "@/components/modals/Hris/AttendanceTable";
+import DisputesList from "@/components/hris/attendance/DisputesList";
 
 export default function AttendancePage() {
   const [activeTab, setActiveTab] = useState<

@@ -1,6 +1,6 @@
 "use client";
 
-import { Attendance } from "@/types/attendance";
+import { Attendance } from "@/types/hris/attendance";
 import { X } from "lucide-react";
 
 interface ManualOverrideModalProps {

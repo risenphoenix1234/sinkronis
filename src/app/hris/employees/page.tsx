@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FiEdit2 } from "react-icons/fi";
-import { staticEmployees } from "@/data/employees";
-import { Employee, EmployeeStatus } from "@/types/employee";
-import InviteEmployeeModal from "@/components/modals/InviteEmployeeModal";
-import FilterEmployeeModal from "@/components/modals/FilterEmployeeModal";
+import { staticEmployees } from "@/data/hris/employees";
+import { Employee, EmployeeStatus } from "@/types/hris/employee";
+import InviteEmployeeModal from "@/components/modals/Hris/InviteEmployeeModal";
+import FilterEmployeeModal from "@/components/modals/Hris/FilterEmployeeModal";
 
 const statusStyles: Record<EmployeeStatus, string> = {
   Confirmed: "bg-emerald-50 text-emerald-700",
@@ -28,7 +28,7 @@ export default function EmployeesPage() {
   const filtered = staticEmployees.filter(
     (e) =>
       e.status === activeTab &&
-      (filterDept === "" || e.department === filterDept)
+      (filterDept === "" || e.department === filterDept),
   );
 
   return (
@@ -114,7 +114,9 @@ export default function EmployeesPage() {
                   {emp.department}
                 </td>
                 <td className="px-6 py-3">
-                  <span className={`inline-block rounded-full px-3 py-1 text-sm font-medium ${statusStyles[emp.status]}`}>
+                  <span
+                    className={`inline-block rounded-full px-3 py-1 text-sm font-medium ${statusStyles[emp.status]}`}
+                  >
                     {emp.status}
                   </span>
                 </td>
@@ -129,7 +131,9 @@ export default function EmployeesPage() {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
-                    onClick={() => router.push(`/hris/employees/${emp.id}/edit`)}
+                    onClick={() =>
+                      router.push(`/hris/employees/${emp.id}/edit`)
+                    }
                     className="rounded p-1.5 text-slate-400 hover:bg-sky-50 hover:text-sky-600"
                   >
                     <FiEdit2 size={16} />
@@ -141,7 +145,10 @@ export default function EmployeesPage() {
         </table>
       </div>
 
-      <InviteEmployeeModal open={inviteOpen} onClose={() => setInviteOpen(false)} />
+      <InviteEmployeeModal
+        open={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+      />
       <FilterEmployeeModal
         open={filterOpen}
         onClose={() => setFilterOpen(false)}

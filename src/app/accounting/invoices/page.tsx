@@ -19,24 +19,52 @@ type Invoice = {
 
 const staticInvoices: Invoice[] = [
   {
-    id: "INV-001", client: "Zenith Technologies Ltd", agent: "Emeka Okafor",
-    project: "Zenith HRIS Deployment", subtotal: "₦490,000", vat: "₦36,750",
-    total: "₦526,750", issueDate: "01 Apr 2026", dueDate: "15 Apr 2026", status: "Paid",
+    id: "INV-001",
+    client: "Zenith Technologies Ltd",
+    agent: "Emeka Okafor",
+    project: "Zenith HRIS Deployment",
+    subtotal: "₦490,000",
+    vat: "₦36,750",
+    total: "₦526,750",
+    issueDate: "01 Apr 2026",
+    dueDate: "15 Apr 2026",
+    status: "Paid",
   },
   {
-    id: "INV-002", client: "Prestige Global Services", agent: "Sade Williams",
-    project: "Prestige Payroll Setup", subtotal: "₦14,500", vat: "₦750",
-    total: "₦15,250", issueDate: "09 May 2026", dueDate: "20 May 2026", status: "Sent",
+    id: "INV-002",
+    client: "Prestige Global Services",
+    agent: "Sade Williams",
+    project: "Prestige Payroll Setup",
+    subtotal: "₦14,500",
+    vat: "₦750",
+    total: "₦15,250",
+    issueDate: "09 May 2026",
+    dueDate: "20 May 2026",
+    status: "Sent",
   },
   {
-    id: "INV-003", client: "BlueStar Logistics", agent: "Emeka Okafor",
-    project: "BlueStar Annual Contract", subtotal: "₦20,000", vat: "₦9,000",
-    total: "₦29,000", issueDate: "01 Jan 2026", dueDate: "30 Apr 2026", status: "Overdue",
+    id: "INV-003",
+    client: "BlueStar Logistics",
+    agent: "Emeka Okafor",
+    project: "BlueStar Annual Contract",
+    subtotal: "₦20,000",
+    vat: "₦9,000",
+    total: "₦29,000",
+    issueDate: "01 Jan 2026",
+    dueDate: "30 Apr 2026",
+    status: "Overdue",
   },
   {
-    id: "INV-004", client: "Zenith Technologies Ltd", agent: "Emeka Okafor",
-    project: "Zenith HRIS Deployment", subtotal: "₦60,000", vat: "₦6,000",
-    total: "₦66,000", issueDate: "14 May 2026", dueDate: "30 Jun 2026", status: "Draft",
+    id: "INV-004",
+    client: "Zenith Technologies Ltd",
+    agent: "Emeka Okafor",
+    project: "Zenith HRIS Deployment",
+    subtotal: "₦60,000",
+    vat: "₦6,000",
+    total: "₦66,000",
+    issueDate: "14 May 2026",
+    dueDate: "30 Jun 2026",
+    status: "Draft",
   },
 ];
 
@@ -77,12 +105,21 @@ export default function InvoicesPage() {
       {/* Filters row */}
       <div className="flex flex-wrap items-center gap-3">
         {["All Client", "All Agents", "All Projects", "All Status"].map((f) => (
-          <select key={f} className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none">
+          <select
+            key={f}
+            className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none"
+          >
             <option>{f}</option>
           </select>
         ))}
-        <input type="date" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none" />
-        <input type="date" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none" />
+        <input
+          type="date"
+          className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none"
+        />
+        <input
+          type="date"
+          className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none"
+        />
       </div>
 
       {/* Table */}
@@ -113,22 +150,47 @@ export default function InvoicesPage() {
                 <td className="px-6 py-3 text-sm font-medium text-sky-600 whitespace-nowrap">
                   {inv.id}
                 </td>
-                <td className="px-6 py-3 text-base text-slate-800 whitespace-nowrap">{inv.client}</td>
-                <td className="px-6 py-3 text-base text-slate-600 whitespace-nowrap">{inv.agent}</td>
-                <td className="px-6 py-3 text-base text-slate-600 whitespace-nowrap">{inv.project}</td>
-                <td className="px-6 py-3 text-base tabular-nums text-slate-800 whitespace-nowrap">{inv.subtotal}</td>
-                <td className="px-6 py-3 text-base tabular-nums text-slate-600 whitespace-nowrap">{inv.vat}</td>
-                <td className="px-6 py-3 text-base tabular-nums font-medium text-slate-800 whitespace-nowrap">{inv.total}</td>
-                <td className="px-6 py-3 text-base text-slate-600 whitespace-nowrap">{inv.issueDate}</td>
-                <td className="px-6 py-3 text-base text-slate-600 whitespace-nowrap">{inv.dueDate}</td>
+                <td className="px-6 py-3 text-base text-slate-800 whitespace-nowrap">
+                  {inv.client}
+                </td>
+                <td className="px-6 py-3 text-base text-slate-600 whitespace-nowrap">
+                  {inv.agent}
+                </td>
+                <td className="px-6 py-3 text-base text-slate-600 whitespace-nowrap">
+                  {inv.project}
+                </td>
+                <td className="px-6 py-3 text-base tabular-nums text-slate-800 whitespace-nowrap">
+                  {inv.subtotal}
+                </td>
+                <td className="px-6 py-3 text-base tabular-nums text-slate-600 whitespace-nowrap">
+                  {inv.vat}
+                </td>
+                <td className="px-6 py-3 text-base tabular-nums font-medium text-slate-800 whitespace-nowrap">
+                  {inv.total}
+                </td>
+                <td className="px-6 py-3 text-base text-slate-600 whitespace-nowrap">
+                  {inv.issueDate}
+                </td>
+                <td className="px-6 py-3 text-base text-slate-600 whitespace-nowrap">
+                  {inv.dueDate}
+                </td>
                 <td className="px-6 py-3">
-                  <span className={`inline-block rounded-full px-3 py-1 text-sm font-medium ${statusStyles[inv.status]}`}>
+                  <span
+                    className={`inline-block rounded-full px-3 py-1 text-sm font-medium ${statusStyles[inv.status]}`}
+                  >
                     {inv.status}
                   </span>
                 </td>
-                <td className="px-6 py-3 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                  <button className="rounded px-3 py-1.5 text-sm text-slate-500 hover:bg-sky-50 hover:text-sky-600 mr-2">Edit</button>
-                  <button className="rounded px-3 py-1.5 text-sm text-rose-500 hover:bg-rose-50">Delete</button>
+                <td
+                  className="px-6 py-3 text-right whitespace-nowrap"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button className="rounded px-3 py-1.5 text-sm text-slate-500 hover:bg-sky-50 hover:text-sky-600 mr-2">
+                    Edit
+                  </button>
+                  <button className="rounded px-3 py-1.5 text-sm text-rose-500 hover:bg-rose-50">
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}
@@ -136,7 +198,10 @@ export default function InvoicesPage() {
         </table>
       </div>
 
-      <CreateInvoiceModal open={modalOpen} onClose={() => setModalOpen(false)} />
+      <CreateInvoiceModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+      />
     </section>
   );
 }

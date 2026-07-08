@@ -18,13 +18,69 @@ type Expense = {
 };
 
 const initialExpenses: Expense[] = [
-  { id: "XPN-007", date: "20 May 2026", category: "Software & Subscriptions", description: "Slack Pro subscription – May 2026", amount: "₦12,000", reference: "RCT-051", loggedBy: "Admin" },
-  { id: "XPN-006", date: "14 May 2026", category: "Travel & Transport", description: "BlueStar site visit – Apapa Road", amount: "₦22,000", reference: "RCT-049", loggedBy: "Emeka Okafor" },
-  { id: "XPN-005", date: "8 May 2026", category: "Office Supplies", description: "Stationery restock for Q2", amount: "₦8,500", reference: "RCT-047", loggedBy: "Sade Williams" },
-  { id: "XPN-004", date: "2 May 2026", category: "Software & Subscriptions", description: "Zoom annual subscription renewal", amount: "₦35,000", reference: "RCT-045", loggedBy: "Admin" },
-  { id: "XPN-003", date: "18 Apr 2026", category: "Marketing & Advertising", description: "LinkedIn sponsored campaign – Apr 2026", amount: "₦120,000", reference: "RCT-041", loggedBy: "Admin" },
-  { id: "XPN-002", date: "5 Apr 2026", category: "Agent Commissions", description: "Emeka Okafor commission – INV-001 (Zenith HRIS Deployment)", amount: "₦52,675", reference: "COM-001", loggedBy: "Admin" },
-  { id: "XPN-001", date: "3 Apr 2026", category: "Travel & Transport", description: "Client visit to Zenith Technologies office, VI", amount: "₦15,000", reference: "RCT-038", loggedBy: "Emeka Okafor" },
+  {
+    id: "XPN-007",
+    date: "20 May 2026",
+    category: "Software & Subscriptions",
+    description: "Slack Pro subscription – May 2026",
+    amount: "₦12,000",
+    reference: "RCT-051",
+    loggedBy: "Admin",
+  },
+  {
+    id: "XPN-006",
+    date: "14 May 2026",
+    category: "Travel & Transport",
+    description: "BlueStar site visit – Apapa Road",
+    amount: "₦22,000",
+    reference: "RCT-049",
+    loggedBy: "Emeka Okafor",
+  },
+  {
+    id: "XPN-005",
+    date: "8 May 2026",
+    category: "Office Supplies",
+    description: "Stationery restock for Q2",
+    amount: "₦8,500",
+    reference: "RCT-047",
+    loggedBy: "Sade Williams",
+  },
+  {
+    id: "XPN-004",
+    date: "2 May 2026",
+    category: "Software & Subscriptions",
+    description: "Zoom annual subscription renewal",
+    amount: "₦35,000",
+    reference: "RCT-045",
+    loggedBy: "Admin",
+  },
+  {
+    id: "XPN-003",
+    date: "18 Apr 2026",
+    category: "Marketing & Advertising",
+    description: "LinkedIn sponsored campaign – Apr 2026",
+    amount: "₦120,000",
+    reference: "RCT-041",
+    loggedBy: "Admin",
+  },
+  {
+    id: "XPN-002",
+    date: "5 Apr 2026",
+    category: "Agent Commissions",
+    description: "Emeka Okafor commission – INV-001 (Zenith HRIS Deployment)",
+    amount: "₦52,675",
+    reference: "COM-001",
+    loggedBy: "Admin",
+  },
+  {
+    id: "XPN-001",
+    date: "3 Apr 2026",
+    category: "Travel & Transport",
+    description: "Client visit to Zenith Technologies office, VI",
+    amount: "₦15,000",
+    reference: "RCT-038",
+    loggedBy: "Emeka Okafor",
+  },
 ];
 
 export default function ExpensesPage() {
@@ -45,7 +101,8 @@ export default function ExpensesPage() {
   const topCategory = (() => {
     const counts: Record<string, number> = {};
     expenses.forEach((e) => {
-      counts[e.category] = (counts[e.category] || 0) + parseFloat(e.amount.replace(/[₦,]/g, ""));
+      counts[e.category] =
+        (counts[e.category] || 0) + parseFloat(e.amount.replace(/[₦,]/g, ""));
     });
     return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "—";
   })();
@@ -117,7 +174,9 @@ export default function ExpensesPage() {
             placeholder="Search description or reference…"
             className="w-full rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm text-slate-700 outline-none placeholder:text-slate-400"
           />
-          <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+          <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+            🔍
+          </span>
         </div>
         <select className="rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-600 outline-none">
           <option>All Categories</option>
@@ -127,8 +186,14 @@ export default function ExpensesPage() {
           <option>Marketing & Advertising</option>
           <option>Agent Commissions</option>
         </select>
-        <input type="date" className="rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-600 outline-none" />
-        <input type="date" className="rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-600 outline-none" />
+        <input
+          type="date"
+          className="rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-600 outline-none"
+        />
+        <input
+          type="date"
+          className="rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-600 outline-none"
+        />
       </div>
 
       {/* Table */}
@@ -172,13 +237,19 @@ export default function ExpensesPage() {
                 </td>
                 <td className="px-6 py-3 text-right whitespace-nowrap">
                   <button
-                    onClick={() => { setActiveExpense(exp); setEditOpen(true); }}
+                    onClick={() => {
+                      setActiveExpense(exp);
+                      setEditOpen(true);
+                    }}
                     className="mr-3 rounded p-1.5 text-slate-400 hover:bg-sky-50 hover:text-sky-600"
                   >
                     <FiEdit2 size={16} />
                   </button>
                   <button
-                    onClick={() => { setActiveExpense(exp); setDeleteOpen(true); }}
+                    onClick={() => {
+                      setActiveExpense(exp);
+                      setDeleteOpen(true);
+                    }}
                     className="rounded p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500"
                   >
                     <RiDeleteBin6Line size={16} />
@@ -191,7 +262,10 @@ export default function ExpensesPage() {
           {/* Footer total */}
           <tfoot>
             <tr className="border-t border-slate-200 bg-slate-50">
-              <td colSpan={4} className="px-6 py-3 text-sm font-medium text-slate-700">
+              <td
+                colSpan={4}
+                className="px-6 py-3 text-sm font-medium text-slate-700"
+              >
                 {expenses.length} entries shown
               </td>
               <td className="px-6 py-3 text-base tabular-nums font-semibold text-slate-900">
