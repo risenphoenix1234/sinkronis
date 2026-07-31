@@ -1,4 +1,4 @@
-import { Field } from "@/app/employee/conduct/page";
+import { Field } from "@/app/employee/profile/page";
 import {
   AnyEmployee,
   QueryEmployee,
@@ -16,14 +16,14 @@ export function DetailPanel({
 }) {
   const isQuery = emp.type === "Query";
 
- function statusColor(status: string) {
-  if (status === "Resolved") return "text-green-500";
-  if (status === "Pending") return "text-amber-500";
-  if (status === "In Progress") return "text-blue-500";
-  if (status === "Open") return "text-red-500";
+  function statusColor(status: string) {
+    if (status === "Resolved") return "text-green-500";
+    if (status === "Pending") return "text-amber-500";
+    if (status === "In Progress") return "text-blue-500";
+    if (status === "Open") return "text-red-500";
 
-  return "text-gray-500";
-}
+    return "text-gray-500";
+  }
 
   return (
     <aside className="w-[300px] min-w-[300px] border-l border-gray-200 bg-white flex flex-col overflow-y-auto">

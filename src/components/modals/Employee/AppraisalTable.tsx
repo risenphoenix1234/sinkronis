@@ -1,7 +1,7 @@
 "use client";
 
-import { RatingBadge } from "@/components/employee/appraisal/appraisalRating";
-import { appraisalData } from "@/data/employee/appraisalData";
+import { RatingBadge } from "@/components/employee/appraisal/PhaseStepper";
+import { appraisalData } from "@/data/employee/appraisal";
 
 interface AppraisalTableProps {
   isOpen: boolean;

@@ -1,111 +1,49 @@
-export const presentSummary = [
-  { title: "On time", value: 200, change: "+12 vs Yesterday", positive: true },
 
-  { title: "Late clock-in", value: 45, change: "-12 vs Yesterday", positive: false },
+import { AttendanceRecord, CalendarDay } from "@/types/employee/attendance";
 
-  { title: "Early clock-in", value: 220, change: "+10 vs Yesterday", positive: true },
+export const calendarDays: CalendarDay[] = [
+  { day: 1, status: "Present" },
+  { day: 2, status: "Present" },
+  { day: 3, status: "Late" },
+  { day: 4, status: "Absent" },
+  { day: 5 },
 
-  { title: "Absent", value: 65, change: "+9 vs Yesterday", positive: true },
+  { day: 6 },
+  { day: 7, status: "Present" },
+  { day: 8, status: "Present" },
+  { day: 9, status: "Present" },
+  { day: 10, status: "Present" },
+  { day: 11, status: "Present" },
+  { day: 12 },
 
-  { title: "No clock-in", value: 34, change: "-1 vs Yesterday", positive: false },
+  { day: 13 },
+  { day: 14, status: "Present" },
+  { day: 15, status: "Present" },
+  { day: 16, status: "Present" },
+  { day: 17, status: "Present" },
+  { day: 18, status: "Present" },
+  { day: 19 },
 
-  { title: "No clock-out", value: 0, change: "0 vs Yesterday", positive: false },
+  { day: 20 },
+  { day: 21, status: "Present" },
+  { day: 22, status: "Present" },
+  { day: 23, status: "Present" },
+  { day: 24, status: "Present" },
+  { day: 25, status: "Present" },
+  { day: 26 },
+
+  { day: 27 },
+  { day: 28, status: "Present" },
+  { day: 29, status: "Present" },
+  { day: 30, status: "Present" },
+  { day: 31, status: "Present" },
 ];
 
-export const totalSummary = [
-  { title: "Present", value: 2340, change: "+30 vs last month", positive: true },
 
-  { title: "Absent", value: 230, change: "-12 vs last month", positive: false },
-
-  { title: "Day off", value: 265, change: "+12 vs last month", positive: true },
-];
-
-export const employees = [
-  {
-    name: "Jaiyesimi Darasimi",
-    time: "10:02AM - 8h 58m - 07:00PM",
-    department: "Marketing Department",
-    note: "She's doing some great work...",
-    status: "Present",
-    mode: "Remote",
-    dayOff: "None",
-  },
-
-  {
-    name: "Jaiyesimi Darasimi",
-    time: "00",
-    department: "Marketing Department",
-    note: "-",
-    status: "Absent",
-    mode: "Remote",
-    dayOff: "None",
-  },
-
-  {
-    name: "Jaiyesimi Darasimi",
-    time: "09:00AM - 9h 1m - 06:00PM",
-    department: "Sales Department",
-    note: "Lined up for some details...",
-    status: "Present",
-    mode: "Onsite",
-    dayOff: "None",
-  },
-  {
-    name: "Jaiyesimi Darasimi",
-    time: "10:02AM - 8h 58m - 07:00PM",
-    department: "Marketing Department",
-    note: "She's doing some great work...",
-    status: "Present",
-    mode: "Remote",
-    dayOff: "None",
-  },
-
-  {
-    name: "Jaiyesimi Darasimi",
-    time: "00",
-    department: "Marketing Department",
-    note: "-",
-    status: "Absent",
-    mode: "Remote",
-    dayOff: "None",
-  },
-
-  {
-    name: "Jaiyesimi Darasimi",
-    time: "09:00AM - 9h 1m - 06:00PM",
-    department: "Sales Department",
-    note: "Lined up for some details...",
-    status: "Present",
-    mode: "Onsite",
-    dayOff: "None",
-  },
-  {
-    name: "Jaiyesimi Darasimi",
-    time: "10:02AM - 8h 58m - 07:00PM",
-    department: "Marketing Department",
-    note: "She's doing some great work...",
-    status: "Present",
-    mode: "Remote",
-    dayOff: "None",
-  },
-
-  {
-    name: "Jaiyesimi Darasimi",
-    time: "00",
-    department: "Marketing Department",
-    note: "-",
-    status: "Absent",
-    mode: "Remote",
-    dayOff: "None",
-  },
-
-  {
-    name: "Jaiyesimi Darasimi",
-    time: "09:00AM - 9h 1m - 06:00PM",
-    department: "Sales Department",
-    note: "Lined up for some details...",
-    status: "Present",
-    mode: "Onsite",
-    dayOff: "None",
-  },
+export const attendanceLog: AttendanceRecord[] = [
+  { date: "Tue, 1 Jul 2026", clockIn: "08:02", clockOut: "17:14", hoursWorked: "9h 12m", status: "Present" },
+  { date: "Wed, 2 Jul 2026", clockIn: "08:15", clockOut: "17:00", hoursWorked: "8h 45m", status: "Present" },
+  { date: "Thu, 3 Jul 2026", clockIn: "08:00", clockOut: "17:05", hoursWorked: "9h 05m", status: "Present" },
+  { date: "Fri, 4 Jul 2026", clockIn: "—",     clockOut: "—",     hoursWorked: "—",      status: "Absent"  },
+  { date: "Mon, 7 Jul 2026", clockIn: "09:30", clockOut: "17:10", hoursWorked: "7h 40m", status: "Late"    },
 ];

@@ -9,7 +9,7 @@ export default function HomePage() {
     { href: "/hris/overview", label: "HRIS" },
     { href: "/hr/overview", label: "HR" },
     { href: "/manager/overview", label: "Manager" },
-    { href: "/employee/overview", label: "Employee" },
+    { href: "/employee/dashboard", label: "Employee" },
     { href: "/payroll/overview", label: "Payroll" },
     { href: "/accounting/dashboard", label: "Accounting" },
   ];

@@ -1,31 +1,20 @@
-// src/app/employee/attendance/page.tsx
-
-import AttendanceFilters from "@/components/employee/attendance/AttendanceFilters";
-import SummaryCards from "@/components/employee/attendance/SummaryCards";
-import AttendanceTable from "@/components/employee/attendance/AttendanceTable";
-import { presentSummary, totalSummary } from "@/data/employee/attendance";
-import Pagination from "@/components/employee/attendance/Pagination";
+import AttendanceCalendar from "@/components/employee/attendance/AttendanceCalender";
+import AttendanceHeader from "@/components/employee/attendance/AttendanceHeader";
+import AttendanceLogTable from "@/components/employee/attendance/AttendanceLogTable";
+import AttendanceSummary from "@/components/employee/attendance/AttendanceSummary";
 
 export default function AttendancePage() {
   return (
-    <section className="space-y-6 p-6">
-      <div className="min-h-screen bg-[#FAFAFA]">
-        <h1 className="text-5xl font-bold">Attendance</h1>
-        <div className="w-full justify-between grid grid-cols-2 gap-20 mt-6">
-          <div>
-            <SummaryCards title="Present Summary" data={presentSummary} />
-          </div>
-          <div>
-            <SummaryCards title="Total Summary" data={totalSummary} />
-          </div>
-        </div>
+    <main className="min-h-screen bg-slate-100">
+      <div className="mx-auto space-y-6 p-6">
+        <AttendanceHeader />
 
-        <AttendanceFilters />
+        <AttendanceCalendar />
 
-        <AttendanceTable />
+        <AttendanceSummary />
 
-        <Pagination />
+        <AttendanceLogTable />
       </div>
-    </section>
+    </main>
   );
 }
