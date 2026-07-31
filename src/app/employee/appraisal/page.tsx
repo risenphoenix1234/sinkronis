@@ -47,7 +47,7 @@ export default function MyAppraisal() {
           <div>
             <h2 className="text-lg font-bold text-gray-900">Q2 2026 Review</h2>
             <p className="text-xs text-gray-400 mt-0.5">
-              Period: 1 Apr – 30 Jun 2026 · Deadline: 15 July 2026
+              Period: 1 Apr - 30 Jun 2026 · Deadline: 15 July 2026
             </p>
           </div>
           <span className="text-xs font-semibold px-3 py-1 rounded-full bg-yellow-100 text-yellow-600">
