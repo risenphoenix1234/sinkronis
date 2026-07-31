@@ -1,11 +1,6 @@
 // src/app/tenant-admin/organisation/page.tsx
-export default function OrganisationPage() {
-  return (
-    <section>
-      <h1 className="text-2xl font-semibold mb-2">Organisation</h1>
-      <p className="text-sm text-slate-500">
-        Static organisation details form / summary.
-      </p>
-    </section>
-  );
+import { redirect } from "next/navigation";
+
+export default function OrganisationIndexPage() {
+  redirect("/tenant-admin/organisation/company-profile");
 }

@@ -1,5 +1,6 @@
 // src/app/hris/layout.tsx
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import ModuleRail from "@/components/ModuleRail";
 
 const sidebarItems = [
   { label: "Overview", href: "/hris/overview" },
@@ -20,12 +21,17 @@ const sidebarItems = [
 
 export default function HRISLayout({ children }: { children: React.ReactNode }) {
   return (
-    <DashboardLayout
-      navbarTitle="HRIS"
-      sidebarTitle="HRIS"
-      sidebarItems={sidebarItems}
-    >
-      {children}
-    </DashboardLayout>
+    <div className="flex h-screen overflow-hidden">
+      <ModuleRail />
+      <div className="min-w-0 flex-1 overflow-x-auto">
+        <DashboardLayout
+          navbarTitle="HRIS"
+          sidebarTitle="HRIS"
+          sidebarItems={sidebarItems}
+        >
+          {children}
+        </DashboardLayout>
+      </div>
+    </div>
   );
 }

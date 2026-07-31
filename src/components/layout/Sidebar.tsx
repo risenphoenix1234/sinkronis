@@ -1,9 +1,10 @@
 // src/components/layout/Sidebar.tsx
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
 export type SidebarItem = {
@@ -15,6 +16,80 @@ export type SidebarItem = {
 interface SidebarProps {
   title: string;
   items: SidebarItem[];
+}
+
+function SidebarChildGroup({
+  subItems,
+  pathname,
+}: {
+  subItems: { label: string; href: string }[];
+  pathname: string;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
+  const [indicator, setIndicator] = useState<{ top: number; height: number } | null>(
+    null
+  );
+
+  const activeHref =
+    subItems.find(
+      (c) => pathname === c.href || pathname.startsWith(c.href)
+    )?.href ?? null;
+
+  useEffect(() => {
+    if (!activeHref) {
+      setIndicator(null);
+      return;
+    }
+    const el = itemRefs.current[activeHref];
+    const container = containerRef.current;
+    if (el && container) {
+      const elRect = el.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      setIndicator({
+        top: elRect.top - containerRect.top,
+        height: elRect.height,
+      });
+    }
+  }, [activeHref, subItems]);
+
+  return (
+    <div ref={containerRef} className="relative ml-3 mt-0.5 pl-3">
+      {/* static track */}
+      <div className="absolute left-0 top-0 h-full w-px bg-slate-200" />
+
+      {/* animated sliding indicator */}
+      {indicator && (
+        <div
+          className="absolute left-0 w-0.5 rounded-full bg-[#2183C6] transition-all duration-300 ease-out"
+          style={{ top: indicator.top, height: indicator.height }}
+        />
+      )}
+
+      <div className="space-y-0.5">
+        {subItems.map((child) => {
+          const childActive =
+            pathname === child.href || pathname.startsWith(child.href);
+          return (
+            <Link
+              key={child.href}
+              href={child.href}
+              ref={(el) => {
+                itemRefs.current[child.href] = el;
+              }}
+              className={`block rounded px-3 py-1.5 text-sm transition-colors ${
+                childActive
+                  ? "font-medium text-[#2183C6]"
+                  : "text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              {child.label}
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export default function Sidebar({ title, items }: SidebarProps) {
@@ -39,11 +114,27 @@ export default function Sidebar({ title, items }: SidebarProps) {
   };
 
   return (
-    <aside className="flex h-full w-56 flex-col border-r border-slate-200 bg-white">
-      <div className="h-14 flex items-center border-b border-slate-200 px-4 text-sm font-semibold">
+    <aside className="sticky top-0 flex h-screen w-56 shrink-0 flex-col border-r border-slate-200 bg-white">
+      {/* Logo */}
+      <div className="flex h-14 shrink-0 items-center border-b border-slate-200 px-4">
+        <Link href="/landingPage" className="flex items-center">
+          <Image
+            src="/logo.png"
+            alt="Sinkronis"
+            width={120}
+            height={32}
+            className="h-8 w-auto object-contain"
+          />
+        </Link>
+      </div>
+
+      {/* Module title */}
+      <div className="flex h-10 shrink-0 items-center border-b border-slate-100 px-4 text-xs font-medium uppercase tracking-wide text-slate-400">
         {title}
       </div>
-      <nav className="flex-1 space-y-0.5 px-2 py-3 text-sm">
+
+      {/* Nav items — scrolls internally if it overflows, sidebar itself stays full height */}
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-3 text-sm">
         {items.map((item) => {
           // Group with children
           if (item.children && item.children.length > 0) {
@@ -74,26 +165,10 @@ export default function Sidebar({ title, items }: SidebarProps) {
                 </button>
 
                 {isOpen && (
-                  <div className="ml-3 mt-0.5 space-y-0.5 border-l border-slate-200 pl-3">
-                    {item.children.map((child) => {
-                      const childActive =
-                        pathname === child.href ||
-                        pathname.startsWith(child.href);
-                      return (
-                        <Link
-                          key={child.href}
-                          href={child.href}
-                          className={`block rounded px-3 py-1.5 text-sm transition-colors ${
-                            childActive
-                              ? "font-medium text-[#2183C6]"
-                              : "text-slate-600 hover:bg-slate-100"
-                          }`}
-                        >
-                          {child.label}
-                        </Link>
-                      );
-                    })}
-                  </div>
+                  <SidebarChildGroup
+                    subItems={item.children}
+                    pathname={pathname}
+                  />
                 )}
               </div>
             );

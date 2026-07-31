@@ -1,8 +1,10 @@
+// src/app/accounting/layout.tsx
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import ModuleRail from "@/components/ModuleRail";
 
 const sidebarItems = [
   { label: "Dashboard", href: "/accounting/dashboard" },
-  { label: "Clients", href: "/accounting/clients" },
+  { label: "Customer", href: "/accounting/clients" },
   { label: "Items & Services", href: "/accounting/items-services" },
   { label: "Projects", href: "/accounting/projects" },
   { label: "Invoices", href: "/accounting/invoices" },
@@ -22,12 +24,17 @@ export default function AccountingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <DashboardLayout
-      navbarTitle="Accounting"
-      sidebarTitle="Accounting"
-      sidebarItems={sidebarItems}
-    >
-      {children}
-    </DashboardLayout>
+    <div className="flex h-screen overflow-hidden">
+      <ModuleRail />
+      <div className="min-w-0 flex-1 overflow-x-auto">
+        <DashboardLayout
+          navbarTitle="Accounting"
+          sidebarTitle="Accounting"
+          sidebarItems={sidebarItems}
+        >
+          {children}
+        </DashboardLayout>
+      </div>
+    </div>
   );
 }
