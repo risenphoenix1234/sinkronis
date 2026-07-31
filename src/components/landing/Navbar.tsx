@@ -1,3 +1,4 @@
+// src/components/landing/Navbar.tsx
 "use client";
 
 import { useState } from "react";
@@ -13,6 +14,14 @@ const navLinks = [
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+
+  const scrollToPricing = () => {
+    setIsOpen(false);
+    document.getElementById("pricing")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-100 bg-white shadow-sm">
@@ -50,13 +59,14 @@ export default function Navbar() {
           >
             Log In
           </Link>
-          <Link
-            href="/signup"
+          <button
+            type="button"
+            onClick={scrollToPricing}
             className="inline-flex items-center gap-2 rounded-lg bg-[#2182C5] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1C6EA7]"
           >
             Get Started
             <ArrowRight className="h-4 w-4" />
-          </Link>
+          </button>
         </div>
 
         {/* Mobile menu toggle */}
@@ -96,13 +106,14 @@ export default function Navbar() {
             >
               Log In
             </Link>
-            <Link
-              href="/signup"
+            <button
+              type="button"
+              onClick={scrollToPricing}
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#2182C5] px-5 py-2.5 text-sm font-semibold text-white"
             >
               Get Started
               <ArrowRight className="h-4 w-4" />
-            </Link>
+            </button>
           </div>
         </div>
       )}

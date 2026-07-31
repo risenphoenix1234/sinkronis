@@ -1,32 +1,68 @@
 // src/app/payroll/overview/page.tsx
+"use client";
+
+import DashboardHeader from "@/components/payroll/overview/DashboardHeader";
+import NotificationBanner from "@/components/payroll/overview/NotificationBanner";
+import PayeeGroupChart from "@/components/payroll/overview/PayeeGroupChart";
+import PayrollChart from "@/components/payroll/overview/PayrollChart";
+import StatCard from "@/components/payroll/overview/StatCard";
+
 export default function PayrollOverviewPage() {
   return (
-    <section className="space-y-3">
-      <h1 className="text-2xl font-semibold">Payroll Overview</h1>
-      <p className="text-sm text-slate-500">
-        Static snapshot of recent payroll runs and totals.
-      </p>
+    <section className="space-y-6 p-6">
+      <main className="min-h-screen bg-[#F7F8FA] p-8">
+        <DashboardHeader />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-lg bg-white p-4 shadow-sm">
-          <h2 className="text-xs font-semibold text-slate-500">
-            Last run (month)
-          </h2>
-          <p className="mt-2 text-2xl font-bold">May 2026</p>
+        <NotificationBanner />
+
+        {/* Stat Cards */}
+
+        <div className="mt-8 grid grid-cols-4 gap-5">
+          <StatCard
+            title="Total Payroll"
+            amount="₦650,000"
+            change="+2 since March"
+            percentage="+8%"
+            positive
+          />
+
+          <StatCard
+            title="Total Employee"
+            amount="60"
+            change="+1 since March"
+            percentage="+2.3%"
+            positive
+          />
+
+          <StatCard
+            title="Total Tax"
+            amount="₦50,000"
+            change="+3 since March"
+            percentage="+12.2%"
+            positive
+          />
+
+          <StatCard
+            title="Total Pension"
+            amount="₦70,000"
+            change="-2 since March"
+            percentage="-15%"
+            positive={false}
+          />
         </div>
-        <div className="rounded-lg bg-white p-4 shadow-sm">
-          <h2 className="text-xs font-semibold text-slate-500">
-            Total net pay (₦)
-          </h2>
-          <p className="mt-2 text-2xl font-bold">45,000,000</p>
+
+        {/* Charts */}
+
+        <div className="mt-10 grid grid-cols-3 gap-6">
+          <div className="col-span-2 rounded-xl bg-white p-6 shadow-sm">
+            <PayrollChart />
+          </div>
+
+          <div className="rounded-xl bg-white p-6 shadow-sm">
+            <PayeeGroupChart />
+          </div>
         </div>
-        <div className="rounded-lg bg-white p-4 shadow-sm">
-          <h2 className="text-xs font-semibold text-slate-500">
-            Employees paid
-          </h2>
-          <p className="mt-2 text-2xl font-bold">178</p>
-        </div>
-      </div>
+      </main>
     </section>
   );
 }
