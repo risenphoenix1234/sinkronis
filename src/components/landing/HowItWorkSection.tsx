@@ -1,3 +1,5 @@
+"use client";
+
 const steps = [
   {
     number: "01",
@@ -43,13 +45,12 @@ export default function HowItWorksSection() {
           </h2>
 
           <p className="mt-6 text-lg leading-8 text-slate-500">
-            No lengthy onboarding or consultants needed. Most teams are live
-            the same day.
+            No lengthy onboarding or consultants needed. Most teams are live the
+            same day.
           </p>
         </div>
 
         <div className="relative mt-16 grid gap-6 md:grid-cols-3">
-
           {/* connector line */}
           <div className="absolute left-[30%] right-[30%] top-8 hidden h-px bg-[#E6EEF6] md:block" />
 
