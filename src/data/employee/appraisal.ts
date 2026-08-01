@@ -1,5 +1,24 @@
 import { Goal, PastAppraisal } from "@/types/employee/appraisal";
 
+export const appraisalData = [
+  {
+    objective: "Revenue Growth",
+    kpis: ["Increase net new revenue by 15%", "Expand enterprise accounts"],
+    employeeRating: 4,
+    employeeComment: "Strong execution and positive momentum.",
+    managerRating: 5,
+    managerComment: "Excellent delivery and leadership.",
+  },
+  {
+    objective: "Operational Excellence",
+    kpis: ["Reduce turnaround time", "Improve SLA adherence"],
+    employeeRating: 3,
+    employeeComment: "Steady progress with room to improve.",
+    managerRating: 4,
+    managerComment: "Reliable and dependable performance.",
+  },
+];
+
 export const goals: Goal[] = [
   {
     id: 1,

@@ -117,7 +117,7 @@ export const MODULES: ModuleDef[] = [
   },
   {
     id: "employee",
-    href: "/employee/overview",
+    href: "/employee/dashboard",
     name: "Employee Portal",
     subtitle: "My workspace",
     description:

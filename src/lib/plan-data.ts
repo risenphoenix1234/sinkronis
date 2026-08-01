@@ -16,7 +16,8 @@ export const modules: ModuleInfo[] = [
   {
     key: "hris",
     name: "HRIS",
-    description: "Human Resource Information System — employee lifecycle, attendance, leave, appraisals, and discipline management.",
+    description:
+      "Human Resource Information System — employee lifecycle, attendance, leave, appraisals, and discipline management.",
     includedInPlan: true,
     monthlyPrice: 0,
     active: true,
@@ -24,7 +25,8 @@ export const modules: ModuleInfo[] = [
   {
     key: "accounting",
     name: "Accounting",
-    description: "Accounting & Finance — invoicing, expense tracking, VAT compliance, agents, and financial reporting.",
+    description:
+      "Accounting & Finance — invoicing, expense tracking, VAT compliance, agents, and financial reporting.",
     includedInPlan: true,
     monthlyPrice: 0,
     active: true,
@@ -32,7 +34,8 @@ export const modules: ModuleInfo[] = [
   {
     key: "payroll",
     name: "Payroll",
-    description: "Payroll Processing — salary computation, PAYE & pension deductions, payslips, and bank integration.",
+    description:
+      "Payroll Processing — salary computation, PAYE & pension deductions, payslips, and bank integration.",
     includedInPlan: false,
     monthlyPrice: 100000,
     active: false,
@@ -56,7 +59,8 @@ export type CurrentPlan = {
 export const currentPlan: CurrentPlan = {
   name: "Business",
   status: "Active",
-  description: "For growing organisations that need HR and finance in one place.",
+  description:
+    "For growing organisations that need HR and finance in one place.",
   seatsUsed: 44,
   seatsTotal: 50,
   monthlyCost: 450000,
@@ -151,6 +155,7 @@ export const savedCard: SavedCard = {
   last4: "4242",
   cardholderName: "Chukwuemeka Obi",
   expiry: "08/28",
+  isDefault: true,
 };
 
 export type BillingAddress = {
@@ -180,12 +185,60 @@ export type BillingHistoryEntry = {
 };
 
 export const billingHistory: BillingHistoryEntry[] = [
-  { id: "INV-2026-006", date: "Jun 1, 2026", description: "Business Plan — Monthly", amount: 450000, status: "Paid", invoiceRef: "INV-2026-006", year: "2026" },
-  { id: "INV-2026-005", date: "May 1, 2026", description: "Business Plan — Monthly", amount: 450000, status: "Paid", invoiceRef: "INV-2026-005", year: "2026" },
-  { id: "INV-2026-004", date: "Apr 1, 2026", description: "Business Plan — Monthly", amount: 450000, status: "Paid", invoiceRef: "INV-2026-004", year: "2026" },
-  { id: "INV-2026-003", date: "Mar 1, 2026", description: "Business Plan — Monthly", amount: 450000, status: "Paid", invoiceRef: "INV-2026-003", year: "2026" },
-  { id: "INV-2026-002", date: "Feb 1, 2026", description: "Business Plan — Monthly + Seats (+5)", amount: 487500, status: "Paid", invoiceRef: "INV-2026-002", year: "2026" },
-  { id: "INV-2026-001", date: "Jan 1, 2026", description: "Business Plan — Monthly", amount: 450000, status: "Paid", invoiceRef: "INV-2026-001", year: "2026" },
+  {
+    id: "INV-2026-006",
+    date: "Jun 1, 2026",
+    description: "Business Plan — Monthly",
+    amount: 450000,
+    status: "Paid",
+    invoiceRef: "INV-2026-006",
+    year: "2026",
+  },
+  {
+    id: "INV-2026-005",
+    date: "May 1, 2026",
+    description: "Business Plan — Monthly",
+    amount: 450000,
+    status: "Paid",
+    invoiceRef: "INV-2026-005",
+    year: "2026",
+  },
+  {
+    id: "INV-2026-004",
+    date: "Apr 1, 2026",
+    description: "Business Plan — Monthly",
+    amount: 450000,
+    status: "Paid",
+    invoiceRef: "INV-2026-004",
+    year: "2026",
+  },
+  {
+    id: "INV-2026-003",
+    date: "Mar 1, 2026",
+    description: "Business Plan — Monthly",
+    amount: 450000,
+    status: "Paid",
+    invoiceRef: "INV-2026-003",
+    year: "2026",
+  },
+  {
+    id: "INV-2026-002",
+    date: "Feb 1, 2026",
+    description: "Business Plan — Monthly + Seats (+5)",
+    amount: 487500,
+    status: "Paid",
+    invoiceRef: "INV-2026-002",
+    year: "2026",
+  },
+  {
+    id: "INV-2026-001",
+    date: "Jan 1, 2026",
+    description: "Business Plan — Monthly",
+    amount: 450000,
+    status: "Paid",
+    invoiceRef: "INV-2026-001",
+    year: "2026",
+  },
 ];
 
 export function getBillingTotals() {

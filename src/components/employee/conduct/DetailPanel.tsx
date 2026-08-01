@@ -1,4 +1,3 @@
-import { Field } from "@/app/employee/profile/page";
 import {
   AnyEmployee,
   QueryEmployee,
@@ -6,6 +5,17 @@ import {
   SuspensionEmployee,
 } from "@/types/employee/conduct";
 import { Plus, X } from "lucide-react";
+
+function Field({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+        {label}
+      </p>
+      <p className="mt-1 text-sm text-gray-700">{value}</p>
+    </div>
+  );
+}
 
 export function DetailPanel({
   emp,
