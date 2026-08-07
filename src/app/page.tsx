@@ -3,10 +3,10 @@ import Navbar from "@/components/landing/Navbar";
 import Hero from "@/components/landing/Hero";
 import ProblemSection from "@/components/landing/ProblemSection";
 import FeaturesSection from "@/components/landing/FeaturesSection";
-import HowItWorksSection from "@/components/landing/HowItWorkSection";
-import TestimonialsSection from "@/components/landing/TestimonialSection";
 import PricingSection from "@/components/landing/Pricingsection";
 import Footer from "@/components/landing/Footer";
+import HowItWorksSection from "@/components/landing/HowItWorkSection";
+import TestimonialSection from "@/components/landing/TestimonialSection";
 
 export default function LandingPage() {
   return (
@@ -16,7 +16,7 @@ export default function LandingPage() {
       <ProblemSection />
       <FeaturesSection />
       <HowItWorksSection />
-      <TestimonialsSection />
+      <TestimonialSection />
       <PricingSection />
       <Footer />
     </main>

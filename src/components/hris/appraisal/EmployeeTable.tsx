@@ -1,10 +1,25 @@
-// components/appraisal/EmployeeTable.tsx
+
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 const employees = [
   {
+    name: "Amara Nwosu",
+    role: "HR Manager",
+    department: "Human Resources",
+    manager: "Chukwumeka Obi",
+    status: "Acknowledged",
+    score: "83%",
+  },
+  {
+    name: "Tunde Adeyemi",
+    role: "Operations Lead",
+    department: "Operations",
+    manager: "Chukwumeka Obi",
+    status: "Pending HR Approval",
+    score: "63%",
+  },
+   {
     name: "Amara Nwosu",
     role: "HR Manager",
     department: "Human Resources",

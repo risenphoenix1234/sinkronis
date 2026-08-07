@@ -40,6 +40,7 @@ export default function EmployeeProfilePage({
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-sky-100 text-2xl font-bold text-sky-600">
                   {employee.name.charAt(0)}
                 </div>
+                <p className="border-l border-0.5 h-8 border-slate-500"></p>
                 <div>
                   <h1 className="text-xl font-semibold text-slate-900">
                     {employee.name}
@@ -61,39 +62,55 @@ export default function EmployeeProfilePage({
             </div>
 
             {/* Stats */}
-            <div className="mt-6 grid grid-cols-3 gap-4 border-t border-slate-100 pt-5">
-              <div>
-                <p className="text-xs text-slate-400 uppercase tracking-wide">
-                  Leaves
+            <div className=" gap-4 border-t border-slate-100 pt-5">
+              <div className="mb-4">
+                <h2 className="text-3xl font-semibold">Overview</h2>
+                <p className="text-gray-500 text-xs">
+                  Date Joined: 13 May 2021
                 </p>
-                <p className="mt-1 text-2xl font-semibold text-slate-900">
-                  {employee.leaves}/16
-                </p>
-                <p className="text-xs text-sky-600">+ Add leave</p>
               </div>
-              <div>
-                <p className="text-xs text-slate-400 uppercase tracking-wide">
-                  Working Hours
-                </p>
-                <p className="mt-1 text-2xl font-semibold text-slate-900">
-                  {employee.workingHours.toLocaleString()}
-                </p>
-                <p className="text-xs text-slate-400">Total hours logged</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 uppercase tracking-wide">
-                  Appraisals
-                </p>
-                <p className="mt-1 text-2xl font-semibold text-slate-900">
-                  {employee.appraisals}
-                </p>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-3 ">
+                <div>
+                  <p className="text-xs text-slate-400 uppercase tracking-wide">
+                    Attendance
+                  </p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-900">
+                    14/16
+                  </p>
+                  <p className="text-xs text-sky-600 mt-2">
+                    +2 Since last month
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 uppercase tracking-wide">
+                    Appraisal
+                  </p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-900">
+                    2780 <span className="text-xs text-slate-400">H</span>
+                  </p>
+                  <p className="text-xs text-slate-400 mt-2">
+                    +1 Since last month
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 uppercase tracking-wide">
+                    Appraisals
+                  </p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-900">
+                    210{" "}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-2">
+                    -2 Since last month{" "}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Work Details */}
           <div className="rounded-xl border border-slate-200 bg-white p-6">
-            <div className="mb-4 flex items-center gap-3">
+            <div className="mb-4 flex items-center gap-3 border-b-2 border-slate-200 pb-4">
               <h2 className="text-base font-semibold text-slate-800">
                 Work Details
               </h2>
@@ -105,7 +122,10 @@ export default function EmployeeProfilePage({
               <span className="ml-auto text-sm text-slate-500">
                 Employee ID:{" "}
                 <span className="font-medium text-slate-800">
-                  {employee.employeeID}
+                  {employee.employeeID}{"   "}
+                  <span className="border border-slate-300 text-slate-500 p-1 rounded hover:bg-slate-100 cursor-pointer">
+                    Hide
+                  </span>
                 </span>
               </span>
             </div>
@@ -113,18 +133,17 @@ export default function EmployeeProfilePage({
             <div className="grid grid-cols-3 gap-y-5 gap-x-6 text-sm">
               {[
                 { label: "Department", value: employee.department },
-                { label: "Date of Birth", value: employee.dob },
-                { label: "Role", value: employee.role },
-                { label: "Gender", value: employee.gender },
                 { label: "Phone", value: employee.contact },
+                { label: "Personal email", value: employee.personalEmail },
+                { label: "Nationality", value: employee.nationality },
+                { label: "Date of Birth", value: employee.dob },
                 { label: "Marital Status", value: employee.maritalStatus },
-                { label: "Email", value: employee.email },
-                { label: "Work Mode", value: employee.workMode },
-                { label: "Salary", value: employee.salary },
-                { label: "Address", value: employee.address },
+                { label: "Gender", value: employee.gender },
                 { label: "City", value: employee.city },
                 { label: "State", value: employee.state },
-                { label: "Country", value: employee.country },
+                { label: "Work Mode", value: employee.workMode },
+                { label: "Address", value: employee.address },
+                { label: "Earnings", value: employee.earning },
               ].map((field) => (
                 <div key={field.label}>
                   <p className="text-xs text-slate-400 uppercase tracking-wide mb-0.5">

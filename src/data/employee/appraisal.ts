@@ -1,130 +1,144 @@
-import { Goal, PastAppraisal } from "@/types/employee/appraisal";
+import {
+  BehaviourObjective,
+  Employee,
+  Signatory,
+  Objective,
+  ReflectionQuestion,
+} from "@/types/employee/appraisal";
+
+export const employee = {
+  id: "EMP-001",
+
+  name: "Amina Hassan",
+
+  department: "Human Resources",
+
+  supervisor: "Michael James",
+
+  jobTitle: "HR Manager",
+
+  employmentDate: "12 March 2022",
+
+  reviewPeriod: "Q2 2026",
+
+  businessUnit: "Corporate Services",
+
+  employeeId: "EMP001",
+
+  location: "Lagos",
+};
+
+export const objectives: Objective[] = [];
+
+export const behaviourObjectives: BehaviourObjective[] = [
+  {
+    id: 1,
+    objective: "Collaboration & Communication",
+    wt: 28,
+    keyResult: "Actively collaborate cross-functionally on shared goals",
+    kpis: 10,
+    target: 0,
+    initiatives: "Bi-weekly cross-team syncs; shared project boards",
+    q1Ach: 0,
+    q1Percent: "",
+    q2Ach: 0,
+    q2Percent: "",
+    comment: "",
+  },
+  {
+    id: 1,
+    objective: "",
+    wt: 28,
+    keyResult: "Share knowledge and mentor peers consistently",
+    kpis: 10,
+    target: 0,
+    initiatives: "Monthly knowledge-sharing sessions",
+    q1Ach: 0,
+    q1Percent: 0,
+    q2Ach: 0,
+    q2Percent: 0,
+    comment: "",
+  },
+  {
+    id: 1,
+    objective: "Leadership & Initiiatives",
+    wt: 13,
+    keyResult: "Proactively identify and resolve blockers without escalation",
+    kpis: 10,
+    target: 0,
+    initiatives: "Bi-weekly cross-team syncs; shared project boards",
+    q1Ach: 0,
+    q1Percent: 0,
+    q2Ach: 0,
+    q2Percent: 0,
+    comment: "",
+  },
+];
 
 export const appraisalData = [
   {
     objective: "Revenue Growth",
-    kpis: ["Increase net new revenue by 15%", "Expand enterprise accounts"],
+    kpis: ["Increase recurring revenue", "Improve customer retention"],
     employeeRating: 4,
-    employeeComment: "Strong execution and positive momentum.",
-    managerRating: 5,
-    managerComment: "Excellent delivery and leadership.",
-  },
-  {
-    objective: "Operational Excellence",
-    kpis: ["Reduce turnaround time", "Improve SLA adherence"],
-    employeeRating: 3,
-    employeeComment: "Steady progress with room to improve.",
+    employeeComment: "Exceeded target for the quarter.",
     managerRating: 4,
-    managerComment: "Reliable and dependable performance.",
+    managerComment: "Strong delivery and ownership.",
+  },
+  {
+    objective: "Operational Efficiency",
+    kpis: ["Reduce processing time", "Improve cross-team collaboration"],
+    employeeRating: 3,
+    employeeComment: "Need more consistency in execution.",
+    managerRating: 3,
+    managerComment: "Good progress but still some gaps.",
   },
 ];
 
-export const goals: Goal[] = [
+export const reflectionQuestions = [
   {
     id: 1,
-    title: "Implement New Onboarding Process",
-    target: "End of Q2",
-    status: "Completed",
+    title: "1. What were your biggest achievements this quarter?",
+    description:
+      "Describe your key accomplishments and their impact on the team or organisation….",
+    answer: "",
   },
   {
     id: 2,
-    title: "Reduce Staff Turnover by 10%",
-    target: "End of Q2",
-    status: "In Progress",
+    title: "2. What challenges did you face and how did you overcome them?",
+    description:
+      "Describe specific obstacles and the steps you took to resolve them…",
+    answer: "",
+  },
+  {
+    id: 3,
+    title: "3. What support or resources do you need from your manager?",
+    description:
+      "Be specific about what would help you perform better in the next period…",
+    answer: "",
+  },
+  {
+    id: 4,
+    title: "4. Where do you want to grow professionally next quarter?",
+    description:
+      "Describe your development goals, skills to build, or experiences to gain…",
+    answer: "",
   },
 ];
 
-export const pastAppraisals: PastAppraisal[] = [
+export const signatories: Signatory[] = [
   {
-    cycle: "Q1 2026 Review",
-    period: "Jan – Mar 2026",
-    finalScore: 83,
-    rating: "Meets Expectations",
-    dateCompleted: "15 Apr 2026",
+    name: "Amina Hassan",
+    role: "Employee",
+    signed: false,
   },
   {
-    cycle: "Q4 2025 Review",
-    period: "Oct – Dec 2025",
-    finalScore: 87,
-    rating: "Exceeds Expectations",
-    dateCompleted: "20 Jan 2026",
+    name: "Michael James",
+    role: "Manager",
+    signed: false,
   },
-];
-import { Section } from "@/types/employee/appraisal";
-
-export const appraisalSections: Section[] = [
   {
-    id: 1,
-    title: "SECTION A",
-    subtitle: "OBJECTIVE GOALS",
-    color: "blue",
-    weight: 60,
-    objectives: [
-      {
-        id: 1,
-        title: "Revenue & Business Growth",
-        description: "Increase monthly revenue by 15%",
-        weight: 20,
-        target: 100,
-        achievement: "",
-        managerScore: 0,
-        hrScore: 0,
-        comment: "",
-      },
-      {
-        id: 2,
-        title: "Operational Excellence",
-        description: "Improve operational efficiency",
-        weight: 20,
-        target: 100,
-        achievement: "",
-        managerScore: 0,
-        hrScore: 0,
-        comment: "",
-      },
-      {
-        id: 3,
-        title: "Employee Experience",
-        description: "Improve employee satisfaction",
-        weight: 20,
-        target: 100,
-        achievement: "",
-        managerScore: 0,
-        hrScore: 0,
-        comment: "",
-      },
-    ],
-  },
-
-  {
-    id: 2,
-    title: "SECTION B",
-    subtitle: "BEHAVIOURAL OBJECTIVES",
-    color: "purple",
-    weight: 20,
-    objectives: [
-      {
-        id: 4,
-        title: "Leadership",
-        description: "Provide leadership",
-        weight: 10,
-        target: 100,
-        achievement: "",
-        managerScore: 0,
-        hrScore: 0,
-        comment: "",
-      },
-      {
-        id: 5,
-        title: "Collaboration",
-        description: "Work with cross-functional teams",
-        weight: 10,
-        target: 100,
-        achievement: "",
-        managerScore: 0,
-        hrScore: 0,
-        comment: "",
-      },
-    ],
+    name: "Human Resources",
+    role: "HR",
+    signed: false,
   },
 ];

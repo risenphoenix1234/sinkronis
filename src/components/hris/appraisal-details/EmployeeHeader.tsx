@@ -1,4 +1,3 @@
-// components/appraisal-details/EmployeeHeader.tsx
 
 export default function EmployeeHeader() {
   return (

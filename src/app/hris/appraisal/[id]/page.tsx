@@ -1,4 +1,3 @@
-// app/appraisal/[id]/page.tsx
 "use client";
 import EmployeeHeader from "@/components/hris/appraisal-details/EmployeeHeader";
 import GoalsSection from "@/components/hris/appraisal-details/GoalsSection";

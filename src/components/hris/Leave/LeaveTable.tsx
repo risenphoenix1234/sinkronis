@@ -1,7 +1,4 @@
-type Status =
-  | "Pending"
-  | "Approved"
-  | "Rejected";
+type Status = "Pending" | "Approved" | "Rejected";
 
 interface LeaveRequest {
   employee: string;
@@ -87,55 +84,28 @@ export default function LeaveTable() {
   return (
     <>
       <div className="overflow-x-auto">
-
         <table className="w-full">
-
           <thead className="text-xs text-gray-400 border-b">
-
             <tr className="h-12">
-
               <th className="text-left">Employee</th>
 
-              <th className="text-left">
-                Department
-              </th>
+              <th className="text-left">Department</th>
 
-              <th className="text-left">
-                Leave Type
-              </th>
+              <th className="text-left">Leave Type</th>
 
-              <th className="text-left">
-                From
-              </th>
+              <th className="text-left">From</th>
 
-              <th className="text-left">
-                To
-              </th>
+              <th className="text-left">To</th>
 
-              <th className="text-left">
-                Days
-              </th>
+              <th className="text-left">Days</th>
 
-              <th className="text-left">
-                Status
-              </th>
-
-              <th className="text-left">
-                Actions
-              </th>
-
+              <th className="text-left">Status</th>
             </tr>
-
           </thead>
 
           <tbody>
-
             {requests.map((item) => (
-
-              <tr
-                key={item.employee}
-                className="border-b h-14 text-sm"
-              >
+              <tr key={item.employee} className="border-b h-14 text-sm">
                 <td>{item.employee}</td>
 
                 <td>{item.department}</td>
@@ -149,7 +119,6 @@ export default function LeaveTable() {
                 <td>{item.days}d</td>
 
                 <td>
-
                   <span
                     className={`
                     px-3
@@ -162,13 +131,10 @@ export default function LeaveTable() {
                   >
                     {item.status}
                   </span>
-
                 </td>
 
                 <td>
-
                   <div className="flex gap-2">
-
                     <button
                       className="
                       bg-blue-500
@@ -194,34 +160,21 @@ export default function LeaveTable() {
                     >
                       Reject
                     </button>
-
                   </div>
-
                 </td>
-
               </tr>
-
             ))}
-
           </tbody>
-
         </table>
-
       </div>
 
       {/* Footer */}
 
       <div className="flex items-center justify-between mt-6">
-
-        <p className="text-xs text-gray-400">
-          Showing 1-6 of 6
-        </p>
+        <p className="text-xs text-gray-400">Showing 1-6 of 6</p>
 
         <div className="flex gap-2">
-
-          <button className="w-8 h-8 border rounded">
-            ‹
-          </button>
+          <button className="w-8 h-8 border rounded">‹</button>
 
           <button
             className="
@@ -235,14 +188,9 @@ export default function LeaveTable() {
             1
           </button>
 
-          <button className="w-8 h-8 border rounded">
-            ›
-          </button>
-
+          <button className="w-8 h-8 border rounded">›</button>
         </div>
-
       </div>
-
     </>
   );
 }

@@ -4,9 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FiEdit2 } from "react-icons/fi";
 import { staticEmployees } from "@/data/hris/employees";
-import { Employee, EmployeeStatus } from "@/types/hris/employee";
+import { EmployeeStatus } from "@/types/hris/employee";
 import InviteEmployeeModal from "@/components/modals/Hris/InviteEmployeeModal";
 import FilterEmployeeModal from "@/components/modals/Hris/FilterEmployeeModal";
+import { Search } from "lucide-react";
 
 const statusStyles: Record<EmployeeStatus, string> = {
   Confirmed: "bg-emerald-50 text-emerald-700",
@@ -43,8 +44,25 @@ export default function EmployeesPage() {
           + New Employee
         </button>
       </div>
+      {/* { search + filter} */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 border-b border-slate-300 pb-2">
+          <Search className="text-slate-400" size={18} />
+          <input
+            type="text"
+            placeholder="Search Employee"
+            className="w-full bg-transparent text-sm text-slate-700 outline-none"
+          />
+        </div>
+        <button
+          onClick={() => setFilterOpen(true)}
+          className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+        >
+          ⚙ Filters
+        </button>
+      </div>
 
-      {/* Tabs + search + filter */}
+      {/* Tabs */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1">
           {tabs.map((tab) => (
@@ -61,22 +79,6 @@ export default function EmployeesPage() {
             </button>
           ))}
         </div>
-
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search Employee"
-              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 outline-none placeholder:text-slate-400 w-56"
-            />
-          </div>
-          <button
-            onClick={() => setFilterOpen(true)}
-            className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
-          >
-            ⚙ Filters
-          </button>
-        </div>
       </div>
 
       {/* Table */}
@@ -90,8 +92,8 @@ export default function EmployeesPage() {
               <th className="px-6 py-3 font-medium">Department</th>
               <th className="px-6 py-3 font-medium">Status</th>
               <th className="px-6 py-3 font-medium">Contact</th>
-              <th className="px-6 py-3 font-medium">Date Added</th>
-              <th className="px-6 py-3 font-medium text-right">Actions</th>
+              <th className="px-6 py-3 font-medium">Joined</th>
+              <th className="px-6 py-3 font-medium text-right"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
