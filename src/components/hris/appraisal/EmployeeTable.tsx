@@ -1,5 +1,3 @@
-
-
 import { useRouter } from "next/navigation";
 
 const employees = [
@@ -19,7 +17,7 @@ const employees = [
     status: "Pending HR Approval",
     score: "63%",
   },
-   {
+  {
     name: "Amara Nwosu",
     role: "HR Manager",
     department: "Human Resources",
@@ -38,7 +36,7 @@ const employees = [
 ];
 
 export default function EmployeeTable() {
-  const router = useRouter()
+  const router = useRouter();
   return (
     <div className="mt-6 overflow-hidden rounded-lg border bg-white">
       <div className="border-b px-5 py-4">

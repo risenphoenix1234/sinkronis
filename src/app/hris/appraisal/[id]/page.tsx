@@ -1,19 +1,11 @@
 "use client";
-import EmployeeHeader from "@/components/hris/appraisal-details/EmployeeHeader";
-import GoalsSection from "@/components/hris/appraisal-details/GoalsSection";
-import ReviewTimeline from "@/components/hris/appraisal-details/ReviewTimeline";
 
-export default function AppraisalDetailsPage() {
+import ReviewPage from "@/components/hris/appraisal-details/ReviewPage";
+
+export default function Page() {
   return (
-    <div className="min-h-screen bg-[#f7f8fa] p-6">
-      <EmployeeHeader />
-
-      <div className="mt-4">
-        <ReviewTimeline />
-      </div>
-      <div className="mt-6">
-        <GoalsSection />
-      </div>
-    </div>
+    <main className="min-h-screen bg-[#F8FAFC] py-6">
+      <ReviewPage />
+    </main>
   );
 }
