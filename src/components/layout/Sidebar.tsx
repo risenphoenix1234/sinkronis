@@ -1,16 +1,69 @@
 // src/components/layout/Sidebar.tsx
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { FiChevronDown, FiChevronRight } from "react-icons/fi";
+import {
+  FiBarChart2,
+  FiBriefcase,
+  FiCalendar,
+  FiChevronDown,
+  FiChevronRight,
+  FiCreditCard,
+  FiDollarSign,
+  FiFileText,
+  FiGrid,
+  FiHelpCircle,
+  FiPackage,
+  FiPieChart,
+  FiSettings,
+  FiTag,
+  FiUsers,
+   
+} from "react-icons/fi";
+
+const sidebarIcons = {
+  // Platform Admin
+  dashboard: FiGrid,
+  tenants: FiBriefcase,
+  "tenant-detail": FiBriefcase,
+  pricing: FiTag,
+  billing: FiCreditCard,
+  users: FiUsers,
+  modules: FiGrid,
+  analytics: FiBarChart2,
+  support: FiHelpCircle,
+  settings: FiSettings,
+
+  // HRIS
+  attendance: FiCalendar,
+  leave: FiCalendar,
+  appraisal: FiBarChart2,
+  conduct: FiUsers,
+
+  // Accounting
+  customer: FiUsers,
+  items: FiPackage,
+  projects: FiBriefcase,
+  invoices: FiFileText,
+  agents: FiUsers,
+  payment: FiCreditCard,
+  expenses: FiDollarSign,
+  reminders: FiCalendar,
+  reports: FiPieChart,
+  tax: FiFileText,
+  wallet: FiDollarSign,
+};
 
 export type SidebarItem = {
   label: string;
   href?: string;
-  children?: { label: string; href: string }[];
+  icon?: keyof typeof sidebarIcons;
+  children?: {
+    label: string;
+    href: string;
+  }[];
 };
 
 interface SidebarProps {
@@ -25,15 +78,22 @@ function SidebarChildGroup({
   subItems: { label: string; href: string }[];
   pathname: string;
 }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const itemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
-  const [indicator, setIndicator] = useState<{ top: number; height: number } | null>(
-    null
-  );
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const itemRefs = useRef<
+    Record<string, HTMLAnchorElement | null>
+  >({});
+
+  const [indicator, setIndicator] = useState<{
+    top: number;
+    height: number;
+  } | null>(null);
 
   const activeHref =
     subItems.find(
-      (c) => pathname === c.href || pathname.startsWith(c.href)
+      (c) =>
+        pathname === c.href ||
+        pathname.startsWith(`${c.href}/`)
     )?.href ?? null;
 
   useEffect(() => {
@@ -41,11 +101,14 @@ function SidebarChildGroup({
       setIndicator(null);
       return;
     }
+
     const el = itemRefs.current[activeHref];
     const container = containerRef.current;
+
     if (el && container) {
       const elRect = el.getBoundingClientRect();
       const containerRect = container.getBoundingClientRect();
+
       setIndicator({
         top: elRect.top - containerRect.top,
         height: elRect.height,
@@ -54,22 +117,30 @@ function SidebarChildGroup({
   }, [activeHref, subItems]);
 
   return (
-    <div ref={containerRef} className="relative ml-3 mt-0.5 pl-3">
-      {/* static track */}
+    <div
+      ref={containerRef}
+      className="relative ml-5 border-l border-slate-200 pl-2"
+    >
+      {/* Static track */}
       <div className="absolute left-0 top-0 h-full w-px bg-slate-200" />
 
-      {/* animated sliding indicator */}
+      {/* Animated sliding indicator */}
       {indicator && (
         <div
-          className="absolute left-0 w-0.5 rounded-full bg-[#2183C6] transition-all duration-300 ease-out"
-          style={{ top: indicator.top, height: indicator.height }}
+          className="absolute left-[-1px] w-0.5 rounded-full bg-[#2183C6] transition-all duration-300 ease-out"
+          style={{
+            top: indicator.top,
+            height: indicator.height,
+          }}
         />
       )}
 
       <div className="space-y-0.5">
         {subItems.map((child) => {
           const childActive =
-            pathname === child.href || pathname.startsWith(child.href);
+            pathname === child.href ||
+            pathname.startsWith(`${child.href}/`);
+
           return (
             <Link
               key={child.href}
@@ -92,63 +163,88 @@ function SidebarChildGroup({
   );
 }
 
-export default function Sidebar({ title, items }: SidebarProps) {
+export default function Sidebar({
+  title,
+  items,
+}: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+  const [openGroups, setOpenGroups] = useState<
+    Record<string, boolean>
+  >(() => {
     const initial: Record<string, boolean> = {};
+
     items.forEach((item) => {
       if (
-        (item.href && pathname.startsWith(item.href)) ||
-        item.children?.some((c) => pathname.startsWith(c.href))
+        (item.href &&
+          (pathname === item.href ||
+            pathname.startsWith(`${item.href}/`))) ||
+        item.children?.some(
+          (c) =>
+            pathname === c.href ||
+            pathname.startsWith(`${c.href}/`)
+        )
       ) {
         initial[item.label] = true;
       }
     });
+
     return initial;
   });
 
   const toggleGroup = (label: string) => {
-    setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
+    setOpenGroups((prev) => ({
+      ...prev,
+      [label]: !prev[label],
+    }));
   };
 
   return (
-    <aside className="sticky top-0 flex h-screen w-56 shrink-0 flex-col border-r border-slate-200 bg-white">
-      {/* Logo */}
-      <div className="flex h-14 shrink-0 items-center border-b border-slate-200 px-4">
-        <Link href="/landingPage" className="flex items-center">
-          <Image
-            src="/logo.png"
-            alt="Sinkronis"
-            width={120}
-            height={32}
-            className="h-8 w-auto object-contain"
-          />
-        </Link>
-      </div>
-
+    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-slate-200 bg-white">
       {/* Module title */}
       <div className="flex h-10 shrink-0 items-center border-b border-slate-100 px-4 text-xs font-medium uppercase tracking-wide text-slate-400">
         {title}
       </div>
 
-      {/* Nav items — scrolls internally if it overflows, sidebar itself stays full height */}
+      {/* Navigation */}
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-3 text-sm">
         {items.map((item) => {
-          // Group with children
-          if (item.children && item.children.length > 0) {
-            const isOpen = openGroups[item.label] ?? false;
+          /*
+           * GROUP WITH CHILDREN
+           */
+          if (
+            item.children &&
+            item.children.length > 0
+          ) {
+            const isOpen =
+              openGroups[item.label] ?? false;
+
             const isGroupActive =
-              (item.href ? pathname === item.href : false) ||
-              item.children.some((c) => pathname.startsWith(c.href));
+              (item.href
+                ? pathname === item.href ||
+                  pathname.startsWith(`${item.href}/`)
+                : false) ||
+              item.children.some(
+                (c) =>
+                  pathname === c.href ||
+                  pathname.startsWith(`${c.href}/`)
+              );
+
+            const Icon = item.icon
+              ? sidebarIcons[item.icon]
+              : null;
 
             return (
               <div key={item.label}>
                 <button
+                  type="button"
                   onClick={() => {
                     toggleGroup(item.label);
-                    if (item.href) router.push(item.href);
+
+                    if (item.href) {
+                      router.push(item.href);
+                    }
                   }}
                   className={`flex w-full items-center justify-between rounded px-3 py-2 transition-colors ${
                     isGroupActive
@@ -156,7 +252,17 @@ export default function Sidebar({ title, items }: SidebarProps) {
                       : "text-slate-700 hover:bg-slate-100"
                   }`}
                 >
-                  <span>{item.label}</span>
+                  <span className="flex items-center gap-3">
+                    {Icon && (
+                      <Icon
+                        size={17}
+                        strokeWidth={1.8}
+                      />
+                    )}
+
+                    <span>{item.label}</span>
+                  </span>
+
                   {isOpen ? (
                     <FiChevronDown size={14} />
                   ) : (
@@ -174,22 +280,36 @@ export default function Sidebar({ title, items }: SidebarProps) {
             );
           }
 
-          // Regular item
+          /*
+           * REGULAR ITEM
+           */
           const isActive = item.href
-            ? pathname === item.href || pathname.startsWith(item.href)
+            ? pathname === item.href ||
+              pathname.startsWith(`${item.href}/`)
             : false;
+
+          const Icon = item.icon
+            ? sidebarIcons[item.icon]
+            : null;
 
           return (
             <Link
               key={item.label}
               href={item.href ?? "#"}
-              className={`block rounded px-3 py-2 transition-colors ${
+              className={`flex items-center gap-3 rounded px-3 py-2 transition-colors ${
                 isActive
                   ? "bg-[#2183C6] text-white"
                   : "text-slate-700 hover:bg-slate-100"
               }`}
             >
-              {item.label}
+              {Icon && (
+                <Icon
+                  size={17}
+                  strokeWidth={1.8}
+                />
+              )}
+
+              <span>{item.label}</span>
             </Link>
           );
         })}

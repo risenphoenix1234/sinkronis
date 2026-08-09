@@ -3,20 +3,51 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import ModuleRail from "@/components/ModuleRail";
 
 const sidebarItems = [
-  { label: "Overview", href: "/hris/overview" },
+  {
+    label: "Overview",
+    href: "/hris/overview",
+    icon: "dashboard",
+  },
   {
     label: "Employee",
-    href: "/hris/employees", // ← clicking the group label goes to list
+    href: "/hris/employees",
+    icon: "users",
     children: [
-      { label: "Add Employee", href: "/hris/employees/add" },
-      { label: "Invite Employee", href: "/hris/invite-employee" },
+      {
+        label: "Add Employee",
+        href: "/hris/employees/add",
+      },
+      {
+        label: "Invite Employee",
+        href: "/hris/invite-employee",
+      },
     ],
   },
-  { label: "Attendance", href: "/hris/attendance" },
-  { label: "Leave Tracking", href: "/hris/leave-tracking" },
-  { label: "Appraisal", href: "/hris/appraisal" },
-  { label: "Conduct", href: "/hris/conduct" },
-  { label: "Settings", href: "/hris/settings" },
+  {
+    label: "Attendance",
+    href: "/hris/attendance",
+    icon: "attendance",
+  },
+  {
+    label: "Leave Tracking",
+    href: "/hris/leave-tracking",
+    icon: "leave",
+  },
+  {
+    label: "Appraisal",
+    href: "/hris/appraisal",
+    icon: "appraisal",
+  },
+  {
+    label: "Conduct",
+    href: "/hris/conduct",
+    icon: "conduct",
+  },
+  {
+    label: "Settings",
+    href: "/hris/settings",
+    icon: "settings",
+  },
 ];
 
 export default function HRISLayout({
@@ -27,6 +58,7 @@ export default function HRISLayout({
   return (
     <div className="flex h-screen overflow-hidden">
       <ModuleRail />
+
       <div className="min-w-0 flex-1 overflow-x-auto">
         <DashboardLayout
           navbarTitle="HRIS"

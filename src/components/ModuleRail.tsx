@@ -4,15 +4,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FiSettings, FiUsers, FiDollarSign, FiGrid } from "react-icons/fi";
+import { FiBriefcase, FiUsers, FiDollarSign, FiCreditCard } from "react-icons/fi";
 
-type ModuleKey = "tenant-admin" | "accounting" | "hris" | "platform-admin";
+type ModuleKey = "hris" | "accounting" | "payroll" | "tenant-admin";
 
 const modules: { key: ModuleKey; href: string; icon: React.ReactNode; label: string }[] = [
-  { key: "tenant-admin", href: "/tenant-admin/overview", icon: <FiSettings size={18} />, label: "Tenant Admin" },
-  { key: "accounting", href: "/accounting/dashboard", icon: <FiDollarSign size={18} />, label: "Accounting" },
   { key: "hris", href: "/hris/overview", icon: <FiUsers size={18} />, label: "HRIS" },
-  { key: "platform-admin", href: "/platform-admin/overview", icon: <FiGrid size={18} />, label: "Platform Admin" },
+  { key: "accounting", href: "/accounting/dashboard", icon: <FiDollarSign size={18} />, label: "Accounting" },
+  { key: "payroll", href: "/payroll/overview", icon: <FiCreditCard size={18} />, label: "Payroll" },
+  { key: "tenant-admin", href: "/tenant-admin/overview", icon: <FiBriefcase size={18} />, label: "Tenant Admin" },
 ];
 
 function getActiveModule(pathname: string): ModuleKey | null {
@@ -28,12 +28,24 @@ export default function ModuleRail() {
 
   return (
     <nav className="sticky top-0 flex h-screen w-28 shrink-0 flex-col items-center bg-sky-600">
-  
+      {/* Logo */}
+      <Link
+        href="/"
+        className="flex h-20 w-full shrink-0 items-center justify-center"
+      >
+        <Image
+          src="/logo.png"
+          alt="Sinkronis"
+          width={80}
+          height={80}
+          priority
+        />
+      </Link>
 
-      {/* Spacer — matches Sidebar's h-10 module-title row so icons align with the first nav link */}
-      <div className="h-10 w-full shrink-0" />
+      {/* Divider */}
+      <div className="h-px w-12 shrink-0 bg-white/20" />
 
-      {/* Icons — pt-3 lines the first icon up with the first sidebar nav row */}
+      {/* Icons */}
       <div className="flex flex-1 flex-col items-center gap-2 pt-3">
         {modules.map((m) => {
           const isActive = active === m.key;

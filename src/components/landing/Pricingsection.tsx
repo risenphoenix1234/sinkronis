@@ -68,21 +68,49 @@ const plans: Plan[] = [
   },
 ];
 
+const BASE_PLAN_NAMES = ["HRIS", "Payroll", "Accounting"];
+
+// "₦150,000" -> 150000
+const parsePrice = (price: string) => Number(price.replace(/[^\d]/g, ""));
+
+const formatPrice = (amount: number) => `₦${amount.toLocaleString("en-NG")}`;
+
 export default function Pricing() {
   const router = useRouter();
   const [selected, setSelected] = useState<string[]>([]);
 
   const togglePlan = (name: string) => {
-    setSelected((prev) =>
-      prev.includes(name) ? prev.filter((p) => p !== name) : [...prev, name]
-    );
+    setSelected((prev) => {
+      // Toggling the bundle itself: clear everything else, it supersedes them.
+      if (name === "All-in-One") {
+        return prev.includes(name) ? [] : ["All-in-One"];
+      }
+
+      const next = prev.includes(name)
+        ? prev.filter((p) => p !== name)
+        : [...prev.filter((p) => p !== "All-in-One"), name];
+
+      // Selecting all three base plans individually should collapse into
+      // the bundle rather than summing three separate prices.
+      const hasAllBase = BASE_PLAN_NAMES.every((p) => next.includes(p));
+      if (hasAllBase) {
+        return ["All-in-One"];
+      }
+
+      return next;
+    });
   };
 
- const handleProceed = () => {
-  if (selected.length === 0) return;
-  const params = encodeURIComponent(selected.join(","));
-  router.push(`/register?plans=${params}`);
-};
+  const totalPrice = selected.reduce((sum, name) => {
+    const plan = plans.find((p) => p.name === name);
+    return sum + (plan ? parsePrice(plan.price) : 0);
+  }, 0);
+
+  const handleProceed = () => {
+    if (selected.length === 0) return;
+    const params = encodeURIComponent(selected.join(","));
+    router.push(`/register?plans=${params}`);
+  };
 
   return (
     <section id="pricing" className="bg-white px-6 py-24">
@@ -102,6 +130,10 @@ export default function Pricing() {
         <div className="mt-16 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           {plans.map((plan) => {
             const isSelected = selected.includes(plan.name);
+            // Grey out base plans once the bundle has taken over.
+            const isSuperseded =
+              selected.includes("All-in-One") && plan.name !== "All-in-One";
+
             return (
               <div
                 key={plan.name}
@@ -111,7 +143,9 @@ export default function Pricing() {
                     : isSelected
                     ? "border-2 border-[#2388D0] p-8"
                     : "border border-[#E5E9F0] p-8"
-                } ${isSelected ? "ring-2 ring-[#2388D0]/20" : ""}`}
+                } ${isSelected ? "ring-2 ring-[#2388D0]/20" : ""} ${
+                  isSuperseded ? "opacity-50" : ""
+                }`}
               >
                 {/* Best value badge */}
                 {plan.highlight && (
@@ -184,7 +218,8 @@ export default function Pricing() {
               {selected.length} plan{selected.length > 1 ? "s" : ""} selected:{" "}
               <span className="font-semibold text-[#1F2937]">
                 {selected.join(", ")}
-              </span>
+              </span>{" "}
+              — <span className="font-semibold text-[#1F2937]">{formatPrice(totalPrice)}/month</span>
             </p>
           )}
           <button
