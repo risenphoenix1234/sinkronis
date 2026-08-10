@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import StatusBadge from "../appraisal/StatusBadge";
 
+
 export default function HRApproval() {
   return (
     <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
