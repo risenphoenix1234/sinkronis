@@ -31,6 +31,7 @@ export const pastAppraisals: PastAppraisal[] = [
     dateCompleted: "20 Jan 2026",
   },
 ];
+
 import { Section } from "@/types/employee/appraisal";
 
 export const appraisalSections: Section[] = [
@@ -107,5 +108,39 @@ export const appraisalSections: Section[] = [
         comment: "",
       },
     ],
+  },
+];
+
+export interface AppraisalItem {
+  objective: string;
+  kpis: string[];
+  employeeRating: number;
+  employeeComment: string;
+  managerRating: number;
+  managerComment: string;
+}
+
+export const appraisalData: AppraisalItem[] = [
+  {
+    objective: "Revenue & Business Growth",
+    kpis: [
+      "Increase monthly revenue by 15%",
+      "Close at least 5 new enterprise deals",
+    ],
+    employeeRating: 4,
+    employeeComment: "Hit the revenue target two months early.",
+    managerRating: 4,
+    managerComment: "Strong quarter, exceeded expectations on new deals.",
+  },
+  {
+    objective: "Operational Excellence",
+    kpis: [
+      "Reduce process turnaround time by 20%",
+      "Document all SOPs for the team",
+    ],
+    employeeRating: 3,
+    employeeComment: "Completed most SOPs, still refining turnaround time.",
+    managerRating: 3,
+    managerComment: "Good progress, needs to finish remaining documentation.",
   },
 ];

@@ -1,5 +1,5 @@
 import { stats } from "@/data/employee/dashboard";
-import StatsCard from "./statsCard";
+import StatsCard from "./StatsCard";
 
 export default function StatsGrid() {
   return (

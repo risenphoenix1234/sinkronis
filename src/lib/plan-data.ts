@@ -149,8 +149,9 @@ export type SavedCard = {
 export const savedCard: SavedCard = {
   brand: "Visa",
   last4: "4242",
-  cardholderName: "Chukwuemeka Obi",
-  expiry: "08/28",
+  cardholderName: "...",
+  expiry: "...",
+  isDefault: true, // add this line
 };
 
 export type BillingAddress = {

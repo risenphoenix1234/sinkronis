@@ -1,6 +1,7 @@
 // app/reports/results/page.tsx
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FiArrowLeft, FiDownload, FiX } from "react-icons/fi";
@@ -16,7 +17,7 @@ const filterLabels: Record<string, string> = {
   to: "To",
 };
 
-export default function ReportsResultsPage() {
+function ReportsResultsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -160,5 +161,12 @@ export default function ReportsResultsPage() {
         </div>
       </div>
     </section>
+  );
+}
+export default function ReportsResultsPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-slate-500">Loading results...</div>}>
+      <ReportsResultsContent />
+    </Suspense>
   );
 }

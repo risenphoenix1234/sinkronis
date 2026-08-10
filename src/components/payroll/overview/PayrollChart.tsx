@@ -60,7 +60,7 @@ export default function PayrollChart() {
 
             <Tooltip
               cursor={{ fill: "#F2F4F7" }}
-              formatter={(value: number) => `₦${value.toLocaleString()}`}
+              formatter={(value) => `₦${Number(value).toLocaleString()}`}
             />
 
             <Bar dataKey="amount" radius={[8, 8, 0, 0]}>
