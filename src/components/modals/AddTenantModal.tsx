@@ -8,12 +8,21 @@ import { Plan, ModuleName } from "@/lib/pa-tenants-data";
 const ALL_PLANS: Plan[] = ["Starter", "Growth", "Enterprise", "Trial"];
 const ALL_MODULES: ModuleName[] = ["HRIS", "Accounting", "Payroll"];
 
+export interface NewTenantInput {
+  companyName: string;
+  adminEmail: string;
+  plan: Plan;
+  modules: ModuleName[];
+  country: string;
+}
+
 interface AddTenantModalProps {
   open: boolean;
   onClose: () => void;
+  onAdd: (input: NewTenantInput) => void;
 }
 
-export default function AddTenantModal({ open, onClose }: AddTenantModalProps) {
+export default function AddTenantModal({ open, onClose, onAdd }: AddTenantModalProps) {
   const [companyName, setCompanyName] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
   const [plan, setPlan] = useState<Plan | "">("");
@@ -26,6 +35,20 @@ export default function AddTenantModal({ open, onClose }: AddTenantModalProps) {
     setModules((prev) =>
       prev.includes(mod) ? prev.filter((m) => m !== mod) : [...prev, mod]
     );
+  };
+
+  const handleSubmit = () => {
+    if (!companyName || !adminEmail || !plan) return; // basic guard for required fields
+
+    onAdd({
+      companyName,
+      adminEmail,
+      plan,
+      modules,
+      country,
+    });
+
+    onClose();
   };
 
   return (
@@ -124,7 +147,7 @@ export default function AddTenantModal({ open, onClose }: AddTenantModalProps) {
 
         <div className="mt-6 flex gap-3">
           <button
-            onClick={onClose}
+            onClick={handleSubmit}
             className="flex-1 rounded-md bg-brand-600 py-2 text-sm font-medium text-white hover:bg-brand-700"
           >
             Add Tenant

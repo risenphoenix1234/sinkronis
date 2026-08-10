@@ -116,7 +116,7 @@ export default function AnalyticsPage() {
                 tick={{ fontSize: 11, fill: "#94a3b8" }}
                 tickFormatter={(v) => `₦${(v / 1_000_000).toFixed(1)}M`}
               />
-              <Tooltip formatter={(v: number) => naira(v)} contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: "#e2e8f0" }} />
+              <Tooltip formatter={(v) => naira(Number(v))} contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: "#e2e8f0" }} />
               <Area type="monotone" dataKey="mrr" stroke="#2563eb" strokeWidth={2} fill="url(#mrrFill)" />
             </AreaChart>
           </ResponsiveContainer>

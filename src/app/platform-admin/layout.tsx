@@ -1,7 +1,9 @@
+// src/app/platform-admin/layout.tsx
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import ModuleRail from "@/components/ModuleRail";
+import { SidebarItem } from "@/components/layout/Sidebar";
 
-const sidebarItems = [
+const sidebarItems: SidebarItem[] = [
   {
     label: "Dashboard",
     href: "/platform-admin/overview",
@@ -12,7 +14,6 @@ const sidebarItems = [
     href: "/platform-admin/tenants",
     icon: "tenants",
   },
-  
   {
     label: "Pricing & Plans",
     href: "/platform-admin/plans",

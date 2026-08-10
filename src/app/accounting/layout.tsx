@@ -1,8 +1,9 @@
 // src/app/accounting/layout.tsx
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import ModuleRail from "@/components/ModuleRail";
+import { SidebarItem } from "@/components/layout/Sidebar";
 
-const sidebarItems = [
+const sidebarItems: SidebarItem[] = [
   {
     label: "Dashboard",
     href: "/accounting/dashboard",

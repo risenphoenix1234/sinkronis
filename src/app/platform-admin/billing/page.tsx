@@ -132,7 +132,7 @@ export default function BillingRevenuePage() {
                 tick={{ fontSize: 11, fill: "#94a3b8" }}
                 tickFormatter={(v) => `₦${(v / 1_000_000).toFixed(1)}M`}
               />
-              <Tooltip formatter={(v: number) => naira(v)} contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: "#e2e8f0" }} />
+              <Tooltip formatter={(v) => naira(Number(v))} contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: "#e2e8f0" }} />
               <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: 12, color: "#64748b" }} />
               <Bar dataKey="Starter" stackId="rev" fill="#c4b5fd" />
               <Bar dataKey="Growth" stackId="rev" fill="#60a5fa" />
