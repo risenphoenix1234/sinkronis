@@ -78,7 +78,9 @@ export default function CompanyProfilePage() {
   const [info, setInfo] = useState<CompanyInfo>(initialInfo);
   const [saving, setSaving] = useState(false);
 
-  const update = (key: keyof CompanyInfo, value: string) => {
+  // companyEmail intentionally excluded — it's the account's registration
+  // email and shouldn't be editable from this form.
+  const update = (key: Exclude<keyof CompanyInfo, "companyEmail">, value: string) => {
     setInfo((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -106,10 +108,14 @@ export default function CompanyProfilePage() {
         <Field label="Company Email">
           <input
             type="email"
-            className={inputClass}
+            className={`${inputClass} cursor-not-allowed bg-slate-50 text-slate-500`}
             value={info.companyEmail}
-            onChange={(e) => update("companyEmail", e.target.value)}
+            readOnly
+            disabled
           />
+          <p className="mt-1 text-xs text-slate-400">
+            This is the email used to register your account and can&apos;t be changed here.
+          </p>
         </Field>
 
         <Field label="Phone Number">

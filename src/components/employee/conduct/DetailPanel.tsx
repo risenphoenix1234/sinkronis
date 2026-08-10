@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+ 
+>>>>>>> cb11d695c44512d67b7426b23eb9686a20c6d5ea
 import {
   AnyEmployee,
   QueryEmployee,
@@ -6,6 +10,7 @@ import {
 } from "@/types/employee/conduct";
 import { Plus, X } from "lucide-react";
 
+<<<<<<< HEAD
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
@@ -13,6 +18,13 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
         {label}
       </p>
       <p className="mt-1 text-sm text-gray-700">{value}</p>
+=======
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs text-gray-400">{label}</p>
+      <p className="text-sm text-gray-900">{value}</p>
+>>>>>>> cb11d695c44512d67b7426b23eb9686a20c6d5ea
     </div>
   );
 }

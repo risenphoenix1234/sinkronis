@@ -1,8 +1,8 @@
 // app/reports/results/page.tsx
 "use client";
 
-import Link from "next/link";
 import { Suspense } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FiArrowLeft, FiDownload, FiX } from "react-icons/fi";
 import { allInvoices, naira, statusStyles } from "@/lib/reports-data";
@@ -186,16 +186,9 @@ function ReportsResultsContent() {
     </section>
   );
 }
-
 export default function ReportsResultsPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="p-6 text-sm text-slate-500">
-          Loading report results...
-        </div>
-      }
-    >
+    <Suspense fallback={<div className="p-6 text-sm text-slate-500">Loading results...</div>}>
       <ReportsResultsContent />
     </Suspense>
   );
