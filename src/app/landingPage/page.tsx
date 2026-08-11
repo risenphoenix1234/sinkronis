@@ -5,8 +5,8 @@ import ProblemSection from "@/components/landing/ProblemSection";
 import FeaturesSection from "@/components/landing/FeaturesSection";
 import HowItWorksSection from "@/components/landing/HowItWorkSection";
 import TestimonialsSection from "@/components/landing/TestimonialSection";
-import PricingSection from "@/components/landing/Pricingsection";
 import Footer from "@/components/landing/Footer";
+import Pricing from "@/components/landing/PricingSection";
 
 export default function LandingPage() {
   return (
@@ -17,7 +17,7 @@ export default function LandingPage() {
       <FeaturesSection />
       <HowItWorksSection />
       <TestimonialsSection />
-      <PricingSection />
+      <Pricing />
       <Footer />
     </main>
   );
