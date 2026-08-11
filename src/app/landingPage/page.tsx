@@ -5,8 +5,8 @@ import ProblemSection from "@/components/landing/ProblemSection";
 import FeaturesSection from "@/components/landing/FeaturesSection";
 import HowItWorksSection from "@/components/landing/HowItWorkSection";
 import TestimonialsSection from "@/components/landing/TestimonialSection";
-import Footer from "@/components/landing/Footer";
 import Pricing from "@/components/landing/PricingSection";
+import Footer from "@/components/landing/Footer";
 
 export default function LandingPage() {
   return (
