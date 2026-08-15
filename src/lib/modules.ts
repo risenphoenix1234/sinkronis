@@ -87,7 +87,7 @@ export const MODULES: ModuleDef[] = [
   },
   {
     id: "payroll",
-    href: "/payroll/overview",
+    href: "/payroll/dashboard",
     name: "Payroll",
     subtitle: "Salary, PAYE & pension",
     description:

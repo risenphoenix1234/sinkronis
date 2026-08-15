@@ -28,8 +28,11 @@ export default function AddEditSuspensionModal({
       {/* Modal Layer */}
       <div className="fixed inset-0 z-40 bg-black/50" />
 
-      <SuspensionDrawer />
-      <UserProfileCard />
+      <SuspensionDrawer
+        open={true}
+        onClose={function (): void{}}
+      />
+      {/* <UserProfileCard /> */}
       <button
         onClick={onclose}
         className="h-11 rounded border border-[#E5E7EB] px-6 text-sm text-[#374151]"

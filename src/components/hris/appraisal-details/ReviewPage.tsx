@@ -12,12 +12,13 @@ import GrandTotal from "./GrandTotal";
 import ReflectionQuestions from "./ReflectionQuestions";
 import BehaviourTable from "./BehaviourTable";
 import ManagerReview from "./ManagerReview";
-import ManagerFeedbackSection from "./ManagerFeedbackSection";
-import ApprovalActions from "./ApprovalActions";
-import ReviewFooter from "./ReviewFooter";
 import HRApproval from "./HRApproval";
+import { useState } from "react";
+import HRApprovalAndAcknowledgment from "./HrApprovalAndAcknowledgement";
 
 export default function ReviewPage() {
+  const [isApproved, setIsApproved] = useState(false);
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-6">
       <div className="mx-auto space-y-6">
@@ -29,13 +30,10 @@ export default function ReviewPage() {
           <ArrowLeft size={18} />
           Back to Reviews
         </button>
-
         {/* Employee Card */}
         <EmployeeCard />
-
         {/* Progress Stepper */}
         <ProgressStepper />
-
         {/* Goals */}
         <div className="rounded-xl border border-slate-200 bg-white">
           <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
@@ -52,7 +50,6 @@ export default function ReviewPage() {
             <GoalCard />
           </div>
         </div>
-
         {/* Self Assessment */}
         <section className="rounded-xl border border-slate-200 bg-white">
           <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
@@ -73,21 +70,22 @@ export default function ReviewPage() {
             <ReflectionQuestions />
           </div>
         </section>
-
         {/* Manager Review */}
         <ManagerReview />
-
-        {/* Manager Feedback */}
-        <ManagerFeedbackSection />
-
-        {/* HRApproval */}
-        <HRApproval />
-
-        {/* Approval Actions */}
-        <ApprovalActions />
-
-        {/* {ReviewFooter} */}
-        <ReviewFooter />
+        
+        {/* HRApproval & HrApprovalAndAcknowledgement*/}
+        {!isApproved ? (
+          <HRApproval
+            onReturnForRevision={() => {
+              console.log("Returned for revision");
+            }}
+            onApprove={() => {
+              setIsApproved(true);
+            }}
+          />
+        ) : (
+          <HRApprovalAndAcknowledgment />
+        )}
       </div>
     </div>
   );

@@ -8,128 +8,178 @@ type AddQueryModalProps = {
   onClose: () => void;
 };
 
+type FormData = {
+  employeeId: string;
+  employeeName: string;
+  role: string;
+  department: string;
+  queryType: string;
+  status: string;
+  notes: string;
+};
+
+const initialFormData: FormData = {
+  employeeId: "00354AE",
+  employeeName: "",
+  role: "IT Manager",
+  department: "IT Department",
+  queryType: "Performance-Related",
+  status: "In Progress",
+  notes: "",
+};
+
+const inputClassName =
+  "h-11 w-full rounded-md border border-[#D9DEE7] bg-white px-3 text-sm text-[#344054] outline-none transition placeholder:text-[#98A2B3] focus:border-[#2388D0] focus:ring-1 focus:ring-[#2388D0]";
+
 export default function AddQueryModal({ open, onClose }: AddQueryModalProps) {
-  const [formData, setFormData] = useState({
-    employeeId: "00354AE",
-    employeeName: "",
-    role: "IT Manager",
-    department: "IT Department",
-    queryType: "Performance-Related",
-    status: "In Progress",
-    notes: "",
-  });
+  const [formData, setFormData] = useState<FormData>(initialFormData);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
+    const { name, value } = e.target;
+
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: value,
     }));
   };
 
-  if (!open) return null;
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    console.log("Query:", formData);
+
+    onClose();
+  };
+
+  if (!open) {
+    return null;
+  }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="h-[90vh] w-[900px] overflow-y-auto rounded-lg bg-[#f7f7f7] shadow-xl">
-        <div className="px-6 pt-6">
-          <h1 className="text-[40px] font-bold text-[#1f2937]">
-            Add New Query
-          </h1>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 sm:p-6">
+      {/* Modal */}
+      <div className="flex max-h-[90vh] w-full max-w-[900px] flex-col overflow-hidden rounded-lg bg-white shadow-2xl">
+        {/* Header / Content */}
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className="flex-1 overflow-y-auto px-6 py-7 sm:px-8 sm:py-8 lg:px-10">
+            <h1 className="text-2xl font-bold leading-tight text-[#1F2937] sm:text-3xl">
+              Add New Query
+            </h1>
 
-          <div className="mt-8 grid max-w-[820px] grid-cols-2 gap-x-6 gap-y-5">
-            <FormField label="Employee ID">
-              <input
-                name="employeeId"
-                value={formData.employeeId}
-                onChange={handleChange}
-                className="input"
-              />
-            </FormField>
+            {/* Form */}
+            <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+              {/* Employee ID */}
+              <FormField label="Employee ID">
+                <input
+                  type="text"
+                  name="employeeId"
+                  value={formData.employeeId}
+                  onChange={handleChange}
+                  className={inputClassName}
+                />
+              </FormField>
 
-            <FormField label="Employee Name">
-              <input
-                name="employeeName"
-                placeholder="Employee Name"
-                value={formData.employeeName}
-                onChange={handleChange}
-                className="input"
-              />
-            </FormField>
+              {/* Employee Name */}
+              <FormField label="Employee Name">
+                <input
+                  type="text"
+                  name="employeeName"
+                  value={formData.employeeName}
+                  onChange={handleChange}
+                  placeholder="Employee Name"
+                  className={inputClassName}
+                />
+              </FormField>
 
-            <FormField label="Role">
-              <input
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="input"
-              />
-            </FormField>
+              {/* Role */}
+              <FormField label="Role">
+                <input
+                  type="text"
+                  name="role"
+                  value={formData.role}
+                  onChange={handleChange}
+                  className={inputClassName}
+                />
+              </FormField>
 
-            <FormField label="Department">
-              <select
-                name="department"
-                value={formData.department}
-                onChange={handleChange}
-                className="input"
-              >
-                <option>IT Department</option>
-                <option>HR Department</option>
-                <option>Finance Department</option>
-              </select>
-            </FormField>
+              {/* Department */}
+              <FormField label="Department">
+                <select
+                  name="department"
+                  value={formData.department}
+                  onChange={handleChange}
+                  className={`${inputClassName} cursor-pointer appearance-auto`}
+                >
+                  <option value="IT Department">IT Department</option>
+                  <option value="HR Department">HR Department</option>
+                  <option value="Finance Department">Finance Department</option>
+                </select>
+              </FormField>
 
-            <FormField label="Query Type">
-              <select
-                name="queryType"
-                value={formData.queryType}
-                onChange={handleChange}
-                className="input"
-              >
-                <option>Performance-Related</option>
-                <option>Payroll</option>
-                <option>Leave Request</option>
-              </select>
-            </FormField>
+              {/* Query Type */}
+              <FormField label="Query Type">
+                <select
+                  name="queryType"
+                  value={formData.queryType}
+                  onChange={handleChange}
+                  className={`${inputClassName} cursor-pointer appearance-auto`}
+                >
+                  <option value="Performance-Related">
+                    Performance-Related
+                  </option>
+                  <option value="Payroll">Payroll</option>
+                  <option value="Leave Request">Leave Request</option>
+                </select>
+              </FormField>
 
-            <FormField label="Status">
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="input"
-              >
-                <option>In Progress</option>
-                <option>Open</option>
-                <option>Resolved</option>
-              </select>
-            </FormField>
+              {/* Status */}
+              <FormField label="Status">
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
+                  className={`${inputClassName} cursor-pointer appearance-auto`}
+                >
+                  <option value="In Progress">In Progress</option>
+                  <option value="Open">Open</option>
+                  <option value="Resolved">Resolved</option>
+                </select>
+              </FormField>
 
-            <FormField label="Notes">
-              <input
-                name="notes"
-                placeholder="Add Note"
-                value={formData.notes}
-                onChange={handleChange}
-                className="input"
-              />
-            </FormField>
+              {/* Notes */}
+              <FormField label="Notes">
+                <input
+                  type="text"
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleChange}
+                  placeholder="Add Note"
+                  className={inputClassName}
+                />
+              </FormField>
+            </div>
           </div>
-        </div>
 
-        <div className="flex justify-end gap-3 p-8">
-          <button
-            onClick={onClose}
-            className="h-10 rounded-md border border-gray-300 bg-white px-5 text-sm text-gray-700 hover:bg-gray-50"
-          >
-            Cancel
-          </button>
+          {/* Footer */}
+          <div className="flex shrink-0 items-center justify-end gap-3 border-t border-[#E5E9EF] bg-white px-6 py-4 sm:px-8 lg:px-10">
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-10 rounded-md border border-[#D9DEE7] bg-white px-5 text-sm font-medium text-[#344054] transition hover:bg-[#F9FAFB]"
+            >
+              Cancel
+            </button>
 
-          <button className="h-10 rounded-md bg-[#1683d8] px-5 text-sm text-white hover:bg-[#0f74c2]">
-            Save
-          </button>
-        </div>
+            <button
+              type="submit"
+              className="h-10 rounded-md bg-[#1683D8] px-6 text-sm font-medium text-white transition hover:bg-[#0F74C2]"
+            >
+              Save
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

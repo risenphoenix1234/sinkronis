@@ -1,9 +1,10 @@
 import { CheckCircle2, ClipboardCheck } from "lucide-react";
 
 import QuarterTabs from "./QuarterTabs";
-import ManagerBehaviourTable from "./ManagerBehaviourTable";
 import StatusBadge from "../appraisal/StatusBadge";
 import ManagerObjectivesTable from "./ManagerObjectiveTable";
+import ManagerBehaviourTable from "./ManagerBehaviourTable";
+import GrandTotalReflection from "./GrandTotalReflection";
 
 export default function ManagerReview() {
   return (
@@ -17,10 +18,6 @@ export default function ManagerReview() {
 
           <div>
             <h2 className="font-semibold text-slate-800">Manager Review</h2>
-
-            <p className="mt-1 text-xs text-slate-400">
-              Manager assessment and performance evaluation
-            </p>
           </div>
         </div>
 
@@ -49,12 +46,8 @@ export default function ManagerReview() {
         {/* Manager overall score */}
         <div className="flex items-center justify-between rounded-lg bg-[#232C39] px-6 py-5">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Manager Overall Score
-            </p>
-
-            <p className="mt-1 text-sm text-slate-300">
-              Q2 2026 Performance Review
+            <p className="text-xs font-semibold uppercase tracking-wide text-white">
+              GRAND TOTAL - Q2
             </p>
           </div>
 
@@ -64,6 +57,8 @@ export default function ManagerReview() {
             <StatusBadge text="Below Expectation" color="yellow" />
           </div>
         </div>
+
+        <GrandTotalReflection />
       </div>
     </section>
   );

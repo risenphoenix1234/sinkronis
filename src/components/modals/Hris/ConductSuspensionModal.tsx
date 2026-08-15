@@ -4,9 +4,10 @@ import { suspensions } from "@/data/hris/conduct";
 import { useState } from "react";
 import StatusBadge from "@/components/ui/StatusBadge";
 import AddEditSuspensionModal from "./AddEditSuspensionModal";
+import { Pencil } from "lucide-react";
 
 export default function ConductSuspensionModal() {
-  const [isSuspensionProfileOpen, setIsSuspensionProfileOpen] = useState(false);
+  const [selectedQuery, setSelectedQuery] = useState(false);
 
   return (
     <div className="flex min-h-screen flex-col bg-white space-y-6 p-6">
@@ -31,6 +32,8 @@ export default function ConductSuspensionModal() {
               <th className="py-4 font-medium">To</th>
 
               <th className="py-4 font-medium">Status</th>
+
+              <th className="py-4 font-medium"></th>
             </tr>
           </thead>
 
@@ -38,7 +41,6 @@ export default function ConductSuspensionModal() {
             {suspensions.map((employee, index) => (
               <tr
                 key={index}
-                onClick={(e) => setIsSuspensionProfileOpen(true)}
                 className="border-b border-[#F3F4F6] text-sm text-[#374151]"
               >
                 <td className="py-5">{employee.id}</td>
@@ -58,14 +60,23 @@ export default function ConductSuspensionModal() {
                 <td>
                   <StatusBadge status={employee.status} />
                 </td>
+
+                <td className="px-4 py-5">
+                  <button
+                    onClick={(e) => setSelectedQuery(true)}
+                    className="text-slate-500 hover:text-blue-600"
+                  >
+                    <Pencil size={15} />
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
-        {isSuspensionProfileOpen && (
+        {selectedQuery && (
           <AddEditSuspensionModal
-            open={isSuspensionProfileOpen}
-            onclose={() => setIsSuspensionProfileOpen(false)}
+            open={true}
+            onclose={() => setSelectedQuery(false)}
           />
         )}
       </div>

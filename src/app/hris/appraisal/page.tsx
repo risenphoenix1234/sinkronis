@@ -33,7 +33,7 @@ export default function AppraisalPage() {
               e.stopPropagation();
               setOpen(true);
             }}
-            className="rounded-md bg-blue-600 px-4 py-2 text-white"
+            className="rounded-md  bg-[#2388D0]  px-4 py-2 text-white"
           >
             New Cycle
           </button>

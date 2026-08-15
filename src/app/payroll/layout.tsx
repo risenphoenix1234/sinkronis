@@ -2,20 +2,23 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 
 const sidebarItems = [
-  { label: "Overview", href: "/payroll/overview" },
+  { label: "Dashboard", href: "/payroll/dashboard" },
   {
-    label: "Payees",
-    href: "/payroll/payees", // ← clicking the group label goes to list
-    children: [
-      { label: "Active Payee", href: "/payroll/payees/active-payee" },
-      { label: "Invite Payee", href: "/payroll/payees/invite-payee" },
-      { label: "Payee Group", href: "/payroll/payees/payee-group" },
-    ],
+    label: "Employees",
+    href: "/payroll/employees",
   },
-  { label: "Payroll", href: "/payroll/payroll" },
+
+  { label: "Payees", href: "/payroll/payees" },
+  { label: "Pay Runs", href: "/payroll/pay-runs" },
+
+  { label: "Payslips", href: "/payroll/payslips" },
+  { label: "Deductions", href: "/payroll/deductions" },
+  { label: "Wallets", href: "/payroll/wallets" },
+
+  { label: "Tax (PAXE)", href: "/payroll/tax" },
   { label: "Pension", href: "/payroll/pension" },
-  { label: "Tax", href: "/payroll/tax" },
-  { label: "Settings", href: "/payroll/settings" },
+  { label: "Reports", href: "/payroll/reports" },
+  { label: "Settings", href: "/payroll/setting" },
 ];
 
 export default function PayrollLayout({

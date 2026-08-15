@@ -1,139 +1,66 @@
 "use client";
 
-import {
-  CheckCircle2,
-  FileCheck2,
-  MessageSquareText,
-  UserRound,
-  CalendarDays,
-  AlertCircle,
-} from "lucide-react";
-import StatusBadge from "../appraisal/StatusBadge";
+import { Shield } from "lucide-react";
 
+type HRApprovalProps = {
+  onReturnForRevision?: () => void;
+  onApprove?: () => void;
+};
 
-export default function HRApproval() {
+export default function HRApproval({
+  onReturnForRevision,
+  onApprove,
+}: HRApprovalProps) {
   return (
-    <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+    <section className="w-full overflow-hidden rounded-md border border-[#A67C00] bg-white">
       {/* Header */}
-      <div className="flex items-center justify-between border-b px-6 py-5">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#EAF4FF]">
-            <FileCheck2 size={19} className="text-[#1677C8]" />
-          </div>
+      <div className="flex items-center justify-between border-b border-[#E5E7EB] bg-[#FFFCF3] px-5 py-4">
+        <div className="flex items-center gap-2">
+          <Shield size={16} strokeWidth={1.8} className="text-[#946B00]" />
 
-          <div>
-            <h2 className="font-semibold text-slate-800">HR Approval</h2>
-
-            <p className="mt-1 text-xs text-slate-400">
-              Review and approve the completed performance appraisal
-            </p>
-          </div>
+          <h2 className="text-[13px] font-semibold text-[#1F2937]">
+            HR Approval
+          </h2>
         </div>
 
-        <StatusBadge text="Pending Approval" color="yellow" />
+        <span className="rounded-full bg-[#FFF3CD] px-3 py-1 text-[10px] font-semibold text-[#946B00]">
+          Awaiting Decision
+        </span>
       </div>
 
-      <div className="space-y-6 p-6">
-        {/* Approval summary */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-lg border border-gray-200 bg-[#F8FAFC] p-5">
-            <p className="text-xs font-medium text-slate-400">Final Score</p>
+      {/* Content */}
+      <div className="px-5 py-5">
+        <label
+          htmlFor="hr-notes"
+          className="mb-2 block text-[11px] font-medium text-[#94A3B8]"
+        >
+          HR Notes (internal — not visible to employee)
+        </label>
 
-            <div className="mt-2 flex items-end gap-2">
-              <span className="text-3xl font-bold text-[#A16207]">63%</span>
+        <textarea
+          id="hr-notes"
+          rows={3}
+          placeholder="Calibration notes, flags, succession planning observations..."
+          className="w-full resize-none rounded-md border border-[#D9DEE5] px-3 py-3 text-[12px] text-[#475467] outline-none placeholder:text-[#A8B0BC] focus:border-[#A67C00] focus:ring-1 focus:ring-[#A67C00]/20"
+        />
 
-              <span className="mb-1 text-xs font-medium text-[#A16207]">
-                Below Expectation
-              </span>
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-gray-200 bg-[#F8FAFC] p-5">
-            <p className="text-xs font-medium text-slate-400">Review Status</p>
-
-            <div className="mt-3 flex items-center gap-2">
-              <CheckCircle2 size={18} className="text-green-600" />
-
-              <span className="text-sm font-semibold text-slate-700">
-                Manager Review Completed
-              </span>
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-gray-200 bg-[#F8FAFC] p-5">
-            <p className="text-xs font-medium text-slate-400">Review Period</p>
-
-            <p className="mt-3 text-sm font-semibold text-slate-700">Q2 2026</p>
-          </div>
-        </div>
-
-        {/* HR note */}
-        <div className="rounded-lg border border-[#F3E8FF] bg-[#FAF5FF] p-5">
-          <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white">
-              <MessageSquareText size={17} className="text-[#7B22A8]" />
-            </div>
-
-            <div>
-              <h3 className="text-sm font-semibold text-[#7B22A8]">
-                HR Review Note
-              </h3>
-
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                Please review the manager's assessment and confirm that the
-                appraisal has followed the required performance review process
-                before approving.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* HR notes */}
-        <div>
-          <label
-            htmlFor="hr-notes"
-            className="mb-2 block text-sm font-semibold text-slate-700"
+        {/* Actions */}
+        <div className="mt-5 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onReturnForRevision}
+            className="h-[43px] rounded-md border border-[#FFB4B4] bg-[#FFF7F7] px-5 text-[12px] font-medium text-[#EF4444] transition hover:bg-[#FFF0F0]"
           >
-            HR Notes
-          </label>
+            Return for Revision
+          </button>
 
-          <textarea
-            id="hr-notes"
-            rows={5}
-            placeholder="Add any comments or observations before approving this review..."
-            className="w-full resize-none rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#1677C8] focus:ring-2 focus:ring-[#1677C8]/10"
-          />
-        </div>
-
-        {/* HR reviewer */}
-        <div className="flex flex-wrap items-center gap-8 border-t pt-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#EAF4FF]">
-              <UserRound size={16} className="text-[#1677C8]" />
-            </div>
-
-            <div>
-              <p className="text-[11px] text-slate-400">HR Reviewer</p>
-
-              <p className="text-sm font-semibold text-slate-700">
-                HR Administrator
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#EAF4FF]">
-              <CalendarDays size={16} className="text-[#1677C8]" />
-            </div>
-
-            <div>
-              <p className="text-[11px] text-slate-400">Submitted</p>
-
-              <p className="text-sm font-semibold text-slate-700">
-                30 June 2026
-              </p>
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={onApprove}
+            className="h-[43px] rounded-md bg-[#9A7200] px-5 text-[12px] font-semibold text-white transition hover:bg-[#856200]"
+          >
+            Approve &amp; Send to Employee
+          </button>
         </div>
       </div>
     </section>
