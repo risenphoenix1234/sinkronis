@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { FiDownload } from "react-icons/fi";
-import { billingHistory, getBillingTotals, naira } from "@/lib/plan-data";
+import { billingHistory, getBillingSummary, naira } from "@/lib/plan-data";
 
 type YearFilter = "all" | "2026" | "2025";
 
@@ -20,7 +20,7 @@ export default function BillingHistoryPage() {
     yearFilter === "all" ? true : b.year === yearFilter
   );
 
-  const { totalPaid2026, thisMonth, annualEstimate } = getBillingTotals();
+const { totalPaid2026, thisMonth, annualEstimate } = getBillingSummary();
 
   const handleExport = () => {
     // Hook up to actual CSV generation / download here.
