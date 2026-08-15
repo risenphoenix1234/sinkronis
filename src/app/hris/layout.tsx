@@ -1,6 +1,6 @@
 // src/app/hris/layout.tsx
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import ModuleRail from "@/components/ModuleRail";
+ 
 import { SidebarItem } from "@/components/layout/Sidebar";
 
 const sidebarItems: SidebarItem[] = [
@@ -58,7 +58,7 @@ export default function HRISLayout({
 }) {
   return (
     <div className="flex h-screen overflow-hidden">
-      <ModuleRail />
+    
 
       <div className="min-w-0 flex-1 overflow-x-auto">
         <DashboardLayout

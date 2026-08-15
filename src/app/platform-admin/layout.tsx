@@ -1,6 +1,6 @@
 // src/app/platform-admin/layout.tsx
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import ModuleRail from "@/components/ModuleRail";
+ 
 import { SidebarItem } from "@/components/layout/Sidebar";
 
 const sidebarItems: SidebarItem[] = [
@@ -44,11 +44,7 @@ const sidebarItems: SidebarItem[] = [
     href: "/platform-admin/support",
     icon: "support",
   },
-  {
-    label: "Settings",
-    href: "/platform-admin/settings",
-    icon: "settings",
-  },
+  
 ];
 
 export default function PlatformAdminLayout({
@@ -58,7 +54,7 @@ export default function PlatformAdminLayout({
 }) {
   return (
     <div className="flex h-screen overflow-hidden">
-      <ModuleRail />
+      
 
       <div className="min-w-0 flex-1 overflow-x-auto">
         <DashboardLayout

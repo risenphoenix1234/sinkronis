@@ -1,4 +1,5 @@
 // src/components/layout/DashboardLayout.tsx
+import ModuleRail from "@/components/ModuleRail";
 import Navbar from "./Navbar";
 import Sidebar, { SidebarItem } from "./Sidebar";
 
@@ -17,6 +18,7 @@ export default function DashboardLayout({
 }: DashboardLayoutProps) {
   return (
     <div className="flex h-screen overflow-hidden">
+      <ModuleRail />
       <Sidebar title={sidebarTitle} items={sidebarItems} />
 
       <div className="flex min-w-0 flex-1 flex-col">

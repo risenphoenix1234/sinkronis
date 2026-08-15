@@ -28,7 +28,7 @@ export default function Navbar() {
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
         <Link href="/" className="flex items-center">
           <Image
-            src="/logo.png"
+            src="/Logo.png"
             alt="Sinkronis"
             width={160}
             height={36}
