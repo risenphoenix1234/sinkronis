@@ -2,15 +2,43 @@
 "use client";
 
 import { useState } from "react";
-import { modules as initialModules, naira } from "@/lib/plan-data";
+import { FiUsers, FiDollarSign, FiBookOpen } from "react-icons/fi";
+import {
+  moduleCatalog,
+  initialActiveModuleIds,
+  naira,
+  ModuleCatalogId,
+} from "@/lib/plan-data";
+import AddPlanConfirmModal from "@/components/modals/AddPlanConfirmModal";
+
+const moduleIcons = {
+  hris: FiUsers,
+  payroll: FiDollarSign,
+  accounting: FiBookOpen,
+} as const;
+
+const iconStyles: Record<string, string> = {
+  hris: "bg-emerald-50 text-emerald-600",
+  payroll: "bg-sky-50 text-sky-600",
+  accounting: "bg-amber-50 text-amber-600",
+};
 
 export default function ModuleAddonsPage() {
-  const [moduleList, setModuleList] = useState(initialModules);
+  const [activeIds, setActiveIds] = useState<ModuleCatalogId[]>(initialActiveModuleIds);
+  const [pendingModuleId, setPendingModuleId] = useState<ModuleCatalogId | null>(null);
 
-  const toggleModule = (key: string) => {
-    setModuleList((prev) =>
-      prev.map((m) => (m.key === key && !m.includedInPlan ? { ...m, active: !m.active } : m))
-    );
+  const individualModules = moduleCatalog.filter((m) => !m.isBundle);
+  const currentModule = moduleCatalog.find((m) => m.id === "hris")!;
+  const pendingModule = moduleCatalog.find((m) => m.id === pendingModuleId) ?? null;
+
+  const handleToggleOn = (id: ModuleCatalogId) => {
+    setPendingModuleId(id);
+  };
+
+  const handleConfirmAdd = () => {
+    if (!pendingModuleId) return;
+    setActiveIds((prev) => (prev.includes(pendingModuleId) ? prev : [...prev, pendingModuleId]));
+    setPendingModuleId(null);
   };
 
   return (
@@ -18,62 +46,82 @@ export default function ModuleAddonsPage() {
       <div className="flex items-start gap-2 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
         <span>⚠</span>
         <p>
-          Modules included in your <span className="font-medium">Business</span> plan are always
-          active. Add-on modules are billed separately each month.
+          Your current plan is <span className="font-medium">HRIS</span>. Add individual modules
+          to expand access, or switch to <span className="font-medium">All-in-One</span> for the
+          best value.
         </p>
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white">
         <div className="divide-y divide-slate-100">
-          {moduleList.map((m) => (
-            <div key={m.key} className="flex items-start justify-between gap-4 p-5">
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold text-slate-800">{m.name}</p>
-                  {m.includedInPlan && (
-                    <span className="rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-600">
-                      Included in plan
+          {individualModules.map((m) => {
+            const isHris = m.id === "hris";
+            const active = isHris || activeIds.includes(m.id);
+            const Icon = moduleIcons[m.id as keyof typeof moduleIcons];
+            const priceLabel = m.addonPriceLabel ?? `${naira(m.price)}/month`;
+
+            return (
+              <div key={m.id} className="flex items-start justify-between gap-4 p-5">
+                <div className="flex flex-1 items-start gap-3">
+                  <span
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${iconStyles[m.id]}`}
+                  >
+                    <Icon size={18} />
+                  </span>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-slate-800">{m.name}</p>
+                      {isHris && (
+                        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                          Current Plan
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-400">{m.subtitle}</p>
+                    <p className="mt-1 text-sm text-slate-500">{m.shortDescription}</p>
+                    {!isHris && <p className="mt-2 text-xs text-slate-400">{priceLabel}</p>}
+                  </div>
+                </div>
+
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                  {isHris ? (
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-400">
+                      Plan included
                     </span>
+                  ) : (
+                    <>
+                      <span className="text-xs font-medium text-slate-500">
+                        {active ? "On" : "Off"}
+                      </span>
+                      <button
+                        onClick={() => (active ? undefined : handleToggleOn(m.id))}
+                        disabled={active}
+                        className={`relative h-6 w-11 rounded-full transition-colors ${
+                          active ? "bg-sky-600" : "bg-slate-200"
+                        } ${active ? "cursor-default" : "cursor-pointer"}`}
+                      >
+                        <span
+                          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                            active ? "translate-x-5" : "translate-x-0.5"
+                          }`}
+                        />
+                      </button>
+                    </>
                   )}
                 </div>
-                <p className="mt-1 text-sm text-slate-500">{m.description}</p>
-                <p className="mt-2 text-xs text-slate-400">
-                  {m.active
-                    ? "Active — accessible to all users with the " + m.name + " permission."
-                    : "Inactive — unable to give your team access to this module."}
-                </p>
               </div>
-
-              <div className="flex shrink-0 flex-col items-end gap-2">
-                {!m.includedInPlan && (
-                  <p className="text-sm font-medium text-slate-700">
-                    {naira(m.monthlyPrice)}
-                    <span className="text-xs text-slate-400"> /mo</span>
-                  </p>
-                )}
-                {m.includedInPlan ? (
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-400">
-                    Plan included
-                  </span>
-                ) : (
-                  <button
-                    onClick={() => toggleModule(m.key)}
-                    className={`relative h-6 w-11 rounded-full transition-colors ${
-                      m.active ? "bg-sky-600" : "bg-slate-200"
-                    }`}
-                  >
-                    <span
-                      className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                        m.active ? "translate-x-5" : "translate-x-0.5"
-                      }`}
-                    />
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
+
+      <AddPlanConfirmModal
+        open={pendingModule !== null}
+        currentPlanLabel={`${currentModule.name} · ${naira(currentModule.price)}/mo`}
+        newPlanLabel={pendingModule ? `${pendingModule.name} · ${naira(pendingModule.price)}/mo` : ""}
+        onCancel={() => setPendingModuleId(null)}
+        onConfirm={handleConfirmAdd}
+      />
     </div>
   );
 }
