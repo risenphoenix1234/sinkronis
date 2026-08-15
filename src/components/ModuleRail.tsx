@@ -4,15 +4,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FiBriefcase, FiUsers, FiDollarSign, FiCreditCard } from "react-icons/fi";
+import { FiUsers, FiDollarSign, FiCreditCard } from "react-icons/fi";
 
-type ModuleKey = "hris" | "accounting" | "payroll" | "tenant-admin";
+type ModuleKey = "hris" | "accounting" | "payroll";
 
 const modules: { key: ModuleKey; href: string; icon: React.ReactNode; label: string }[] = [
   { key: "hris", href: "/hris/overview", icon: <FiUsers size={18} />, label: "HRIS" },
   { key: "accounting", href: "/accounting/dashboard", icon: <FiDollarSign size={18} />, label: "Accounting" },
   { key: "payroll", href: "/payroll/overview", icon: <FiCreditCard size={18} />, label: "Payroll" },
-  { key: "tenant-admin", href: "/tenant-admin/overview", icon: <FiBriefcase size={18} />, label: "Tenant Admin" },
 ];
 
 function getActiveModule(pathname: string): ModuleKey | null {

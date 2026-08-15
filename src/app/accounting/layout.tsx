@@ -1,6 +1,6 @@
 // src/app/accounting/layout.tsx
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import ModuleRail from "@/components/ModuleRail";
+  
 import { SidebarItem } from "@/components/layout/Sidebar";
 
 const sidebarItems: SidebarItem[] = [
@@ -64,11 +64,7 @@ const sidebarItems: SidebarItem[] = [
     href: "/accounting/wallets",
     icon: "wallet",
   },
-  {
-    label: "Settings",
-    href: "/accounting/settings",
-    icon: "settings",
-  },
+  
 ];
 
 export default function AccountingLayout({
@@ -78,7 +74,7 @@ export default function AccountingLayout({
 }) {
   return (
     <div className="flex h-screen overflow-hidden">
-      <ModuleRail />
+   
 
       <div className="min-w-0 flex-1 overflow-x-auto">
         <DashboardLayout

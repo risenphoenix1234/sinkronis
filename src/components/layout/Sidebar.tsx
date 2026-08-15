@@ -5,9 +5,11 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-  FiBarChart2,
+ FiBarChart2,
+  FiBell,
   FiBriefcase,
   FiCalendar,
+  FiCheckCircle,
   FiChevronDown,
   FiChevronRight,
   FiCreditCard,
@@ -15,11 +17,16 @@ import {
   FiFileText,
   FiGrid,
   FiHelpCircle,
+  FiLock,
   FiPackage,
   FiPieChart,
   FiSettings,
+  FiShield,
+  FiSliders,
   FiTag,
   FiUsers,
+  
+
    
 } from "react-icons/fi";
 
@@ -54,6 +61,14 @@ const sidebarIcons = {
   reports: FiPieChart,
   tax: FiFileText,
   wallet: FiDollarSign,
+
+  // Tenant Admin
+  organisation: FiBriefcase,
+  permissions: FiShield,
+  security: FiLock,
+  audit: FiFileText,
+  notifications: FiBell,
+  "general-settings": FiSliders,
 };
 
 export type SidebarItem = {
