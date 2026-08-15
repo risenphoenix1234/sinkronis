@@ -33,7 +33,7 @@ export default function ModuleRail() {
         className="flex h-20 w-full shrink-0 items-center justify-center"
       >
         <Image
-          src="/logo.png"
+          src="/Logo.png"
           alt="Sinkronis"
           width={80}
           height={80}
