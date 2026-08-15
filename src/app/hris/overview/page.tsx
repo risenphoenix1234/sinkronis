@@ -7,17 +7,41 @@ export default function HRISOverviewPage() {
     <section className="p-6">
       <div>
         {/* Header */}
-        
-        <div className="mb-8 flex justify-between items-center">
-          <h1 className="text-4xl font-semibold text-[#1D2939]">Overview</h1>
 
-          <div className="flex items-center gap-3">
-            <Button variant={"outline"}>Export Report</Button>
-            <Button variant={"outline"}>Filter</Button>
-            <Button variant={"outline"}>September</Button>
+        <div className="mb-8 flex justify-between items-center">
+          <h1 className="text-4xl font-bold text-[#1D2939]">Welcome Back</h1>
+
+          <div className="flex items-center font-light gap-3">
+            <p>Monday, 1 June 2026</p>
           </div>
         </div>
 
+        {/* {StatCard} */}
+        <div className="flex items-center justify-between gap-6 mb-4">
+          <div className="bg-white p-4 w-full">
+            <p className="text-xs text-gray-500">Total Employees</p>
+            <h2 className="text-3xl font-bold mt-1">248</h2>
+            <p className="text-xs text-green-800 mt-1">+3 this month</p>
+          </div>
+
+          <div className="bg-white p-4 w-full">
+            <p className="text-xs text-gray-500">Active Employees</p>
+            <h2 className="text-3xl font-bold mt-1">231</h2>
+            <p className="text-xs text-green-800 mt-1">+93 of total</p>
+          </div>
+
+          <div className="bg-white p-4 w-full">
+            <p className="text-xs text-gray-500">On Leave Today</p>
+            <h2 className="text-3xl font-bold mt-1">12</h2>
+            <p className="text-xs text-green-800 mt-1">5 pending approval</p>
+          </div>
+
+          <div className="bg-white p-4 w-full">
+            <p className="text-xs text-gray-500">New Hires (MTD)</p>
+            <h2 className="text-3xl font-bold mt-1">6</h2>
+            <p className="text-xs text-green-800 mt-1">+2 vs last month</p>
+          </div>
+        </div>
         {/* Row 1 */}
         <div className="grid grid-cols-12 gap-4 mb-4">
           {/* Attendance */}

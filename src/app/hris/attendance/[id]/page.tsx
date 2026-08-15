@@ -6,8 +6,8 @@ export default function DashboardPage() {
     { title: "Leave Count", value: "19", color: "text-green-600" },
     { title: "Days Absent", value: "2", color: "text-red-500" },
     { title: "On Leave", value: "0", color: "text-gray-500" },
-    { title: "Late Arrivals", value: "2", color: "text-yellow-500" },
-    { title: "Logged Hours", value: "153.3h", color: "text-gray-800" },
+    { title: "Late Clock-in", value: "2", color: "text-yellow-500" },
+    { title: "Total Hours", value: "153.3h", color: "text-gray-800" },
   ];
 
   const records = [
@@ -57,7 +57,7 @@ export default function DashboardPage() {
       {/* Alert */}
 
       <div className="bg-orange-50 border border-orange-200 text-orange-600 text-sm rounded-md px-4 py-2 mb-6">
-        ⚠️ 1.2D underlogged this month
+        ⚠️ 3.0h overtime logged this month
       </div>
 
       {/* Main Content */}
@@ -77,7 +77,7 @@ export default function DashboardPage() {
 
             {days.map((day) => (
               <div key={day} className="text-xs text-gray-400">
-                {["Mon", "Tue", "Wed", "Thu", "Fri"][day - 1]}
+                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][day - 1]}
               </div>
             ))}
 

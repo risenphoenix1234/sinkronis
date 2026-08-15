@@ -1,146 +1,144 @@
-import { Goal, PastAppraisal } from "@/types/employee/appraisal";
+import {
+  BehaviourObjective,
+  Employee,
+  Signatory,
+  Objective,
+  ReflectionQuestion,
+} from "@/types/employee/appraisal";
 
-export const goals: Goal[] = [
+export const employee = {
+  id: "EMP-001",
+
+  name: "Amina Hassan",
+
+  department: "Human Resources",
+
+  supervisor: "Michael James",
+
+  jobTitle: "HR Manager",
+
+  employmentDate: "12 March 2022",
+
+  reviewPeriod: "Q2 2026",
+
+  businessUnit: "Corporate Services",
+
+  employeeId: "EMP001",
+
+  location: "Lagos",
+};
+
+export const objectives: Objective[] = [];
+
+export const behaviourObjectives: BehaviourObjective[] = [
   {
     id: 1,
-    title: "Implement New Onboarding Process",
-    target: "End of Q2",
-    status: "Completed",
+    objective: "Collaboration & Communication",
+    wt: 28,
+    keyResult: "Actively collaborate cross-functionally on shared goals",
+    kpis: 10,
+    target: 0,
+    initiatives: "Bi-weekly cross-team syncs; shared project boards",
+    q1Ach: 0,
+    q1Percent: "",
+    q2Ach: 0,
+    q2Percent: "",
+    comment: "",
   },
-  {
-    id: 2,
-    title: "Reduce Staff Turnover by 10%",
-    target: "End of Q2",
-    status: "In Progress",
-  },
-];
-
-export const pastAppraisals: PastAppraisal[] = [
-  {
-    cycle: "Q1 2026 Review",
-    period: "Jan – Mar 2026",
-    finalScore: 83,
-    rating: "Meets Expectations",
-    dateCompleted: "15 Apr 2026",
-  },
-  {
-    cycle: "Q4 2025 Review",
-    period: "Oct – Dec 2025",
-    finalScore: 87,
-    rating: "Exceeds Expectations",
-    dateCompleted: "20 Jan 2026",
-  },
-];
-
-import { Section } from "@/types/employee/appraisal";
-
-export const appraisalSections: Section[] = [
   {
     id: 1,
-    title: "SECTION A",
-    subtitle: "OBJECTIVE GOALS",
-    color: "blue",
-    weight: 60,
-    objectives: [
-      {
-        id: 1,
-        title: "Revenue & Business Growth",
-        description: "Increase monthly revenue by 15%",
-        weight: 20,
-        target: 100,
-        achievement: "",
-        managerScore: 0,
-        hrScore: 0,
-        comment: "",
-      },
-      {
-        id: 2,
-        title: "Operational Excellence",
-        description: "Improve operational efficiency",
-        weight: 20,
-        target: 100,
-        achievement: "",
-        managerScore: 0,
-        hrScore: 0,
-        comment: "",
-      },
-      {
-        id: 3,
-        title: "Employee Experience",
-        description: "Improve employee satisfaction",
-        weight: 20,
-        target: 100,
-        achievement: "",
-        managerScore: 0,
-        hrScore: 0,
-        comment: "",
-      },
-    ],
+    objective: "",
+    wt: 28,
+    keyResult: "Share knowledge and mentor peers consistently",
+    kpis: 10,
+    target: 0,
+    initiatives: "Monthly knowledge-sharing sessions",
+    q1Ach: 0,
+    q1Percent: 0,
+    q2Ach: 0,
+    q2Percent: 0,
+    comment: "",
   },
-
   {
-    id: 2,
-    title: "SECTION B",
-    subtitle: "BEHAVIOURAL OBJECTIVES",
-    color: "purple",
-    weight: 20,
-    objectives: [
-      {
-        id: 4,
-        title: "Leadership",
-        description: "Provide leadership",
-        weight: 10,
-        target: 100,
-        achievement: "",
-        managerScore: 0,
-        hrScore: 0,
-        comment: "",
-      },
-      {
-        id: 5,
-        title: "Collaboration",
-        description: "Work with cross-functional teams",
-        weight: 10,
-        target: 100,
-        achievement: "",
-        managerScore: 0,
-        hrScore: 0,
-        comment: "",
-      },
-    ],
+    id: 1,
+    objective: "Leadership & Initiiatives",
+    wt: 13,
+    keyResult: "Proactively identify and resolve blockers without escalation",
+    kpis: 10,
+    target: 0,
+    initiatives: "Bi-weekly cross-team syncs; shared project boards",
+    q1Ach: 0,
+    q1Percent: 0,
+    q2Ach: 0,
+    q2Percent: 0,
+    comment: "",
   },
 ];
 
-export interface AppraisalItem {
-  objective: string;
-  kpis: string[];
-  employeeRating: number;
-  employeeComment: string;
-  managerRating: number;
-  managerComment: string;
-}
-
-export const appraisalData: AppraisalItem[] = [
+export const appraisalData = [
   {
-    objective: "Revenue & Business Growth",
-    kpis: [
-      "Increase monthly revenue by 15%",
-      "Close at least 5 new enterprise deals",
-    ],
+    objective: "Revenue Growth",
+    kpis: ["Increase recurring revenue", "Improve customer retention"],
     employeeRating: 4,
-    employeeComment: "Hit the revenue target two months early.",
+    employeeComment: "Exceeded target for the quarter.",
     managerRating: 4,
-    managerComment: "Strong quarter, exceeded expectations on new deals.",
+    managerComment: "Strong delivery and ownership.",
   },
   {
-    objective: "Operational Excellence",
-    kpis: [
-      "Reduce process turnaround time by 20%",
-      "Document all SOPs for the team",
-    ],
+    objective: "Operational Efficiency",
+    kpis: ["Reduce processing time", "Improve cross-team collaboration"],
     employeeRating: 3,
-    employeeComment: "Completed most SOPs, still refining turnaround time.",
+    employeeComment: "Need more consistency in execution.",
     managerRating: 3,
-    managerComment: "Good progress, needs to finish remaining documentation.",
+    managerComment: "Good progress but still some gaps.",
+  },
+];
+
+export const reflectionQuestions = [
+  {
+    id: 1,
+    title: "1. What were your biggest achievements this quarter?",
+    description:
+      "Describe your key accomplishments and their impact on the team or organisation….",
+    answer: "",
+  },
+  {
+    id: 2,
+    title: "2. What challenges did you face and how did you overcome them?",
+    description:
+      "Describe specific obstacles and the steps you took to resolve them…",
+    answer: "",
+  },
+  {
+    id: 3,
+    title: "3. What support or resources do you need from your manager?",
+    description:
+      "Be specific about what would help you perform better in the next period…",
+    answer: "",
+  },
+  {
+    id: 4,
+    title: "4. Where do you want to grow professionally next quarter?",
+    description:
+      "Describe your development goals, skills to build, or experiences to gain…",
+    answer: "",
+  },
+];
+
+export const signatories: Signatory[] = [
+  {
+    name: "Amina Hassan",
+    role: "Employee",
+    signed: false,
+  },
+  {
+    name: "Michael James",
+    role: "Manager",
+    signed: false,
+  },
+  {
+    name: "Human Resources",
+    role: "HR",
+    signed: false,
   },
 ];

@@ -28,13 +28,13 @@ function ReportsResultsContent() {
   const results = allInvoices;
   const totalValue = results.reduce((sum, inv) => sum + inv.total, 0);
 
-  const clearAll = () => router.push("/reports/results");
+  const clearAll = () => router.push("/accounting/reports/results");
 
   return (
     <section className="space-y-6 p-6">
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-sm text-slate-400">
-        <Link href="/reports" className="hover:text-slate-600">
+        <Link href="/accounting/reports" className="hover:text-slate-600">
           Reports
         </Link>
         <span>/</span>
@@ -44,7 +44,7 @@ function ReportsResultsContent() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <Link
-          href="/reports"
+          href="/accounting/reports"
           className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
         >
           <FiArrowLeft size={14} /> Back
@@ -58,13 +58,16 @@ function ReportsResultsContent() {
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-3">
         <div className="flex flex-wrap items-center gap-2">
           <Link
-            href="/reports"
+            href="/accounting/reports"
             className="text-sm font-medium text-sky-600 hover:underline"
           >
             Modify Filters
           </Link>
           <span className="text-slate-300">|</span>
-          <button onClick={clearAll} className="text-sm text-slate-500 hover:underline">
+          <button
+            onClick={clearAll}
+            className="text-sm text-slate-500 hover:underline"
+          >
             Clear all
           </button>
           {activeFilters.length > 0 && (
@@ -82,8 +85,13 @@ function ReportsResultsContent() {
           )}
         </div>
         <p className="text-sm text-slate-500">
-          <span className="font-medium text-slate-800">{results.length} invoices found</span>
-          {" · "}Total: <span className="font-medium text-slate-800">{naira(totalValue)}</span>
+          <span className="font-medium text-slate-800">
+            {results.length} invoices found
+          </span>
+          {" · "}Total:{" "}
+          <span className="font-medium text-slate-800">
+            {naira(totalValue)}
+          </span>
         </p>
       </div>
 
@@ -110,9 +118,15 @@ function ReportsResultsContent() {
                 <td className="px-6 py-3 text-sm font-medium text-sky-600 whitespace-nowrap">
                   {inv.id}
                 </td>
-                <td className="px-6 py-3 text-sm text-slate-600 whitespace-nowrap">{inv.client}</td>
-                <td className="px-6 py-3 text-sm text-slate-600 whitespace-nowrap">{inv.agent}</td>
-                <td className="px-6 py-3 text-sm text-slate-600 whitespace-nowrap">{inv.project}</td>
+                <td className="px-6 py-3 text-sm text-slate-600 whitespace-nowrap">
+                  {inv.client}
+                </td>
+                <td className="px-6 py-3 text-sm text-slate-600 whitespace-nowrap">
+                  {inv.agent}
+                </td>
+                <td className="px-6 py-3 text-sm text-slate-600 whitespace-nowrap">
+                  {inv.project}
+                </td>
                 <td className="px-6 py-3 text-sm text-slate-600 whitespace-nowrap">
                   {inv.itemsServices}
                 </td>
@@ -126,17 +140,24 @@ function ReportsResultsContent() {
                   {naira(inv.total)}
                 </td>
                 <td className="px-6 py-3 whitespace-nowrap">
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusStyles[inv.status]}`}>
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusStyles[inv.status]}`}
+                  >
                     {inv.status}
                   </span>
                 </td>
-                <td className="px-6 py-3 text-sm text-slate-500 whitespace-nowrap">{inv.issueDate}</td>
+                <td className="px-6 py-3 text-sm text-slate-500 whitespace-nowrap">
+                  {inv.issueDate}
+                </td>
               </tr>
             ))}
           </tbody>
           <tfoot>
             <tr className="border-t border-slate-200 bg-slate-50">
-              <td colSpan={7} className="px-6 py-3 text-sm font-medium text-slate-700">
+              <td
+                colSpan={7}
+                className="px-6 py-3 text-sm font-medium text-slate-700"
+              >
                 Totals — {results.length} invoices
               </td>
               <td className="px-6 py-3 text-sm tabular-nums font-semibold text-slate-900">
@@ -150,7 +171,9 @@ function ReportsResultsContent() {
 
       {/* Export bar */}
       <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4">
-        <p className="text-sm text-slate-500">Export {results.length} invoices as:</p>
+        <p className="text-sm text-slate-500">
+          Export {results.length} invoices as:
+        </p>
         <div className="flex items-center gap-3">
           <button className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50">
             <FiDownload size={14} /> Download CSV

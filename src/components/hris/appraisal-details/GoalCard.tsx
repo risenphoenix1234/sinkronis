@@ -1,78 +1,53 @@
-// components/appraisal-details/GoalCard.tsx
-
+import StatusBadge from "../appraisal/StatusBadge";
 import RatingScale from "./RatingScale";
 
-
-interface Props {
-  title: string;
-  description: string;
-  target: string;
-  employeeScore: number;
-  managerScore: number;
-  employeeLabel: string;
-  managerLabel: string;
-  status: string;
-}
-
-export default function GoalCard({
-  title,
-  description,
-  target,
-  employeeScore,
-  managerScore,
-  employeeLabel,
-  managerLabel,
-  status,
-}: Props) {
-  const statusColor =
-    status === "Completed"
-      ? "bg-green-100 text-green-700"
-      : "bg-blue-100 text-blue-700";
-
+export default function GoalCard() {
   return (
-    <div className="rounded-lg border bg-white p-6">
-      <div className="flex justify-between">
+    <div className="rounded-xl border bg-white p-6">
+      <div className="flex items-start justify-between">
         <div>
-          <h4 className="font-semibold text-slate-800">{title}</h4>
+          <h2 className="text-xl font-semibold">
+            Process Optimisation Initiative
+          </h2>
 
-          <p className="mt-2 text-sm text-slate-500">{description}</p>
-
-          <p className="mt-2 text-sm text-slate-500">
-            ✓ New process launched and all managers trained by end of Q2.
+          <p className="mt-2 text-gray-500">
+            Identify and eliminate 3 operational inefficiencies.
           </p>
 
-          <p className="mt-2 text-sm text-slate-500">Target: {target}</p>
+          <p className="mt-2 text-[#7A8DA8]">
+            ✓ 3 documented bottlenecks resolved.
+          </p>
+
+          <p className="mt-2 text-sm text-gray-500">Target: 30 Jun 2026</p>
         </div>
 
-        <span
-          className={`h-fit rounded-full px-3 py-1 text-xs font-medium ${statusColor}`}
-        >
-          {status}
-        </span>
+        <StatusBadge text="Completed" />
       </div>
 
-      <div className="mt-8 grid gap-8 md:grid-cols-2">
+      <hr className="my-8" />
+
+      <div className="grid grid-cols-2 gap-20">
         <div>
-          <p className="mb-3 text-xs font-semibold tracking-wide text-slate-400">
-            EMPLOYEE
-          </p>
+          <RatingScale
+            title="Employee"
+            selected={4}
+            subtitle="Exceeds Expectations"
+          />
 
-          <RatingScale rating={employeeScore} label={employeeLabel} />
-
-          <p className="mt-3 text-sm text-slate-500">
-            Launched the new checklist and trained all 12 managers.
+          <p className="mt-4 text-gray-600">
+            Identified and resolved 3 bottlenecks, saving ~5 hrs/week.
           </p>
         </div>
 
         <div>
-          <p className="mb-3 text-xs font-semibold tracking-wide text-slate-400">
-            MANAGER
-          </p>
+          <RatingScale
+            title="Manager"
+            selected={3}
+            subtitle="Meets Expectations"
+          />
 
-          <RatingScale rating={managerScore} label={managerLabel} />
-
-          <p className="mt-3 text-sm text-slate-500">
-            Well executed. Minor refinements still needed for remote onboarding.
+          <p className="mt-4 text-gray-600">
+            Good outcome but took longer than expected.
           </p>
         </div>
       </div>

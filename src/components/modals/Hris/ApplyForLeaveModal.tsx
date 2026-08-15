@@ -72,7 +72,7 @@ export default function ApplyForLeaveModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-center gap-4 border-t px-5 py-4">
+        <div className="flex items-center justify-between gap-4 border-t px-5 py-4">
           <button
             onClick={onClose}
             className="h-10 rounded px-6 text-sm font-medium text-slate-600 transition hover:bg-slate-100"

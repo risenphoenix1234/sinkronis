@@ -1,10 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  attendanceData,
-  staticAttendance,
-} from "@/data/hris/attendance";
+import { attendanceData, staticAttendance } from "@/data/hris/attendance";
 import { Attendance } from "@/types/hris/attendance";
 import {
   Search,
@@ -17,7 +14,6 @@ import ManualOverrideModal from "@/components/modals/ManualOverideModal";
 import { FiEdit2 } from "react-icons/fi";
 import RaiseAttendanceDisputeModal from "@/components/modals/Hris/RaiseAttendanceDisputeModal";
 import { useRouter } from "next/navigation";
-import { DisputeCard } from "@/components/hris/attendance/DisputeCard";
 import AttendanceTable from "@/components/modals/Hris/AttendanceTable";
 import DisputesList from "@/components/hris/attendance/DisputesList";
 
@@ -33,6 +29,7 @@ export default function AttendancePage() {
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("All Departments");
   const [status, setStatus] = useState("All");
+  const [isClockedIn, setIsClockedIn] = useState(false);
 
   const filteredAttendance = useMemo(() => {
     return staticAttendance.filter((employee) => {
@@ -165,13 +162,17 @@ export default function AttendancePage() {
                 </p>
               </div>
 
-              <button className="bg-red-500 text-white px-5 py-2 rounded-md">
-                Clock Out
+              <button
+                onClick={() => setIsClockedIn((prev) => !prev)}
+                className={`px-5 py-2 rounded-md text-white ${
+                  isClockedIn ? "bg-red-500" : "bg-blue-600"
+                }`}
+              >
+                {isClockedIn ? "Clock Out" : "Clock In"}
               </button>
             </div>
 
             {/* Stats */}
-
             <div className="grid grid-cols-6 gap-4 mt-5">
               {[
                 ["On Time", 5],
@@ -253,7 +254,7 @@ export default function AttendancePage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search name or ID..."
-                  className="w-full border rounded-md pl-10 pr-4 py-2"
+                  className="w-full border rounded-md pl-10 pr-4 py-2  bg-transparent"
                 />
               </div>
 
@@ -374,9 +375,7 @@ function AttendanceLogTable({ attendance }: { attendance: Attendance[] }) {
                 Status
               </th>
 
-              <th className="w-24 px-4 py-3 text-center text-xs font-medium text-slate-500">
-                Actions
-              </th>
+              <th className="w-24 px-4 py-3 text-center text-xs font-medium text-slate-500"></th>
             </tr>
           </thead>
 
@@ -387,7 +386,7 @@ function AttendanceLogTable({ attendance }: { attendance: Attendance[] }) {
                 className="border-t cursor-pointer"
                 onClick={() => router.push(`/hris/attendance/${employee.id}`)}
               >
-                <td className="px-4 py-3">{employee.id}</td>
+                <td className="px-4 py-3 text-blue-600">{employee.id}</td>
 
                 <td className="px-4 py-3">{employee.name}</td>
 
@@ -465,6 +464,8 @@ function DepartmentSummaryTable({ data }: { data: any[] }) {
               "Late",
               "Absent",
               "On Leave",
+              "Hours",
+              "Rate",
             ].map((head) => (
               <th
                 key={head}
@@ -485,6 +486,8 @@ function DepartmentSummaryTable({ data }: { data: any[] }) {
               <td className="px-4 py-3 text-yellow-600">{dept.late}</td>
               <td className="px-4 py-3 text-red-600">{dept.absent}</td>
               <td className="px-4 py-3">{dept.onLeave}</td>
+              <td className="px-4 py-3">{dept.hours}</td>
+              <td className="px-4 py-3">{dept.rate}</td>
             </tr>
           ))}
         </tbody>

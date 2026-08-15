@@ -141,8 +141,8 @@ export default function Pricing() {
                   plan.highlight
                     ? "border-2 border-[#2388D0] pt-0"
                     : isSelected
-                    ? "border-2 border-[#2388D0] p-8"
-                    : "border border-[#E5E9F0] p-8"
+                      ? "border-2 border-[#2388D0] p-8"
+                      : "border border-[#E5E9F0] p-8"
                 } ${isSelected ? "ring-2 ring-[#2388D0]/20" : ""} ${
                   isSuperseded ? "opacity-50" : ""
                 }`}
@@ -156,7 +156,13 @@ export default function Pricing() {
                   </div>
                 )}
 
-                <div className={plan.highlight ? "flex flex-1 flex-col p-8" : "flex flex-1 flex-col"}>
+                <div
+                  className={
+                    plan.highlight
+                      ? "flex flex-1 flex-col p-8"
+                      : "flex flex-1 flex-col"
+                  }
+                >
                   {/* Name + subtitle */}
                   <h3 className="text-[22px] font-bold text-[#2388D0]">
                     {plan.name}
@@ -178,7 +184,10 @@ export default function Pricing() {
                     {plan.features.map((feature) => (
                       <div key={feature} className="flex items-start gap-3">
                         <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border border-[#2388D0]">
-                          <Check className="h-3 w-3 text-[#2388D0]" strokeWidth={3} />
+                          <Check
+                            className="h-3 w-3 text-[#2388D0]"
+                            strokeWidth={3}
+                          />
                         </span>
                         <span className="text-[15px] leading-[22px] text-[#475467]">
                           {feature}
@@ -201,7 +210,9 @@ export default function Pricing() {
                           : "border-[#2388D0] text-[#2388D0] hover:bg-[#2388D0] hover:text-white"
                       }`}
                     >
-                      {isSelected && <Check className="h-4 w-4" strokeWidth={3} />}
+                      {isSelected && (
+                        <Check className="h-4 w-4" strokeWidth={3} />
+                      )}
                       {isSelected ? "Selected" : "Select"}
                     </span>
                   </button>
@@ -219,7 +230,10 @@ export default function Pricing() {
               <span className="font-semibold text-[#1F2937]">
                 {selected.join(", ")}
               </span>{" "}
-              — <span className="font-semibold text-[#1F2937]">{formatPrice(totalPrice)}/month</span>
+              —{" "}
+              <span className="font-semibold text-[#1F2937]">
+                {formatPrice(totalPrice)}/month
+              </span>
             </p>
           )}
           <button

@@ -9,6 +9,7 @@ export type Employee = {
   status: EmployeeStatus;
   contact: string;
   dateAdded: string;
+  personalEmail?: string;
   email: string;
   dob: string;
   gender: string;
@@ -30,6 +31,7 @@ export type Employee = {
   workMode: WorkMode;
   dateJoined: string;
   salary: string;
+  earning?: number;
   guarantor: {
     lastName: string;
     firstName: string;
