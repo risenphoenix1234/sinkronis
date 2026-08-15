@@ -1,8 +1,8 @@
 // components/CycleCard.tsx
 
 import { Trash2 } from "lucide-react";
-import { AppraisalCycle } from "@/types/hris/cycles";
 import StatusBadge from "../../ui/StatusBadge";
+import { AppraisalCycle } from "@/types/hris/appraisal";
 
 interface Props {
   cycle: AppraisalCycle;

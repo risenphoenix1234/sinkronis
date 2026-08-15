@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import { FiDownload } from "react-icons/fi";
+
 import { billingHistory, getBillingSummary, naira } from "@/lib/plan-data";
 
 type YearFilter = "all" | "2026" | "2025";
@@ -17,10 +18,12 @@ export default function BillingHistoryPage() {
   const [yearFilter, setYearFilter] = useState<YearFilter>("all");
 
   const filtered = billingHistory.filter((b) =>
-    yearFilter === "all" ? true : b.year === yearFilter
+    yearFilter === "all" ? true : b.year === yearFilter,
   );
 
 const { totalPaid2026, thisMonth, annualEstimate } = getBillingSummary();
+
+
 
   const handleExport = () => {
     // Hook up to actual CSV generation / download here.
@@ -32,11 +35,13 @@ const { totalPaid2026, thisMonth, annualEstimate } = getBillingSummary();
       {/* Filter + Export bar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1 rounded-md border border-slate-200 bg-white p-1">
-          {([
-            { id: "all", label: "All" },
-            { id: "2026", label: "2026" },
-            { id: "2025", label: "2025" },
-          ] as const).map((opt) => (
+          {(
+            [
+              { id: "all", label: "All" },
+              { id: "2026", label: "2026" },
+              { id: "2025", label: "2025" },
+            ] as const
+          ).map((opt) => (
             <button
               key={opt.id}
               onClick={() => setYearFilter(opt.id)}
@@ -104,15 +109,21 @@ const { totalPaid2026, thisMonth, annualEstimate } = getBillingSummary();
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-xl border border-slate-200 bg-white px-5 py-4">
           <p className="text-xs text-slate-400">Total Paid (2026)</p>
-          <p className="mt-1 text-xl font-semibold text-emerald-600">{naira(totalPaid2026)}</p>
+          <p className="mt-1 text-xl font-semibold text-emerald-600">
+            {naira(totalPaid2026)}
+          </p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white px-5 py-4">
           <p className="text-xs text-slate-400">This Month</p>
-          <p className="mt-1 text-xl font-semibold text-sky-600">{naira(thisMonth)}</p>
+          <p className="mt-1 text-xl font-semibold text-sky-600">
+            {naira(thisMonth)}
+          </p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white px-5 py-4">
           <p className="text-xs text-slate-400">Annual Estimate</p>
-          <p className="mt-1 text-xl font-semibold text-amber-600">{naira(annualEstimate)}</p>
+          <p className="mt-1 text-xl font-semibold text-amber-600">
+            {naira(annualEstimate)}
+          </p>
         </div>
       </div>
     </div>

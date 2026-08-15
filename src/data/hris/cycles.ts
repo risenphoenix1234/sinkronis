@@ -1,6 +1,7 @@
 // data/cycles.ts
 
-import { AppraisalCycle } from "@/types/hris/cycles";
+import { AppraisalCycle } from "@/types/hris/appraisal";
+
 
 
 export const cycles: AppraisalCycle[] = [

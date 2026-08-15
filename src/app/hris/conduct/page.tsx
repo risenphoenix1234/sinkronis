@@ -77,7 +77,7 @@ export default function HRISConductPage() {
                 <div>
                   <button
                     onClick={() => setIsAddQueryOpen(true)}
-                    className="flex h-10 items-center gap-2 rounded-md bg-blue-600 px-4 text-sm text-white"
+                    className="flex h-10 items-center gap-2 rounded-md bg-[#2388D0] px-4 text-sm text-white"
                   >
                     <Plus size={15} />
                     New Query
@@ -145,9 +145,7 @@ export default function HRISConductPage() {
                       <TableHead title="Query Type" />
                       <TableHead title="Status" />
 
-                      <th className="px-4 py-4 text-left text-xs font-medium text-slate-500">
-                        Action
-                      </th>
+                      {/* <th className="px-4 py-4 text-left text-xs font-medium text-slate-500"></th> */}
                     </tr>
                   </thead>
 

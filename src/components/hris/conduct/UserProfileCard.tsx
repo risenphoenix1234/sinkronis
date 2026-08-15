@@ -1,8 +1,12 @@
 // components/UserProfileCard.tsx
 
-import { User, Wallet, Users, LogIn } from "lucide-react";
-
-export default function UserProfileCard() {
+import { User, Wallet, Users, LogIn, X } from "lucide-react";
+type UserProfileProps = {
+  open: boolean;
+  onClose: () => void;
+};
+export default function UserProfileCard({ open, onClose }: UserProfileProps) {
+  if (!open) return null;
   return (
     <div className="fixed right-6 top-5 z-[60] w-[250px] rounded-xl bg-white shadow-xl">
       <div className="p-5">
@@ -13,6 +17,9 @@ export default function UserProfileCard() {
             <h3 className="font-semibold text-[#101828]">Nwokaego Adella</h3>
 
             <p className="text-xs text-[#667085]">Consultant</p>
+          </div>
+          <div >
+            <X className="cursor-pointer" size={16} onClick={onClose} />
           </div>
         </div>
 

@@ -5,7 +5,7 @@ export default function BehaviourTable() {
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200">
       <SectionHeader
-        title="SECTION B : BEHAVIOURAL OBJECTIVES"
+        title="SECTION B: BEHAVIOURAL OBJECTIVES"
         weight="20%"
         color="purple"
       />
@@ -15,26 +15,38 @@ export default function BehaviourTable() {
           <thead className="bg-[#FAFAFC]">
             <tr className="border-b">
               <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Competency
+                Objective
               </th>
 
-              <th className="text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                 WT.
               </th>
 
-              <th className="text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Expected Behaviour
+              <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Key Result
               </th>
 
-              <th className="text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                KPIs
+              </th>
+
+              <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Target
+              </th>
+
+              <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Initiatives
+              </th>
+
+              <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                 Achieved
               </th>
 
-              <th className="text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Result %
+              <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Results
               </th>
 
-              <th className="text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                 Comment
               </th>
             </tr>
@@ -43,30 +55,44 @@ export default function BehaviourTable() {
           <tbody>
             {rows.map((row) => (
               <tr
-                key={row.competency}
+                key={row.objective}
                 className="border-b last:border-none hover:bg-gray-50"
               >
                 <td className="px-6 py-5 font-semibold text-[#7B22A8]">
-                  {row.competency}
+                  {row.objective}
                 </td>
 
-                <td>
+                <td className="px-4 py-5 text-sm text-slate-600">
+                  {row.weight}
+                </td>
+
+                <td className="px-4 py-5">
                   <span className="rounded-full bg-[#7B22A8] px-3 py-1 text-xs font-semibold text-white">
-                    {row.weight}
+                    {row.keyResult}
                   </span>
                 </td>
 
-                <td className="max-w-sm py-5 text-sm text-slate-600">
-                  {row.expectation}
+                <td className="max-w-sm px-4 py-5 text-sm text-slate-600">
+                  {row.kpis}
                 </td>
 
-                <td className="max-w-sm py-5 text-sm text-slate-600">
+                <td className="max-w-sm px-4 py-5 text-sm text-slate-600">
+                  {row.target}
+                </td>
+
+                <td className="px-4 py-5 font-bold text-[#A16207]">
+                  {row.initiatives}
+                </td>
+
+                <td className="px-4 py-5 font-bold text-[#A16207]">
                   {row.achieved}
                 </td>
 
-                <td className="font-bold text-[#A16207]">{row.result}</td>
+                <td className="px-4 py-5 font-bold text-[#A16207]">
+                  {row.results}
+                </td>
 
-                <td className="max-w-sm py-5 text-sm text-slate-600">
+                <td className="max-w-sm px-4 py-5 text-sm text-slate-600">
                   {row.comment}
                 </td>
               </tr>
