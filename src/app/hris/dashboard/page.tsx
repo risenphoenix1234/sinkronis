@@ -1,37 +1,37 @@
 "use client";
 
 import Button from "@/components/ui/Button";
-import { useHRISDashboard } from "@/hooks/useHRISDashbord";
+// import { useHRISDashboard } from "@/hooks/useHRISDashbord";
 import { departments, requests } from "@/utils/types";
 import { useEffect, useState } from "react";
 
 // src/app/hris/overview/page.tsx
 export default function HRISDashboardPage() {
-  const { data, loading, error, refetch } = useHRISDashboard();
+  // const { data, loading, error, refetch } = useHRISDashboard();
 
-  if (loading) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <p className="text-sm text-gray-500">Loading dashboard...</p>
-      </div>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <div className="flex min-h-[400px] items-center justify-center">
+  //       <p className="text-sm text-gray-500">Loading dashboard...</p>
+  //     </div>
+  //   );
+  // }
 
-  if (error) {
-    return (
-      <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
-        <p className="text-sm text-red-500">{error}</p>
+  // if (error) {
+  //   return (
+  //     <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+  //       <p className="text-sm text-red-500">{error}</p>
 
-        <button
-          type="button"
-          onClick={refetch}
-          className="rounded-lg bg-black px-4 py-2 text-sm text-white"
-        >
-          Try Again
-        </button>
-      </div>
-    );
-  }
+  //       <button
+  //         type="button"
+  //         onClick={refetch}
+  //         className="rounded-lg bg-black px-4 py-2 text-sm text-white"
+  //       >
+  //         Try Again
+  //       </button>
+  //     </div>
+  //   );
+  // }
   return (
     <section className="p-6">
       <div>
@@ -44,9 +44,9 @@ export default function HRISDashboardPage() {
             <p>Monday, 1 June 2026</p>
           </div>
 
-          <pre className="rounded-lg bg-gray-100 p-4 text-sm">
+          {/* <pre className="rounded-lg bg-gray-100 p-4 text-sm">
             {JSON.stringify(data, null, 2)}
-          </pre>
+          </pre> */}
         </div>
 
         {/* {StatCard} */}
