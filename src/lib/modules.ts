@@ -51,7 +51,7 @@ export const MODULES: ModuleDef[] = [
   },
   {
     id: "hris",
-    href: "/hris/overview",
+    href: "/hris/dashboard",
     name: "HRIS",
     subtitle: "Human Resource Information System",
     description:

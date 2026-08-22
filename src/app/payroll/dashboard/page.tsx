@@ -156,7 +156,7 @@ export default function PayrollPage() {
       {/* Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#1F2937]">Payroll</h1>
+          <h1 className="text-3xl font-bold text-[#1F2937]">Payroll</h1>
 
           <p className="mt-1 text-base text-[#6B7280]">
             Manage salary processing, statutory deductions, and disbursements.

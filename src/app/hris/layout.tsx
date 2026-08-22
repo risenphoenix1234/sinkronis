@@ -1,12 +1,12 @@
 // src/app/hris/layout.tsx
 import DashboardLayout from "@/components/layout/DashboardLayout";
- 
+
 import { SidebarItem } from "@/components/layout/Sidebar";
 
 const sidebarItems: SidebarItem[] = [
   {
-    label: "Overview",
-    href: "/hris/overview",
+    label: "Dashboard",
+    href: "/hris/dashboard",
     icon: "dashboard",
   },
   {
@@ -44,11 +44,6 @@ const sidebarItems: SidebarItem[] = [
     href: "/hris/conduct",
     icon: "conduct",
   },
-  {
-    label: "Settings",
-    href: "/hris/settings",
-    icon: "settings",
-  },
 ];
 
 export default function HRISLayout({
@@ -58,11 +53,8 @@ export default function HRISLayout({
 }) {
   return (
     <div className="flex h-screen overflow-hidden">
-    
-
       <div className="min-w-0 flex-1 overflow-x-auto">
         <DashboardLayout
-          navbarTitle="HRIS"
           sidebarTitle="HRIS"
           sidebarItems={sidebarItems}
         >

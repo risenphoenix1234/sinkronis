@@ -6,6 +6,7 @@ import DeductionsLoans from "@/components/payroll/employee/DeductionsLoans";
 import EmployeeOverview from "@/components/payroll/employee/EmployeeOverview";
 import PayBreakdown from "@/components/payroll/employee/PayBreakdown";
 import PayrollHistory from "@/components/payroll/employee/PayrollHistory";
+import RemoveFromPayrollModal from "@/components/payroll/employee/RemoveFromPayroll";
 import { ChevronLeft } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -119,7 +120,9 @@ export default function EmployeePayrollDetailsPage() {
   const params = useParams();
 
   const [addToPayRollOpen, setAddToPayRollOpen] = useState(false);
+  const [removeFromPayrollOpen, setRemoveFromPayrollOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Overview");
+  const [isOnPayroll, setIsOnPayroll] = useState(false);
 
   // Safely get employeeName from the URL
   const employeeNameParam = params?.employeeName;
@@ -128,8 +131,28 @@ export default function EmployeePayrollDetailsPage() {
     ? decodeURIComponent(employeeNameParam[0] ?? "")
     : decodeURIComponent(employeeNameParam ?? "Employee");
 
+  // Shared employee details used by both modals — replace with real data
+  // from your API/state once this page is wired to a data source.
+  const employeeSummary = {
+    name: employeeName || "Adaeze Nwachukwu",
+    role: "Support Lead",
+    department: "Customer Support",
+    grossPay: "₦243,000",
+    netPay: "₦206,603",
+  };
+
+  const handleConfirmAddToPayroll = () => {
+    setIsOnPayroll(true);
+    setAddToPayRollOpen(false);
+  };
+
+  const handleConfirmRemoveFromPayroll = () => {
+    setIsOnPayroll(false);
+    setRemoveFromPayrollOpen(false);
+  };
+
   return (
-    <main className="min-h-screen bg-[#F8F9FA] px-4 py-6 text-[#263342] sm:px-6 lg:px-7">
+    <main className="min-h-screen bg-[#F8F9FA] p-4 text-[#263342] sm:px-6">
       {/* ================================================================ */}
       {/* BACK BUTTON */}
       {/* ================================================================ */}
@@ -201,15 +224,27 @@ export default function EmployeePayrollDetailsPage() {
             </div>
 
             <div className="text-right">
-              <p className="text-xs font-medium text-[#98A2B3]">Off Payroll</p>
+              <p className="text-xs font-medium text-[#98A2B3]">
+                {isOnPayroll ? "On Payroll" : "Off Payroll"}
+              </p>
 
-              <button
-                type="button"
-                onClick={() => setAddToPayRollOpen(true)}
-                className="mt-1 rounded bg-[#1683D8] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[#0D6EBA]"
-              >
-                Add to Payroll
-              </button>
+              {isOnPayroll ? (
+                <button
+                  type="button"
+                  onClick={() => setRemoveFromPayrollOpen(true)}
+                  className="mt-1 rounded bg-[#78350F] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[#5C2A0A]"
+                >
+                  Remove from Payroll
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setAddToPayRollOpen(true)}
+                  className="mt-1 rounded bg-[#1683D8] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[#0D6EBA]"
+                >
+                  Add to Payroll
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -263,10 +298,15 @@ export default function EmployeePayrollDetailsPage() {
       <AddToPayrollModal
         isOpen={addToPayRollOpen}
         onClose={() => setAddToPayRollOpen(false)}
-        onConfirm={function (): void {
-          throw new Error("Function not implemented.");
-        }}
-        employeeName={""}
+        onConfirm={handleConfirmAddToPayroll}
+        employeeName={employeeSummary.name}
+      />
+
+      <RemoveFromPayrollModal
+        open={removeFromPayrollOpen}
+        onClose={() => setRemoveFromPayrollOpen(false)}
+        onConfirm={handleConfirmRemoveFromPayroll}
+        employee={employeeSummary}
       />
     </main>
   );

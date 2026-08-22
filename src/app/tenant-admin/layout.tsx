@@ -83,7 +83,6 @@ export default function TenantAdminLayout({
     <div className="flex h-screen overflow-hidden">
       <div className="min-w-0 flex-1 overflow-x-auto">
         <DashboardLayout
-          navbarTitle="Tenant Admin"
           sidebarTitle="Tenant Admin"
           sidebarItems={sidebarItems}
         >

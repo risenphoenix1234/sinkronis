@@ -58,7 +58,6 @@ export default function PlatformAdminLayout({
 
       <div className="min-w-0 flex-1 overflow-x-auto">
         <DashboardLayout
-          navbarTitle="Platform Admin"
           sidebarTitle="Platform Admin"
           sidebarItems={sidebarItems}
         >

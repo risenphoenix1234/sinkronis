@@ -43,7 +43,7 @@ export default function AccountingDashboardPage() {
   const [showNotifications, setShowNotifications] = useState(false);
 
   return (
-    <section className="relative space-y-6">
+    <section className="relative space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

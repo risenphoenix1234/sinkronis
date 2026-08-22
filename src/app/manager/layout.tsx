@@ -18,7 +18,6 @@ export default function ManagerLayout({
 }) {
   return (
     <DashboardLayout
-      navbarTitle="Manager"
       sidebarTitle="Manager"
       sidebarItems={sidebarItems}
     >

@@ -4,15 +4,93 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/ui/hooks/useAuth";
+import {
+  getTenants,
+  overrideTenantSubscription,
+  setTenantModule,
+} from "@/lib/api/platformAdmin";
+import { registerOrganization } from "@/lib/api/register";
+import { createEmployee } from "@/lib/api/hris";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { signIn, loading, error } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [organizationSlug, setOrganizationSlug] = useState("");
 
-  const handleSignIn = () => {
-    // Static — no real auth yet. Sends you to the module picker.
-    router.push("/modules");
+  const handleCheckTenant = async () => {
+    const res = await getTenants();
+    console.log("Tenants:", res.data);
+  };
+
+  const handleAssignPlan = async () => {
+    try {
+      const res = await overrideTenantSubscription(
+        "cmt3z13pp00013qmx28aeatfx", // frontend-test-company's org id
+        "ALL_IN_ONE",
+        "Frontend testing",
+      );
+      console.log("Plan assigned:", res);
+    } catch (err: any) {
+      console.error(
+        "Plan assignment failed:",
+        err.response?.data || err.message,
+      );
+    }
+  };
+
+  const handleActivateHris = async () => {
+    try {
+      const res = await setTenantModule(
+        "cmt3z13pp00013qmx28aeatfx",
+        "hris",
+        true,
+      );
+      console.log("Module activated:", res);
+    } catch (err: any) {
+      console.error("Activation failed:", err.response?.data || err.message);
+    }
+  };
+
+  const handleTestCreateEmployee = async () => {
+    try {
+      const res = await createEmployee({
+        employeeId: "EMP-001",
+        firstName: "Jane",
+        lastName: "Doe",
+        email: "jane.doe@frontendtestcompany.com",
+        phoneNumber: "+2348012345678",
+        departmentId: "",
+        position: "Software Engineer",
+        joinedDate: new Date().toISOString(),
+        lifecycleStatus: "PROBATION",
+        operationalStatus: "ACTIVE",
+        workMode: "ONSITE",
+        monthlySalary: 500000,
+      });
+      console.log("Employee created:", res);
+    } catch (err: any) {
+      console.error(
+        "Create employee failed:",
+        err.response?.data || err.message,
+      );
+    }
+  };
+
+  const handleSignIn = async () => {
+    try {
+      await signIn({
+        organizationSlug: "default",
+        email,
+        password,
+      });
+
+      router.push("/modules");
+    } catch {
+      // Error is already handled by useAuth.
+    }
   };
 
   return (
@@ -24,6 +102,19 @@ export default function LoginPage() {
         </p>
 
         <div className="space-y-4">
+          {/* <div>
+            <label className="mb-1.5 block text-[13px] font-medium text-[#344054]">
+              Organization
+            </label>
+            <input
+              type="text"
+              value={organizationSlug}
+              onChange={(e) => setOrganizationSlug(e.target.value)}
+              placeholder="acme-logistics"
+              className="w-full rounded-lg border border-[#E5E9F0] px-4 py-3 text-[15px] text-[#1F2937] outline-none transition focus:border-[#2388D0] focus:ring-2 focus:ring-[#2388D0]/15"
+            />
+          </div> */}
+
           <div>
             <label className="mb-1.5 block text-[13px] font-medium text-[#344054]">
               Email
@@ -48,22 +139,62 @@ export default function LoginPage() {
               placeholder="••••••••"
               className="w-full rounded-lg border border-[#E5E9F0] px-4 py-3 text-[15px] text-[#1F2937] outline-none transition focus:border-[#2388D0] focus:ring-2 focus:ring-[#2388D0]/15"
             />
+            {error && <p className="text-[13px] text-red-500">{error}</p>}
           </div>
 
           <button
             type="button"
             onClick={handleSignIn}
-            className="mt-2 flex h-[52px] w-full items-center justify-center rounded-lg bg-gradient-to-r from-[#1F88C7] to-[#0CB4D1] font-semibold text-white transition hover:opacity-90"
+            disabled={loading}
+            className="mt-2 flex h-[52px] w-full items-center justify-center rounded-lg bg-gradient-to-r from-[#1F88C7] to-[#0CB4D1] font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
           >
-            Sign in
+            {loading ? "Signing in..." : "Sign in"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleTestCreateEmployee}
+            className="mt-2 w-full text-sm text-gray-500 underline"
+          >
+            Test Create Employee (temp)
+          </button>
+
+          <button
+            type="button"
+            onClick={handleActivateHris}
+            className="mt-2 w-full text-sm text-gray-500 underline"
+          >
+            Test Activate HRIS (temp)
+          </button>
+
+          <button
+            type="button"
+            onClick={handleAssignPlan}
+            className="mt-2 w-full text-sm text-gray-500 underline"
+          >
+            Test Assign Plan (temp)
+          </button>
+
+           <button
+            type="button"
+            onClick={handleCheckTenant}
+            className="mt-2 w-full text-sm text-gray-500 underline"
+          >
+            Test Check Tenant (temp)
           </button>
         </div>
 
         <div className="mt-5 flex justify-between text-[13px] text-[#667085]">
-          <Link href="/forgot-password" className="hover:text-[#2388D0] hover:underline">
+          <Link
+            href="/forgot-password"
+            className="hover:text-[#2388D0] hover:underline"
+          >
             Forgot password?
           </Link>
-          <Link href="/register" className="hover:text-[#2388D0] hover:underline">
+          <Link
+            href="/register"
+            className="hover:text-[#2388D0] hover:underline"
+          >
             Create account
           </Link>
         </div>

@@ -78,7 +78,6 @@ export default function AccountingLayout({
 
       <div className="min-w-0 flex-1 overflow-x-auto">
         <DashboardLayout
-          navbarTitle="Accounting"
           sidebarTitle="Accounting"
           sidebarItems={sidebarItems}
         >

@@ -1,31 +1,36 @@
-// src/components/layout/DashboardLayout.tsx
+import type { ReactNode } from "react";
+
 import ModuleRail from "@/components/ModuleRail";
 import Navbar from "./Navbar";
 import Sidebar, { SidebarItem } from "./Sidebar";
 
 interface DashboardLayoutProps {
-  navbarTitle: string;
   sidebarTitle: string;
   sidebarItems: SidebarItem[];
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export default function DashboardLayout({
-  navbarTitle,
   sidebarTitle,
   sidebarItems,
   children,
 }: DashboardLayoutProps) {
   return (
-    <div className="flex h-screen overflow-hidden">
-      <ModuleRail />
-      <Sidebar title={sidebarTitle} items={sidebarItems} />
+    <div className="min-h-screen bg-white">
+      {/* Full-width top navigation */}
+      <Navbar />
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <Navbar title={navbarTitle} />
+      {/* Dashboard body */}
+      <div className="flex min-h-[calc(100vh-80px)]">
+        {/* Module navigation */}
+        <ModuleRail />
 
-        <main className="flex-1 overflow-y-auto bg-slate-50 p-4">
-          <div className="mx-auto">{children}</div>
+        {/* Module sidebar */}
+        <Sidebar title={sidebarTitle} items={sidebarItems} />
+
+        {/* Page content */}
+        <main className="min-w-0 flex-1">
+          <div className="mx-auto w-full">{children}</div>
         </main>
       </div>
     </div>

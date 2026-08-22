@@ -1,11 +1,12 @@
 // src/components/layout/Sidebar.tsx
 "use client";
 
+import { FileMinus, FileSliders } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
- FiBarChart2,
+  FiBarChart2,
   FiBell,
   FiBriefcase,
   FiCalendar,
@@ -14,21 +15,34 @@ import {
   FiChevronRight,
   FiCreditCard,
   FiDollarSign,
+  FiFileMinus,
   FiFileText,
+  FiGift,
   FiGrid,
   FiHelpCircle,
+  FiInbox,
   FiLock,
+  FiMinus,
+  FiMinusCircle,
   FiPackage,
   FiPieChart,
+  FiPlay,
+  FiPlayCircle,
   FiSettings,
   FiShield,
   FiSliders,
   FiTag,
   FiUsers,
-  
-
-   
 } from "react-icons/fi";
+import {
+  RiFile2Fill,
+  RiFile3Fill,
+  RiFile4Line,
+  RiFileAddFill,
+  RiFileForbidLine,
+  RiFileSettingsFill,
+  RiFileTextLine,
+} from "react-icons/ri";
 
 const sidebarIcons = {
   // Platform Admin
@@ -48,6 +62,26 @@ const sidebarIcons = {
   leave: FiCalendar,
   appraisal: FiBarChart2,
   conduct: FiUsers,
+
+  // PAYROLL
+  "payroll-dashboard": FiGrid,
+  employee: FiUsers,
+  payee: FiUsers,
+  payruns: FiPlayCircle,
+  payslips: FiFileMinus,
+  deduction: FiMinus,
+  "payroll-wallet": FiDollarSign,
+  "payroll-tax": FiDollarSign,
+  pension: FiBarChart2,
+  "payroll-reports": FiSliders,
+
+  //EMPLOYEE
+  "employee-dashboard": FiGrid,
+  profile: FiUsers,
+  "employee-attendance": FiCalendar,
+  "employee-leave": FiCalendar,
+  "employee-appraisal": FiBarChart2,
+  inbox: FiInbox,
 
   // Accounting
   customer: FiUsers,
@@ -95,9 +129,7 @@ function SidebarChildGroup({
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const itemRefs = useRef<
-    Record<string, HTMLAnchorElement | null>
-  >({});
+  const itemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
 
   const [indicator, setIndicator] = useState<{
     top: number;
@@ -106,9 +138,7 @@ function SidebarChildGroup({
 
   const activeHref =
     subItems.find(
-      (c) =>
-        pathname === c.href ||
-        pathname.startsWith(`${c.href}/`)
+      (c) => pathname === c.href || pathname.startsWith(`${c.href}/`),
     )?.href ?? null;
 
   useEffect(() => {
@@ -153,8 +183,7 @@ function SidebarChildGroup({
       <div className="space-y-0.5">
         {subItems.map((child) => {
           const childActive =
-            pathname === child.href ||
-            pathname.startsWith(`${child.href}/`);
+            pathname === child.href || pathname.startsWith(`${child.href}/`);
 
           return (
             <Link
@@ -178,27 +207,19 @@ function SidebarChildGroup({
   );
 }
 
-export default function Sidebar({
-  title,
-  items,
-}: SidebarProps) {
+export default function Sidebar({ title, items }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [openGroups, setOpenGroups] = useState<
-    Record<string, boolean>
-  >(() => {
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
 
     items.forEach((item) => {
       if (
         (item.href &&
-          (pathname === item.href ||
-            pathname.startsWith(`${item.href}/`))) ||
+          (pathname === item.href || pathname.startsWith(`${item.href}/`))) ||
         item.children?.some(
-          (c) =>
-            pathname === c.href ||
-            pathname.startsWith(`${c.href}/`)
+          (c) => pathname === c.href || pathname.startsWith(`${c.href}/`),
         )
       ) {
         initial[item.label] = true;
@@ -228,27 +249,18 @@ export default function Sidebar({
           /*
            * GROUP WITH CHILDREN
            */
-          if (
-            item.children &&
-            item.children.length > 0
-          ) {
-            const isOpen =
-              openGroups[item.label] ?? false;
+          if (item.children && item.children.length > 0) {
+            const isOpen = openGroups[item.label] ?? false;
 
             const isGroupActive =
               (item.href
-                ? pathname === item.href ||
-                  pathname.startsWith(`${item.href}/`)
+                ? pathname === item.href || pathname.startsWith(`${item.href}/`)
                 : false) ||
               item.children.some(
-                (c) =>
-                  pathname === c.href ||
-                  pathname.startsWith(`${c.href}/`)
+                (c) => pathname === c.href || pathname.startsWith(`${c.href}/`),
               );
 
-            const Icon = item.icon
-              ? sidebarIcons[item.icon]
-              : null;
+            const Icon = item.icon ? sidebarIcons[item.icon] : null;
 
             return (
               <div key={item.label}>
@@ -268,12 +280,7 @@ export default function Sidebar({
                   }`}
                 >
                   <span className="flex items-center gap-3">
-                    {Icon && (
-                      <Icon
-                        size={17}
-                        strokeWidth={1.8}
-                      />
-                    )}
+                    {Icon && <Icon size={17} strokeWidth={1.8} />}
 
                     <span>{item.label}</span>
                   </span>
@@ -299,13 +306,10 @@ export default function Sidebar({
            * REGULAR ITEM
            */
           const isActive = item.href
-            ? pathname === item.href ||
-              pathname.startsWith(`${item.href}/`)
+            ? pathname === item.href || pathname.startsWith(`${item.href}/`)
             : false;
 
-          const Icon = item.icon
-            ? sidebarIcons[item.icon]
-            : null;
+          const Icon = item.icon ? sidebarIcons[item.icon] : null;
 
           return (
             <Link
@@ -317,12 +321,7 @@ export default function Sidebar({
                   : "text-slate-700 hover:bg-slate-100"
               }`}
             >
-              {Icon && (
-                <Icon
-                  size={17}
-                  strokeWidth={1.8}
-                />
-              )}
+              {Icon && <Icon size={17} strokeWidth={1.8} />}
 
               <span>{item.label}</span>
             </Link>
