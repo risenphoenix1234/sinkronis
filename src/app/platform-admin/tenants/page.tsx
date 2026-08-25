@@ -1,75 +1,83 @@
-// src/app/platform-admin/tenants/page.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Search, Plus, Eye, Ban } from "lucide-react";
-import {
-  allTenants,
-  naira,
-  planStyles,
-  statusStyles,
-  moduleStyles,
-  Plan,
-  ModuleName,
-  Tenant,
-} from "@/lib/pa-tenants-data";
+import { getTenants, createTenant, suspendTenant } from "@/lib/api/platform-admin";
+import { Tenant } from "@/lib/api/types/platform-admin.types";
 import AddTenantModal, { NewTenantInput } from "@/components/modals/AddTenantModal";
 
-const ALL_MODULES: ModuleName[] = ["HRIS", "Accounting", "Payroll"];
-const ALL_PLANS: Plan[] = ["Starter", "Growth", "Enterprise", "Trial"];
+const ALL_MODULES = ["HRIS", "Accounting", "Payroll"];
+
+const naira = (n: number) => `₦${n.toLocaleString()}`;
+
+const statusStyles: Record<string, string> = {
+  ACTIVE: "bg-emerald-50 text-emerald-600",
+  TRIAL: "bg-amber-50 text-amber-600",
+  SUSPENDED: "bg-red-50 text-red-600",
+};
+
+const moduleStyles: Record<string, string> = {
+  HRIS: "bg-sky-50 text-sky-600",
+  Accounting: "bg-violet-50 text-violet-600",
+  Payroll: "bg-orange-50 text-orange-600",
+};
 
 export default function TenantsPage() {
-  const [tenants, setTenants] = useState<Tenant[]>(allTenants);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [searchTerm, setSearchTerm] = useState("");
-  const [planFilter, setPlanFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [moduleFilter, setModuleFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
 
-  const filteredTenants = useMemo(() => {
-    return tenants.filter((tenant) => {
-      const matchesSearch =
-        !searchTerm ||
-        tenant.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tenant.adminEmail.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesPlan = !planFilter || tenant.plan === planFilter;
-      const matchesStatus = !statusFilter || tenant.status === statusFilter;
-      const enabledModules = (Object.keys(tenant.activeModules) as ModuleName[]).filter(
-        (m) => tenant.activeModules[m]
-      );
-      const matchesModule = !moduleFilter || enabledModules.includes(moduleFilter as ModuleName);
-      return matchesSearch && matchesPlan && matchesStatus && matchesModule;
-    });
-  }, [tenants, searchTerm, planFilter, statusFilter, moduleFilter]);
+  const fetchTenants = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await getTenants({
+        search: searchTerm || undefined,
+        status: statusFilter || undefined,
+        module: moduleFilter || undefined,
+      });
+      setTenants(res.data);
+    } catch (err) {
+      setError("Failed to load tenants.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleAddTenant = (input: NewTenantInput) => {
-    const newTenant: Tenant = {
-      id: input.companyName.toLowerCase().trim().replace(/\s+/g, "-"),
-      company: input.companyName,
-      industry: "—",
-      adminEmail: input.adminEmail,
-      plan: input.plan,
-      status: input.plan === "Trial" ? "Trial" : "Active",
-      mrr: 0,
-      country: input.country,
-      createdDate: new Date().toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      }),
-      about: `${input.companyName} was just added to the platform.`,
-      activeModules: {
-        HRIS: input.modules.includes("HRIS"),
-        Accounting: input.modules.includes("Accounting"),
-        Payroll: input.modules.includes("Payroll"),
-      },
-      users: [],
-      activity: [],
-      invoices: [],
-      tickets: [],
-    };
-    setTenants((prev) => [newTenant, ...prev]);
+  useEffect(() => {
+    const debounce = setTimeout(fetchTenants, 400);
+    return () => clearTimeout(debounce);
+  }, [searchTerm, statusFilter, moduleFilter]);
+
+  const handleAddTenant = async (input: NewTenantInput) => {
+    try {
+      await createTenant({
+        companyName: input.companyName,
+        adminEmail: input.adminEmail,
+        subscriptionPlan: input.subscriptionPlan as any,
+        country: input.country,
+        industry: input.industry,
+      });
+      setShowModal(false);
+      fetchTenants();
+    } catch (err) {
+      alert("Failed to add tenant.");
+    }
+  };
+
+  const handleSuspend = async (tenantId: string) => {
+    try {
+      await suspendTenant(tenantId);
+      fetchTenants();
+    } catch (err) {
+      alert("Failed to suspend tenant.");
+    }
   };
 
   return (
@@ -83,14 +91,14 @@ export default function TenantsPage() {
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-1.5 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white bg-sky-600  hover:bg-brand-700"
+          className="flex items-center gap-1.5 rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
         >
           <Plus className="h-4 w-4" />
           Add Tenant
         </button>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-[2fr_1fr_1fr_1fr]">
+      <div className="grid gap-3 sm:grid-cols-[2fr_1fr_1fr]">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
@@ -98,38 +106,25 @@ export default function TenantsPage() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by company, email or industry..."
-            className="w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+            className="w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
           />
         </div>
 
         <select
-          value={planFilter}
-          onChange={(e) => setPlanFilter(e.target.value)}
-          className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
-        >
-          <option value="">All Plans</option>
-          {ALL_PLANS.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </select>
-
-        <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+          className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
         >
           <option value="">All Statuses</option>
-          <option value="Active">Active</option>
-          <option value="Trial">Trial</option>
-          <option value="Suspended">Suspended</option>
+          <option value="ACTIVE">Active</option>
+          <option value="TRIAL">Trial</option>
+          <option value="SUSPENDED">Suspended</option>
         </select>
 
         <select
           value={moduleFilter}
           onChange={(e) => setModuleFilter(e.target.value)}
-          className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+          className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
         >
           <option value="">All Modules</option>
           {ALL_MODULES.map((m) => (
@@ -145,72 +140,102 @@ export default function TenantsPage() {
           <thead>
             <tr className="border-b border-slate-100 text-xs text-slate-500">
               <th className="px-5 py-3 font-medium">Company</th>
+              <th className="px-5 py-3 font-medium">Plan</th>
               <th className="px-5 py-3 font-medium">Modules</th>
               <th className="px-5 py-3 font-medium">Users</th>
-              <th className="px-5 py-3 font-medium">MRR ₦</th>
+              <th className="px-5 py-3 font-medium">MRR</th>
               <th className="px-5 py-3 font-medium">Status</th>
               <th className="px-5 py-3 font-medium">Last Active</th>
               <th className="px-5 py-3 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredTenants.map((tenant) => {
-              const enabledModules = (Object.keys(tenant.activeModules) as ModuleName[]).filter(
-                (m) => tenant.activeModules[m]
-              );
-              return (
+            {loading && (
+              <tr>
+                <td colSpan={8} className="px-5 py-10 text-center text-sm text-slate-400">
+                  Loading tenants...
+                </td>
+              </tr>
+            )}
+
+            {!loading && error && (
+              <tr>
+                <td colSpan={8} className="px-5 py-10 text-center text-sm text-red-500">
+                  {error}
+                </td>
+              </tr>
+            )}
+
+            {!loading &&
+              !error &&
+              tenants.map((tenant) => (
                 <tr
-                  key={tenant.id}
+                  key={tenant.organizationId}
                   className="border-b border-slate-50 last:border-0 hover:bg-slate-50"
                 >
                   <td className="px-5 py-3">
-                    <p className="font-medium text-slate-800">{tenant.company}</p>
-                    <p className="text-xs text-slate-400">{tenant.adminEmail}</p>
+                    <p className="font-medium text-slate-800">{tenant.organizationName}</p>
+                    <p className="text-xs text-slate-400">{tenant.companyEmail}</p>
                   </td>
-                  <td className="px-5 py-3">
-                    <div className="flex flex-wrap gap-1">
-                      {enabledModules.map((mod) => (
-                        <span
-                          key={mod}
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${moduleStyles[mod]}`}
-                        >
-                          {mod}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-5 py-3 text-slate-700">{tenant.users.length}</td>
-                  <td className="px-5 py-3 text-slate-700">{naira(tenant.mrr)}</td>
+                
+                
+                
+                  <td className="px-5 py-3 text-slate-700">{tenant.currentPlan.name}</td>
+                 <td className="px-5 py-3">
+  <div className="flex flex-wrap gap-1">
+    {tenant.activeModules.length === 0 && (
+      <span className="text-xs text-slate-400">—</span>
+    )}
+    {tenant.activeModules.map((mod) => (
+      <span
+        key={mod.id}
+        className={`rounded-full px-2 py-0.5 text-xs font-medium ${moduleStyles[mod.key] ?? "bg-slate-50 text-slate-600"}`}
+      >
+        {mod.name}
+      </span>
+    ))}
+  </div>
+</td>
+                  <td className="px-5 py-3 text-slate-700">{tenant.totalUsers}</td>
+                  <td className="px-5 py-3 text-slate-700">{naira(tenant.monthlyRecurringRevenue)}</td>
                   <td className="px-5 py-3">
                     <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusStyles[tenant.status]}`}
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusStyles[tenant.subscriptionStatus]}`}
                     >
-                      {tenant.status}
+                      {tenant.subscriptionStatus}
                     </span>
                   </td>
-                  <td className="px-5 py-3 text-slate-500">{tenant.createdDate}</td>
+                  <td className="px-5 py-3 text-slate-500">
+                    {new Date(tenant.lastActiveAt).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
                       <Link
-                        href={`/platform-admin/tenants/${tenant.id}`}
-                        className="flex items-center gap-1 text-xs font-medium text-brand-600 hover:underline"
+                        href={`/platform-admin/tenants/${tenant.organizationId}`}
+                        className="flex items-center gap-1 text-xs font-medium text-sky-600 hover:underline"
                       >
                         <Eye className="h-3.5 w-3.5" />
                         View
                       </Link>
-                      <button className="flex items-center gap-1 text-xs font-medium text-red-600 hover:underline">
+                      <button
+                        onClick={() => handleSuspend(tenant.organizationId)}
+                        className="flex items-center gap-1 text-xs font-medium text-red-600 hover:underline"
+                      >
                         <Ban className="h-3.5 w-3.5" />
                         Suspend
                       </button>
                     </div>
                   </td>
                 </tr>
-              );
-            })}
+              ))}
 
-            {filteredTenants.length === 0 && (
+            {!loading && !error && tenants.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-5 py-10 text-center text-sm text-slate-400">
+                <td colSpan={8} className="px-5 py-10 text-center text-sm text-slate-400">
                   No tenants match your filters.
                 </td>
               </tr>
