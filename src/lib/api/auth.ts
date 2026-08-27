@@ -1,28 +1,35 @@
-import api from "@/lib/axios";
+import api from "./axios";
+import { LoginPayload, LoginResponse, MeResponse } from "./types/auth.types";
 
-export interface LoginPayload {
-  organizationSlug: string;
-  email: string;
+export const login = async (payload: LoginPayload) => {
+  const { data } = await api.post<LoginResponse>("/auth/login", payload);
+  return data;
+};
+
+export interface AcceptInvitationPayload {
+  token: string;
   password: string;
+  confirmPassword: string;
 }
 
-export interface LoginResponse {
-  user: {
-    id: string;
-    organizationId: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    role: string;
-    lastLoginAt: string | null;
+export interface AcceptInvitationResponse {
+  message: string;
+  organization: {
+    name: string;
+    slug: string;
   };
-  tokens: {
-    accessToken: string;
-    refreshToken: string;
-  };
+  email: string;
 }
 
-export const login = async (payload: LoginPayload): Promise<LoginResponse> => {
-  const response = await api.post<LoginResponse>("/auth/login", payload);
-  return response.data;
+export const acceptTenantInvitation = async (payload: AcceptInvitationPayload) => {
+  const { data } = await api.post<AcceptInvitationResponse>(
+    "/auth/tenant-invitations/accept",
+    payload
+  );
+  return data;
+};
+
+export const getMe = async () => {
+  const { data } = await api.get<MeResponse>("/auth/me");
+  return data;
 };

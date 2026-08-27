@@ -3,17 +3,29 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import { Plan, ModuleName } from "@/lib/pa-tenants-data";
 
-const ALL_PLANS: Plan[] = ["Starter", "Growth", "Enterprise", "Trial"];
-const ALL_MODULES: ModuleName[] = ["HRIS", "Accounting", "Payroll"];
+const PLAN_MODULES: Record<string, string[]> = {
+  HRIS: ["HRIS"],
+  PAYROLL: ["Payroll"],
+  ACCOUNTING: ["Accounting"],
+  ALL_IN_ONE: ["HRIS", "Payroll", "Accounting"],
+};
+
+const ALL_PLANS = ["HRIS", "PAYROLL", "ACCOUNTING", "ALL_IN_ONE"];
+
+const COUNTRIES = [
+  { code: "NG", name: "Nigeria" },
+  { code: "GH", name: "Ghana" },
+  { code: "KE", name: "Kenya" },
+  { code: "ZA", name: "South Africa" },
+];
 
 export interface NewTenantInput {
   companyName: string;
   adminEmail: string;
-  plan: Plan;
-  modules: ModuleName[];
+  subscriptionPlan: string;
   country: string;
+  industry?: string;
 }
 
 interface AddTenantModalProps {
@@ -25,27 +37,23 @@ interface AddTenantModalProps {
 export default function AddTenantModal({ open, onClose, onAdd }: AddTenantModalProps) {
   const [companyName, setCompanyName] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
-  const [plan, setPlan] = useState<Plan | "">("");
-  const [modules, setModules] = useState<ModuleName[]>([]);
-  const [country, setCountry] = useState("Nigeria");
+  const [subscriptionPlan, setSubscriptionPlan] = useState("");
+  const [country, setCountry] = useState("NG");
+  const [industry, setIndustry] = useState("");
 
   if (!open) return null;
 
-  const toggleModule = (mod: ModuleName) => {
-    setModules((prev) =>
-      prev.includes(mod) ? prev.filter((m) => m !== mod) : [...prev, mod]
-    );
-  };
+  const derivedModules = subscriptionPlan ? PLAN_MODULES[subscriptionPlan] ?? [] : [];
 
   const handleSubmit = () => {
-    if (!companyName || !adminEmail || !plan) return; // basic guard for required fields
+    if (!companyName || !adminEmail || !subscriptionPlan) return;
 
     onAdd({
       companyName,
       adminEmail,
-      plan,
-      modules,
+      subscriptionPlan,
       country,
+      industry: industry || undefined,
     });
 
     onClose();
@@ -79,8 +87,8 @@ export default function AddTenantModal({ open, onClose, onAdd }: AddTenantModalP
               type="text"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
-              placeholder="e.g. Acme Corp"
-              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+              placeholder="e.g. Acme Nigeria Limited"
+              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
             />
           </div>
 
@@ -92,17 +100,19 @@ export default function AddTenantModal({ open, onClose, onAdd }: AddTenantModalP
               type="email"
               value={adminEmail}
               onChange={(e) => setAdminEmail(e.target.value)}
-              placeholder="admin@company.ng"
-              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+              placeholder="admin@acme.example"
+              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
             />
           </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-700">Plan</label>
+            <label className="text-xs font-medium text-slate-700">
+              Subscription Plan <span className="text-red-500">*</span>
+            </label>
             <select
-              value={plan}
-              onChange={(e) => setPlan(e.target.value as Plan)}
-              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+              value={subscriptionPlan}
+              onChange={(e) => setSubscriptionPlan(e.target.value)}
+              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
             >
               <option value="">Select a plan</option>
               {ALL_PLANS.map((p) => (
@@ -115,17 +125,17 @@ export default function AddTenantModal({ open, onClose, onAdd }: AddTenantModalP
 
           <div>
             <label className="text-xs font-medium text-slate-700">Modules</label>
-            <div className="mt-2 flex gap-4">
-              {ALL_MODULES.map((mod) => (
-                <label key={mod} className="flex items-center gap-1.5 text-sm text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={modules.includes(mod)}
-                    onChange={() => toggleModule(mod)}
-                    className="h-3.5 w-3.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-                  />
+            <div className="mt-2 flex flex-wrap gap-2">
+              {derivedModules.length === 0 && (
+                <span className="text-xs text-slate-400">Select a plan to see included modules</span>
+              )}
+              {derivedModules.map((mod) => (
+                <span
+                  key={mod}
+                  className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600"
+                >
                   {mod}
-                </label>
+                </span>
               ))}
             </div>
           </div>
@@ -135,20 +145,32 @@ export default function AddTenantModal({ open, onClose, onAdd }: AddTenantModalP
             <select
               value={country}
               onChange={(e) => setCountry(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
             >
-              <option value="Nigeria">Nigeria</option>
-              <option value="Ghana">Ghana</option>
-              <option value="Kenya">Kenya</option>
-              <option value="South Africa">South Africa</option>
+              {COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
             </select>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-slate-700">Industry</label>
+            <input
+              type="text"
+              value={industry}
+              onChange={(e) => setIndustry(e.target.value)}
+              placeholder="e.g. Technology"
+              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+            />
           </div>
         </div>
 
         <div className="mt-6 flex gap-3">
           <button
             onClick={handleSubmit}
-            className="flex-1 rounded-md bg-brand-600 py-2 text-sm font-medium text-white hover:bg-brand-700"
+            className="flex-1 rounded-md bg-sky-600 py-2 text-sm font-medium text-white hover:bg-sky-700"
           >
             Add Tenant
           </button>
