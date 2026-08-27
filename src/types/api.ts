@@ -2,7 +2,9 @@ export interface ApiResponse<T> {
   success: boolean;
   message: string;
   data: T;
-  metadata?: Record<string, any>;
+  errorCode?: string | null;
+  validationErrors?: unknown;
+  metadata?: Record<string, unknown>;
   pagination?: {
     page: number;
     limit: number;
