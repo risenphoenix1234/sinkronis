@@ -1,4 +1,4 @@
-import api from "./axios";
+import api from "../axios";
 import { LoginPayload, LoginResponse, MeResponse } from "./types/auth.types";
 
 export const login = async (payload: LoginPayload) => {

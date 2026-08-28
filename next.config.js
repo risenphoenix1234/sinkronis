@@ -8,14 +8,6 @@ const nextConfig = {
       },
     ],
   },
-  async rewrites() {
-    return [
-      {
-        source: "/api/proxy/:path*",
-        destination: "https://sinkronis-backend.vercel.app/api/v1/:path*",
-      },
-    ];
-  },
 };
 
 module.exports = nextConfig;

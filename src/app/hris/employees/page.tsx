@@ -2,14 +2,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  createEmployee,
-  getDepartments,
-  getEmployees,
-} from "@/lib/api/hris";
+import { createEmployee, getEmployees } from "@/lib/api/hris";
 import {
   CreateEmployeePayload,
-  Department,
   Employee,
   LifecycleStatus,
   OperationalStatus,
@@ -33,7 +28,6 @@ const emptyForm: CreateEmployeePayload = {
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -46,12 +40,8 @@ export default function EmployeesPage() {
     setLoading(true);
     setLoadError(null);
     try {
-      const [employeesRes, departmentsRes] = await Promise.all([
-        getEmployees(),
-        getDepartments().catch(() => ({ data: [] as Department[] })), // don't block on this
-      ]);
+      const employeesRes = await getEmployees();
       setEmployees(employeesRes.data);
-      setDepartments(departmentsRes.data);
     } catch (err: any) {
       setLoadError(
         err.response?.data?.message || "Couldn't load employees. Try again."
@@ -182,32 +172,17 @@ export default function EmployeesPage() {
                 />
               </Field>
 
-              <Field label="Department">
-                {departments.length > 0 ? (
-                  <select
-                    required
-                    value={form.departmentId}
-                    onChange={(e) => updateField("departmentId", e.target.value)}
-                    className={inputClass}
-                  >
-                    <option value="" disabled>
-                      Select a department
-                    </option>
-                    {departments.map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.name}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    required
-                    value={form.departmentId}
-                    onChange={(e) => updateField("departmentId", e.target.value)}
-                    placeholder="Department ID"
-                    className={inputClass}
-                  />
-                )}
+              <Field label="Department ID">
+                {/* No /hris/departments endpoint exists yet, so this is a
+                   plain text field for now — swap for a dropdown once we
+                   know where department IDs actually come from. */}
+                <input
+                  required
+                  value={form.departmentId}
+                  onChange={(e) => updateField("departmentId", e.target.value)}
+                  placeholder="Paste a department ID"
+                  className={inputClass}
+                />
               </Field>
 
               <Field label="Joined date">
