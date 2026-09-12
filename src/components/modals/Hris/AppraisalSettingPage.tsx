@@ -1,22 +1,111 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
+import axios from "axios";
 
 import NewTemplate from "@/components/hris/appraisal-details/NewTemplateForm";
 import TemplateView from "@/components/hris/appraisal-details/NewTemplateView";
 import { TemplateCard } from "@/components/hris/appraisal-details/TemplateCard";
 
-import { ratingScale, templates } from "@/data/hris/appraisal";
+import { ratingScale } from "@/data/hris/appraisal";
+
+import {
+  archiveAppraisalTemplate,
+  createAppraisalCycle,
+  getAppraisalSettings,
+  getAppraisalTemplateDetail,
+  getAppraisalTemplates,
+  updateAppraisalSettings,
+} from "@/lib/api/hris";
+import type {
+  AppraisalSettings,
+  AppraisalTemplate,
+  AppraisalTemplateSummary,
+  CreateAppraisalCyclePayload,
+} from "@/lib/api/types/hrisTypes";
 
 type ModalType = "new" | "preview" | "edit" | null;
 
 export default function AppraisalSettings() {
   const [activeModal, setActiveModal] = useState<ModalType>(null);
+  const [settings, setSettings] = useState<AppraisalSettings | null>(null);
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [savingFrequency, setSavingFrequency] = useState(false);
 
-  /* ------------------------------------------------------------------------ */
-  /* Modal handlers                                                           */
-  /* ------------------------------------------------------------------------ */
+  const [templates, setTemplates] = useState<AppraisalTemplateSummary[]>([]);
+
+  const [templatesLoading, setTemplatesLoading] = useState(true);
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<AppraisalTemplate | null>(null);
+  const [templateDetailLoading, setTemplateDetailLoading] = useState(false);
+
+  const openTemplateDetail = async (
+    templateId: string,
+    modal: "preview" | "edit",
+  ) => {
+    setTemplateDetailLoading(true);
+    try {
+      const detail = await getAppraisalTemplateDetail(templateId);
+      setSelectedTemplate(detail);
+      setActiveModal(modal);
+    } catch (err) {
+      console.error(
+        "Template detail failed:",
+        axios.isAxiosError(err) ? err.response?.data : err,
+      );
+    } finally {
+      setTemplateDetailLoading(false);
+    }
+  };
+
+  const refetchTemplates = () => {
+    setTemplatesLoading(true);
+    getAppraisalTemplates()
+      .then((res) => setTemplates(res.data))
+      .catch((err) => {
+        console.error(
+          "Appraisal templates failed:",
+          axios.isAxiosError(err) ? err.response?.data : err,
+        );
+      })
+      .finally(() => setTemplatesLoading(false));
+  };
+
+  const handleArchiveTemplate = async (templateId: string) => {
+    if (
+      !confirm(
+        "Archive this template? It won't be available for future cycles, but existing appraisals using it are unaffected.",
+      )
+    ) {
+      return;
+    }
+    try {
+      await archiveAppraisalTemplate(templateId);
+      setTemplates((prev) => prev.filter((t) => t.id !== templateId));
+    } catch (err) {
+      console.error(
+        "Archive template failed:",
+        axios.isAxiosError(err) ? err.response?.data : err,
+      );
+    }
+  };
+
+  useEffect(() => {
+    getAppraisalSettings()
+      .then((res) => setSettings(res))
+      .catch((err) => {
+        console.error(
+          "Appraisal settings failed:",
+          axios.isAxiosError(err) ? err.response?.data : err,
+        );
+      })
+      .finally(() => setSettingsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    refetchTemplates();
+  }, []);
 
   const openModal = (modal: Exclude<ModalType, null>) => {
     setActiveModal(modal);
@@ -24,19 +113,31 @@ export default function AppraisalSettings() {
 
   const closeModal = () => {
     setActiveModal(null);
+    setSelectedTemplate(null);
+  };
+
+  const handleFrequencyChange = async (
+    value: AppraisalSettings["defaultReviewFrequency"],
+  ) => {
+    setSavingFrequency(true);
+    try {
+      await updateAppraisalSettings({ defaultReviewFrequency: value });
+      setSettings((prev) =>
+        prev ? { ...prev, defaultReviewFrequency: value } : prev,
+      );
+    } catch (err) {
+      console.error(
+        "Update settings failed:",
+        axios.isAxiosError(err) ? err.response?.data : err,
+      );
+    } finally {
+      setSavingFrequency(false);
+    }
   };
 
   return (
     <>
-      {/* ==================================================================== */}
-      {/* APPRAISAL SETTINGS PAGE                                              */}
-      {/* ==================================================================== */}
-
       <main className="min-h-screen bg-white p-4 sm:p-5 lg:p-6">
-        {/* ------------------------------------------------------------------ */}
-        {/* Header                                                             */}
-        {/* ------------------------------------------------------------------ */}
-
         <section>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             {/* Page title */}
@@ -63,67 +164,80 @@ export default function AppraisalSettings() {
             </button>
           </div>
 
-          {/* ---------------------------------------------------------------- */}
-          {/* Template Cards                                                   */}
-          {/* ---------------------------------------------------------------- */}
-
           <div className="mt-5 space-y-3">
-            {templates.map((template) => (
-              <TemplateCard
-                key={template.name}
-                template={template}
-                onPreview={() => openModal("preview")}
-                onEdit={() => openModal("edit")}
-              />
-            ))}
+            {templatesLoading ? (
+              <p className="text-sm text-[#94A3B8]">Loading templates…</p>
+            ) : templates.length === 0 ? (
+              <p className="rounded-md border border-dashed border-[#E5E9EF] py-8 text-center text-sm text-[#94A3B8]">
+                No templates yet. Create one to get started.
+              </p>
+            ) : (
+              templates.map((template: any) => (
+                <TemplateCard
+                  key={template.id}
+                  template={template}
+                  onPreview={() => openTemplateDetail(template.id, "preview")}
+                  onEdit={() => openTemplateDetail(template.id, "edit")}
+                  onArchived={refetchTemplates}
+                  loading={templateDetailLoading}
+                />
+              ))
+            )}
           </div>
         </section>
 
-        {/* ------------------------------------------------------------------ */}
-        {/* Rating Scale                                                       */}
-        {/* ------------------------------------------------------------------ */}
-
-        <RatingScale />
+        <RatingScale
+          currentFrequency={settings?.defaultReviewFrequency}
+          loading={settingsLoading || savingFrequency}
+          onFrequencyChange={handleFrequencyChange}
+        />
       </main>
+      <NewTemplate
+        isOpen={activeModal === "new"}
+        onClose={closeModal}
+        onCreated={() => {
+          refetchTemplates();
+          closeModal();
+        }}
+      />
 
-      {/* ==================================================================== */}
-      {/* MODALS                                                               */}
-      {/* ==================================================================== */}
-
-      {/* -------------------------------------------------------------------- */}
-      {/* New Template                                                         */}
-      {/* -------------------------------------------------------------------- */}
-
-      <NewTemplate isOpen={activeModal === "new"} onClose={closeModal} />
-
-      {/* -------------------------------------------------------------------- */}
-      {/* Template Preview                                                     */}
-      {/* -------------------------------------------------------------------- */}
-
-      <TemplateView isOpen={activeModal === "edit"} onClose={closeModal} />
-
-      {/* -------------------------------------------------------------------- */}
-      {/* Edit Template                                                        */}
-      {/* -------------------------------------------------------------------- */}
-
-      <TemplateView isOpen={activeModal === "preview"} onClose={closeModal} />
+      <TemplateView
+        isOpen={activeModal === "preview" || activeModal === "edit"}
+        onClose={closeModal}
+        template={selectedTemplate}
+        mode={activeModal === "edit" ? "edit" : "preview"}
+        onSaved={(updated) => {
+          setSelectedTemplate(updated);
+          refetchTemplates();
+        }}
+      />
     </>
   );
 }
 
-/* ========================================================================== */
-/* RATING SCALE                                                               */
-/* ========================================================================== */
-
-function RatingScale() {
-  const frequencies = ["Monthly", "Quarterly", "BiAnnual", "Annual"];
+function RatingScale({
+  currentFrequency,
+  loading,
+  onFrequencyChange,
+}: {
+  currentFrequency?: string;
+  loading: boolean;
+  onFrequencyChange: (
+    value: AppraisalSettings["defaultReviewFrequency"],
+  ) => void;
+}) {
+  const frequencies: {
+    label: string;
+    value: AppraisalSettings["defaultReviewFrequency"];
+  }[] = [
+    { label: "Monthly", value: "MONTHLY" },
+    { label: "Quarterly", value: "QUARTERLY" },
+    { label: "BiAnnual", value: "BIANNUAL" },
+    { label: "Annual", value: "ANNUAL" },
+  ];
 
   return (
     <section className="mt-6 overflow-hidden rounded-md border border-[#E5E9EF]">
-      {/* -------------------------------------------------------------------- */}
-      {/* Rating Scale Header                                                  */}
-      {/* -------------------------------------------------------------------- */}
-
       <div className="flex flex-col gap-2 border-b border-[#E5E9EF] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="font-bold text-[#1F2937]">OKR Rating Scale</h2>
 
@@ -131,10 +245,6 @@ function RatingScale() {
           Applied to Grand Total score (Section A + Section B)
         </span>
       </div>
-
-      {/* -------------------------------------------------------------------- */}
-      {/* Rating Items                                                         */}
-      {/* -------------------------------------------------------------------- */}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
         {ratingScale.map((item) => (
@@ -157,24 +267,35 @@ function RatingScale() {
         ))}
       </div>
 
-      {/* -------------------------------------------------------------------- */}
-      {/* Review Frequency                                                     */}
-      {/* -------------------------------------------------------------------- */}
-
       <div className="p-4 sm:p-5">
         <h2 className="font-bold text-[#1F2937]">Default Review Frequency</h2>
 
         <div className="mt-3 flex flex-wrap gap-2">
-          {frequencies.map((frequency) => (
-            <button
-              key={frequency}
-              type="button"
-              className="rounded border border-[#D9DEE7] bg-white px-4 py-2 text-sm text-black transition hover:border-[#2388D0] hover:text-[#2388D0] focus:outline-none focus:ring-2 focus:ring-[#2388D0] focus:ring-offset-1"
-            >
-              {frequency}
-            </button>
-          ))}
+          {frequencies.map((frequency) => {
+            const isActive = !loading && currentFrequency === frequency.value;
+            return (
+              <button
+                key={frequency.value}
+                type="button"
+                onClick={() => onFrequencyChange(frequency.value)}
+                disabled={loading || isActive}
+                className={`rounded border px-4 py-2 text-sm transition focus:outline-none focus:ring-2 focus:ring-[#2388D0] focus:ring-offset-1 disabled:cursor-not-allowed ${
+                  isActive
+                    ? "border-[#2388D0] bg-[#EBF6FC] font-semibold text-[#2388D0]"
+                    : "border-[#D9DEE7] bg-white text-black hover:border-[#2388D0] hover:text-[#2388D0]"
+                }`}
+              >
+                {frequency.label}
+              </button>
+            );
+          })}
         </div>
+
+        {loading && (
+          <p className="mt-2 text-xs text-[#94A3B8]">
+            Loading current setting…
+          </p>
+        )}
       </div>
     </section>
   );

@@ -1,15 +1,26 @@
-export type EmployeeStatus = "Confirmed" | "Probation" | "Exited";
-export type WorkMode = "Remote" | "Hybrid" | "On-site";
+export interface NextOfKin {
+  firstName: string;
+  lastName: string;
+  email: string;
+  contact: string;
+}
 
-export type Employee = {
+export interface Guarantor {
+  lastName: string;
+  firstName: string;
+  relationship: string;
+  phoneNumber: string;
+  address: string;
+}
+
+export interface Employee {
   id: string;
   name: string;
   role: string;
   department: string;
-  status: EmployeeStatus;
+  status: string;
   contact: string;
   dateAdded: string;
-  personalEmail?: string;
   email: string;
   dob: string;
   gender: string;
@@ -19,29 +30,15 @@ export type Employee = {
   city: string;
   state: string;
   country: string;
-  nextOfKin: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    contact: string;
-  };
-  // Professional
+  nextOfKin?: NextOfKin;
   employeeID: string;
   position: string;
-  workMode: WorkMode;
+  workMode: string;
   dateJoined: string;
-  salary: string;
-  earning?: number;
-  guarantor: {
-    lastName: string;
-    firstName: string;
-    relationship: string;
-    phoneNumber: string;
-    address: string;
-  };
-  // Stats
-  leaves: number;
-  workingHours: number;
-  appraisals: number;
-  avatar?: string;
-};
+  salary?: string;
+  guarantor?: Guarantor;
+  leaves?: number;
+  workingHours?: number;
+  appraisals?: number;
+  [key: string]: unknown;
+}

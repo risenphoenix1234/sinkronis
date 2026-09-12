@@ -3,12 +3,14 @@
 import { MessageSquare, X } from "lucide-react";
 import { Attendance } from "@/types/hris/attendance";
 import { useState } from "react";
+import axios from "axios";
+import { raiseAttendanceDispute } from "@/lib/api/hris";
 
 interface RaiseAttendanceDisputeModalProps {
   isOpen: boolean;
   employee: Attendance | null;
   onClose: () => void;
-  onSubmit?: (data: DisputeFormData) => void;
+  onSubmitted?: () => void; // lets the parent refetch after a successful raise
 }
 
 export interface DisputeFormData {
@@ -18,11 +20,22 @@ export interface DisputeFormData {
   description: string;
 }
 
+// UI labels map to the backend's confirmed enum values (only
+// MISSING_CLOCK_IN seen in Swagger's example — the rest are guessed
+// following the same naming pattern; verify once tested).
+const ISSUE_TYPE_OPTIONS: { label: string; value: string }[] = [
+  { label: "Missing Clock In", value: "MISSING_CLOCK_IN" },
+  { label: "Missing Clock Out", value: "MISSING_CLOCK_OUT" },
+  { label: "Incorrect Hours", value: "INCORRECT_HOURS" },
+  { label: "Wrong Shift", value: "WRONG_SHIFT" },
+  { label: "Overtime Missing", value: "OVERTIME_MISSING" },
+];
+
 export default function RaiseAttendanceDisputeModal({
   isOpen,
   employee,
   onClose,
-  onSubmit,
+  onSubmitted,
 }: RaiseAttendanceDisputeModalProps) {
   const [form, setForm] = useState<DisputeFormData>({
     issueType: "",
@@ -30,23 +43,46 @@ export default function RaiseAttendanceDisputeModal({
     actualClockOut: "",
     description: "",
   });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen || !employee) return null;
 
-  const handleSubmit = () => {
-    onSubmit?.(form);
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setError(null);
+    try {
+      await raiseAttendanceDispute(employee.id, {
+        issueType: form.issueType,
+        description: form.description,
+        claimedClockIn: form.actualClockIn || undefined,
+        claimedClockOut: form.actualClockOut || undefined,
+      });
 
-    setForm({
-      issueType: "",
-      actualClockIn: "",
-      actualClockOut: "",
-      description: "",
-    });
+      setForm({
+        issueType: "",
+        actualClockIn: "",
+        actualClockOut: "",
+        description: "",
+      });
 
-    onClose();
+      onSubmitted?.();
+      onClose();
+    } catch (err) {
+      console.error("Raise dispute failed:", axios.isAxiosError(err) ? err.response?.data : err);
+      if (axios.isAxiosError(err) && err.response?.status === 409) {
+        setError("There's already a pending dispute for this attendance record.");
+      } else {
+        setError(
+          axios.isAxiosError(err) ? err.response?.data?.message ?? "Couldn't submit this dispute." : "Couldn't submit this dispute.",
+        );
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const isDisabled = !form.issueType || !form.description.trim();
+  const isDisabled = !form.issueType || !form.description.trim() || submitting;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -65,7 +101,7 @@ export default function RaiseAttendanceDisputeModal({
               </h2>
 
               <p className="mt-1 text-xs text-slate-500">
-                {employee.name} • {employee.id} • 1 Jun 2026
+                {employee.name} • {employee.id}
               </p>
             </div>
 
@@ -94,16 +130,11 @@ export default function RaiseAttendanceDisputeModal({
               className="h-10 w-full rounded border border-slate-200 px-3 text-sm outline-none focus:border-blue-500"
             >
               <option value="">Select issue type</option>
-
-              <option value="Missing Clock In">Missing Clock In</option>
-
-              <option value="Missing Clock Out">Missing Clock Out</option>
-
-              <option value="Incorrect Hours">Incorrect Hours</option>
-
-              <option value="Wrong Shift">Wrong Shift</option>
-
-              <option value="Overtime Missing">Overtime Missing</option>
+              {ISSUE_TYPE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -169,6 +200,8 @@ export default function RaiseAttendanceDisputeModal({
             />
           </div>
 
+          {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+
           {/* Footer */}
           <div className="flex gap-3">
             <button
@@ -187,7 +220,7 @@ export default function RaiseAttendanceDisputeModal({
                   : "bg-blue-600 hover:bg-blue-700"
               }`}
             >
-              Submit Dispute
+              {submitting ? "Submitting…" : "Submit Dispute"}
             </button>
           </div>
         </div>

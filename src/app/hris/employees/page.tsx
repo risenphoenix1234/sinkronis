@@ -1,50 +1,101 @@
-// src/app/hris/employees/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
-import { createEmployee, getEmployees } from "@/lib/api/hris";
-import {
-  CreateEmployeePayload,
-  Employee,
-  LifecycleStatus,
-  OperationalStatus,
-  WorkMode,
-} from "@/types/hris";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { getEmployees } from "@/lib/api/hris";
+import type { EmployeeListItem } from "@/lib/api/types/hrisTypes";
+import axios from "axios";
+import { BiSearch, BiPlus, BiFilterAlt, BiSortAlt2, BiPencil } from "react-icons/bi";
+import FilterPanel, { type FilterValues } from "@/components/modals/Hris/FilterPanel";
+interface EmployeeRow {
+  id: string;
+  employeeId: string;
+  name: string;
+  role: string;
+  department: string;
+  lifecycleStatus: LifecycleStatus;
+  contact: string;
+  joinedDate: string;
+  joinedDateIso: string;
+}
 
-const emptyForm: CreateEmployeePayload = {
-  employeeId: "",
-  firstName: "",
-  lastName: "",
-  email: "",
-  phoneNumber: "",
-  departmentId: "",
-  position: "",
-  joinedDate: new Date().toISOString().slice(0, 10),
-  lifecycleStatus: "PROBATION",
-  operationalStatus: "ACTIVE",
-  workMode: "ONSITE",
-  monthlySalary: 0,
+function formatJoinedDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return `${dd}.${mm}.${d.getFullYear()}`;
+}
+
+type LifecycleStatus = "CONFIRMED" | "PROBATION" | "EXITED";
+type TabKey = "Confirmed" | "Probation" | "Exited";
+
+const TAB_TO_STATUS: Record<TabKey, LifecycleStatus> = {
+  Confirmed: "CONFIRMED",
+  Probation: "PROBATION",
+  Exited: "EXITED",
+};
+const TABS: TabKey[] = ["Confirmed", "Probation", "Exited"];
+
+const STATUS_LABEL: Record<LifecycleStatus, string> = {
+  CONFIRMED: "Confirmed",
+  PROBATION: "Probation",
+  EXITED: "Exited",
 };
 
-export default function EmployeesPage() {
-  const [employees, setEmployees] = useState<Employee[]>([]);
+const STATUS_STYLES: Record<LifecycleStatus, string> = {
+  CONFIRMED: "bg-[#ECFDF3] text-[#12B76A]",
+  PROBATION: "bg-[#FFFAEB] text-[#B54708]",
+  EXITED: "bg-[#FEF3F2] text-[#B42318]",
+};
+
+function toLifecycleStatus(value: string): LifecycleStatus {
+  return value === "CONFIRMED" || value === "PROBATION" || value === "EXITED"
+    ? value
+    : "PROBATION";
+}
+
+function toRow(emp: EmployeeListItem): EmployeeRow {
+  return {
+    id: emp.id,
+    employeeId: emp.employeeId,
+    name: emp.name,
+    role: emp.role,
+    department: emp.department?.name ?? "",
+    lifecycleStatus: toLifecycleStatus(emp.status),
+    contact: emp.phoneNumber,
+    joinedDate: formatJoinedDate(emp.joinedDate),
+    joinedDateIso: emp.joinedDate,
+  };
+}
+
+type SortKey = "employeeId" | "name" | "role" | "department";
+
+export default function EmployeeListPage() {
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<TabKey>("Confirmed");
+  const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortAsc, setSortAsc] = useState(true);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<FilterValues>({ status: "All Statuses", exitedDate: "" });
+
+  const [rows, setRows] = useState<EmployeeRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState<CreateEmployeePayload>(emptyForm);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
-  const loadData = async () => {
+  const loadEmployees = async () => {
     setLoading(true);
     setLoadError(null);
     try {
-      const employeesRes = await getEmployees();
-      setEmployees(employeesRes.data);
-    } catch (err: any) {
+      const employees = await getEmployees ({ limit: 100 }); // no destructuring — it's already the array
+      setRows(employees.map(toRow));
+    } catch (error) {
+      console.error("loadEmployees failed:", error);
       setLoadError(
-        err.response?.data?.message || "Couldn't load employees. Try again."
+        axios.isAxiosError(error)
+          ? error.response?.data?.message ?? "Failed to load employees."
+          : "Failed to load employees.",
       );
     } finally {
       setLoading(false);
@@ -52,261 +103,194 @@ export default function EmployeesPage() {
   };
 
   useEffect(() => {
-    loadData();
+    loadEmployees();
   }, []);
 
-  const updateField = <K extends keyof CreateEmployeePayload>(
-    key: K,
-    value: CreateEmployeePayload[K]
-  ) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  };
+  const visibleRows = useMemo(() => {
+    const status = TAB_TO_STATUS[activeTab];
+    const term = search.trim().toLowerCase();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setSubmitError(null);
+    let filtered = rows.filter((row) => row.lifecycleStatus === status);
 
-    try {
-      await createEmployee({
-        ...form,
-        joinedDate: new Date(form.joinedDate).toISOString(),
-      });
-      setForm(emptyForm);
-      setShowForm(false);
-      await loadData();
-    } catch (err: any) {
-      setSubmitError(
-        err.response?.data?.message || "Couldn't add this employee. Check the details and try again."
+    if (filters.status !== "All Statuses") {
+      const statusByLabel: Record<string, LifecycleStatus> = {
+        Confirmed: "CONFIRMED",
+        Probation: "PROBATION",
+        Exited: "EXITED",
+      };
+      filtered = filtered.filter((row) => row.lifecycleStatus === statusByLabel[filters.status]);
+    }
+
+    if (filters.exitedDate) {
+      filtered = filtered.filter(
+        (row) => row.joinedDateIso.slice(0, 10) === filters.exitedDate,
       );
-    } finally {
-      setSubmitting(false);
+    }
+
+    if (term) {
+      filtered = filtered.filter(
+        (row) =>
+          row.name.toLowerCase().includes(term) ||
+          row.employeeId.toLowerCase().includes(term) ||
+          row.role.toLowerCase().includes(term) ||
+          row.department.toLowerCase().includes(term),
+      );
+    }
+
+    if (sortKey) {
+      filtered = [...filtered].sort((a, b) => {
+        const cmp = a[sortKey].localeCompare(b[sortKey]);
+        return sortAsc ? cmp : -cmp;
+      });
+    }
+
+    return filtered;
+  }, [rows, activeTab, search, sortKey, sortAsc, filters]);
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortAsc((prev) => !prev);
+    } else {
+      setSortKey(key);
+      setSortAsc(true);
     }
   };
 
   return (
-    <main className="min-h-screen bg-[#F7F9FC] px-6 py-12">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-[28px] font-bold text-[#1F2937]">Employees</h1>
-            <p className="mt-1 text-[14px] text-[#667085]">
-              {loading ? "Loading roster…" : `${employees.length} ${employees.length === 1 ? "person" : "people"} on record`}
-            </p>
-          </div>
+    <main className="min-h-screen bg-white px-8 py-10">
+      <div className="mx-auto">
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-[28px] font-bold text-[#1F2937]">Employee List</h1>
           <button
             type="button"
-            onClick={() => setShowForm((prev) => !prev)}
-            className="flex h-[44px] items-center justify-center rounded-lg bg-gradient-to-r from-[#1F88C7] to-[#0CB4D1] px-5 font-semibold text-white transition hover:opacity-90"
+            onClick={() => router.push("/hris/employees/add")}
+            className="flex h-10 items-center gap-1.5 rounded-lg bg-[#2563EB] px-4 text-[14px] font-semibold text-white transition hover:bg-[#1D4ED8]"
           >
-            {showForm ? "Cancel" : "Add employee"}
+            <BiPlus className="h-4 w-4" />
+            New Employee
           </button>
         </div>
 
-        {showForm && (
-          <form
-            onSubmit={handleSubmit}
-            className="mb-8 rounded-2xl border border-[#E5E9F0] bg-white p-8"
-          >
-            <h2 className="mb-6 text-[18px] font-semibold text-[#1F2937]">
-              New employee
-            </h2>
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <div className="flex h-10 w-full max-w-xs items-center gap-2 border-b border-[#E5E9F0] px-1">
+            <BiSearch className="h-4 w-4 text-[#98A2B3]" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search Employee"
+              className="w-full bg-transparent text-[14px] text-[#1F2937] outline-none placeholder:text-[#98A2B3]"
+            />
+          </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Employee ID">
-                <input
-                  required
-                  value={form.employeeId}
-                  onChange={(e) => updateField("employeeId", e.target.value)}
-                  placeholder="EMP-001"
-                  className={inputClass}
-                />
-              </Field>
-
-              <Field label="Position">
-                <input
-                  required
-                  value={form.position}
-                  onChange={(e) => updateField("position", e.target.value)}
-                  placeholder="Software Engineer"
-                  className={inputClass}
-                />
-              </Field>
-
-              <Field label="First name">
-                <input
-                  required
-                  value={form.firstName}
-                  onChange={(e) => updateField("firstName", e.target.value)}
-                  className={inputClass}
-                />
-              </Field>
-
-              <Field label="Last name">
-                <input
-                  required
-                  value={form.lastName}
-                  onChange={(e) => updateField("lastName", e.target.value)}
-                  className={inputClass}
-                />
-              </Field>
-
-              <Field label="Email">
-                <input
-                  required
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => updateField("email", e.target.value)}
-                  placeholder="jane.doe@company.com"
-                  className={inputClass}
-                />
-              </Field>
-
-              <Field label="Phone number">
-                <input
-                  required
-                  value={form.phoneNumber}
-                  onChange={(e) => updateField("phoneNumber", e.target.value)}
-                  placeholder="+2348012345678"
-                  className={inputClass}
-                />
-              </Field>
-
-              <Field label="Department ID">
-                {/* No /hris/departments endpoint exists yet, so this is a
-                   plain text field for now — swap for a dropdown once we
-                   know where department IDs actually come from. */}
-                <input
-                  required
-                  value={form.departmentId}
-                  onChange={(e) => updateField("departmentId", e.target.value)}
-                  placeholder="Paste a department ID"
-                  className={inputClass}
-                />
-              </Field>
-
-              <Field label="Joined date">
-                <input
-                  required
-                  type="date"
-                  value={form.joinedDate}
-                  onChange={(e) => updateField("joinedDate", e.target.value)}
-                  className={inputClass}
-                />
-              </Field>
-
-              <Field label="Lifecycle status">
-                <select
-                  value={form.lifecycleStatus}
-                  onChange={(e) =>
-                    updateField("lifecycleStatus", e.target.value as LifecycleStatus)
-                  }
-                  className={inputClass}
-                >
-                  <option value="PROBATION">Probation</option>
-                  <option value="ACTIVE">Active</option>
-                  <option value="ON_LEAVE">On leave</option>
-                  <option value="TERMINATED">Terminated</option>
-                </select>
-              </Field>
-
-              <Field label="Operational status">
-                <select
-                  value={form.operationalStatus}
-                  onChange={(e) =>
-                    updateField("operationalStatus", e.target.value as OperationalStatus)
-                  }
-                  className={inputClass}
-                >
-                  <option value="ACTIVE">Active</option>
-                  <option value="INACTIVE">Inactive</option>
-                </select>
-              </Field>
-
-              <Field label="Work mode">
-                <select
-                  value={form.workMode}
-                  onChange={(e) => updateField("workMode", e.target.value as WorkMode)}
-                  className={inputClass}
-                >
-                  <option value="ONSITE">Onsite</option>
-                  <option value="REMOTE">Remote</option>
-                  <option value="HYBRID">Hybrid</option>
-                </select>
-              </Field>
-
-              <Field label="Monthly salary">
-                <input
-                  required
-                  type="number"
-                  min={0}
-                  value={form.monthlySalary}
-                  onChange={(e) => updateField("monthlySalary", Number(e.target.value))}
-                  className={inputClass}
-                />
-              </Field>
-            </div>
-
-            {submitError && (
-              <p className="mt-4 text-[13px] text-red-500">{submitError}</p>
-            )}
-
+          <div className="relative">
             <button
-              type="submit"
-              disabled={submitting}
-              className="mt-6 flex h-[48px] w-full items-center justify-center rounded-lg bg-gradient-to-r from-[#1F88C7] to-[#0CB4D1] font-semibold text-white transition hover:opacity-90 disabled:opacity-60 sm:w-auto sm:px-8"
+              type="button"
+              onClick={() => setFilterOpen((open) => !open)}
+              aria-expanded={filterOpen}
+              className="flex h-9 items-center gap-1.5 rounded-md border border-[#E5E9F0] px-3 text-[13px] font-medium text-[#344054] transition hover:border-[#2388D0] hover:text-[#2388D0]"
             >
-              {submitting ? "Adding…" : "Add employee"}
+              <BiFilterAlt className="h-4 w-4" />
+              Filters
             </button>
-          </form>
-        )}
 
-        <div className="rounded-2xl border border-[#E5E9F0] bg-white">
+            {filterOpen && (
+              <div className="absolute right-0 top-full z-20 mt-2 w-[min(24rem,calc(100vw-2rem))]">
+                <FilterPanel
+                  initialValues={filters}
+                  statusOptions={["All Statuses", "Confirmed", "Probation", "Exited"]}
+                  onCancel={() => setFilterOpen(false)}
+                  onSave={(values) => {
+                    setFilters(values);
+                    setFilterOpen(false);
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mb-4 flex gap-6 border-b border-[#E5E9F0]">
+          {TABS.map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`relative pb-3 text-[14px] font-medium transition ${
+                activeTab === tab ? "text-[#2563EB]" : "text-[#98A2B3] hover:text-[#667085]"
+              }`}
+            >
+              {tab}
+              {activeTab === tab && (
+                <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-[#2563EB]" />
+              )}
+            </button>
+          ))}
+        </div>
+
+        <div className="overflow-x-auto">
           {loading ? (
-            <p className="p-8 text-[14px] text-[#667085]">Loading…</p>
+            <p className="px-4 py-12 text-center text-[#667085]">Loading employees…</p>
           ) : loadError ? (
-            <div className="p-8">
-              <p className="text-[14px] text-red-500">{loadError}</p>
+            <div className="px-4 py-12 text-center">
+              <p className="text-[#B42318]">{loadError}</p>
               <button
                 type="button"
-                onClick={loadData}
+                onClick={loadEmployees}
                 className="mt-3 text-[13px] font-medium text-[#2388D0] hover:underline"
               >
                 Try again
               </button>
             </div>
-          ) : employees.length === 0 ? (
-            <div className="p-8 text-center">
-              <p className="text-[14px] text-[#667085]">
-                No employees yet. Add the first person on your team.
-              </p>
-            </div>
           ) : (
             <table className="w-full text-left text-[14px]">
               <thead>
-                <tr className="border-b border-[#E5E9F0] text-[12px] uppercase tracking-wide text-[#98A2B3]">
-                  <th className="px-6 py-3 font-semibold">Name</th>
-                  <th className="px-6 py-3 font-semibold">Position</th>
-                  <th className="px-6 py-3 font-semibold">Status</th>
-                  <th className="px-6 py-3 font-semibold">Work mode</th>
+                <tr className="text-[12px] text-[#98A2B3]">
+                  <SortableHeader label="Employee ID" sortKey="employeeId" activeKey={sortKey} onSort={toggleSort} />
+                  <SortableHeader label="Name" sortKey="name" activeKey={sortKey} onSort={toggleSort} />
+                  <SortableHeader label="Role" sortKey="role" activeKey={sortKey} onSort={toggleSort} />
+                  <SortableHeader label="Department" sortKey="department" activeKey={sortKey} onSort={toggleSort} />
+                  <th className="px-4 py-3 font-normal">Status</th>
+                  <th className="px-4 py-3 font-normal">Contact</th>
+                  <th className="px-4 py-3 font-normal">Joined</th>
+                  <th className="px-4 py-3 font-normal" />
                 </tr>
               </thead>
               <tbody>
-                {employees.map((emp) => (
-                  <tr key={emp.id} className="border-b border-[#E5E9F0] last:border-0">
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-[#1F2937]">
-                        {emp.firstName} {emp.lastName}
-                      </div>
-                      <div className="text-[13px] text-[#667085]">{emp.email}</div>
+                {visibleRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-12 text-center text-[#667085]">
+                      No employees match this view.
                     </td>
-                    <td className="px-6 py-4 text-[#344054]">{emp.position}</td>
-                    <td className="px-6 py-4">
-                      <StatusBadge status={emp.lifecycleStatus} />
-                    </td>
-                    <td className="px-6 py-4 text-[#344054]">{emp.workMode}</td>
                   </tr>
-                ))}
+                ) : (
+                  visibleRows.map((row, i) => (
+                    <tr key={row.id} className={i % 2 === 1 ? "bg-[#F9FAFB]" : "bg-white"}>
+                      <td className="px-4 py-4 text-[#344054]">{row.employeeId}</td>
+                      <td className="px-4 py-4 font-medium text-[#1F2937]">{row.name}</td>
+                      <td className="px-4 py-4 text-[#344054]">{row.role}</td>
+                      <td className="px-4 py-4 text-[#344054]">{row.department}</td>
+                      <td className="px-4 py-4">
+                        <span
+                          className={`inline-flex rounded-full px-2.5 py-1 text-[12px] font-medium ${STATUS_STYLES[row.lifecycleStatus]}`}
+                        >
+                          {STATUS_LABEL[row.lifecycleStatus]}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-[#344054]">{row.contact}</td>
+                      <td className="px-4 py-4 text-[#344054]">{row.joinedDate}</td>
+                      <td className="px-4 py-4">
+                        <button
+                          type="button"
+                          aria-label={`Edit ${row.name}`}
+                          onClick={() => router.push(`/hris/employees/${row.id}`)}
+                          className="text-[#98A2B3] transition hover:text-[#2388D0]"
+                        >
+                          <BiPencil className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           )}
@@ -316,33 +300,29 @@ export default function EmployeesPage() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function SortableHeader({
+  label,
+  sortKey,
+  activeKey,
+  onSort,
+}: {
+  label: string;
+  sortKey: SortKey;
+  activeKey: SortKey | null;
+  onSort: (key: SortKey) => void;
+}) {
   return (
-    <div>
-      <label className="mb-1.5 block text-[13px] font-medium text-[#344054]">
+    <th className="px-4 py-3 font-normal">
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className={`flex items-center gap-1 transition hover:text-[#344054] ${
+          activeKey === sortKey ? "text-[#344054]" : ""
+        }`}
+      >
         {label}
-      </label>
-      {children}
-    </div>
+        <BiSortAlt2 className="h-3.5 w-3.5" />
+      </button>
+    </th>
   );
 }
-
-function StatusBadge({ status }: { status: LifecycleStatus }) {
-  const styles: Record<LifecycleStatus, string> = {
-    ACTIVE: "bg-[#ECFDF3] text-[#027A48]",
-    PROBATION: "bg-[#FFFAEB] text-[#B54708]",
-    ON_LEAVE: "bg-[#EFF8FF] text-[#175CD3]",
-    TERMINATED: "bg-[#FEF3F2] text-[#B42318]",
-  };
-
-  return (
-    <span
-      className={`inline-flex rounded-full px-2.5 py-1 text-[12px] font-medium ${styles[status]}`}
-    >
-      {status.replace("_", " ")}
-    </span>
-  );
-}
-
-const inputClass =
-  "w-full rounded-lg border border-[#E5E9F0] px-4 py-3 text-[15px] text-[#1F2937] outline-none transition focus:border-[#2388D0] focus:ring-2 focus:ring-[#2388D0]/15";

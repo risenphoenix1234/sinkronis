@@ -1,14 +1,64 @@
 import { AttendanceDispute } from "@/types/hris/attendance";
 import { useState } from "react";
+import axios from "axios";
 import ApproveDisputeModal from "../../modals/Hris/ApproveDisputeModal";
 import StatusBadge from "@/components/ui/StatusBadge";
+import { resolveDispute } from "@/lib/api/hris";
 
 interface CardProps {
   dispute: AttendanceDispute;
+  onResolved?: () => void; // lets the parent refetch the list after a successful resolve
 }
 
-export function DisputeCard({ dispute }: CardProps) {
+export function DisputeCard({ dispute, onResolved }: CardProps) {
   const [showModal, setShowModal] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleApprove = async (data: {
+    action: "Approved" | "Rejected";
+    resolution: string;
+  }) => {
+    setError(null);
+    try {
+      await resolveDispute(dispute.id, {
+        status: data.action === "Approved" ? "APPROVED" : "REJECTED",
+        resolutionNote: data.resolution,
+      });
+      setShowModal(false);
+      onResolved?.();
+    } catch (err) {
+      console.error("Approve failed:", axios.isAxiosError(err) ? err.response?.data : err);
+      setError(
+        axios.isAxiosError(err) ? err.response?.data?.message ?? "Couldn't resolve this dispute." : "Couldn't resolve this dispute.",
+      );
+    }
+  };
+
+  const handleReject = async () => {
+    // ⚠️ Placeholder — using window.prompt since there's no RejectDisputeModal
+    // yet. Replace with a proper modal (matching ApproveDisputeModal's UX)
+    // once you want a nicer reject flow.
+    const note = window.prompt("Reason for rejecting this dispute:");
+    if (note === null) return; // user cancelled
+
+    setRejecting(true);
+    setError(null);
+    try {
+      await resolveDispute(dispute.id, {
+        status: "REJECTED",
+        resolutionNote: note,
+      });
+      onResolved?.();
+    } catch (err) {
+      console.error("Reject failed:", axios.isAxiosError(err) ? err.response?.data : err);
+      setError(
+        axios.isAxiosError(err) ? err.response?.data?.message ?? "Couldn't reject this dispute." : "Couldn't reject this dispute.",
+      );
+    } finally {
+      setRejecting(false);
+    }
+  };
 
   return (
     <div className="bg-white border rounded-lg p-5">
@@ -56,6 +106,8 @@ export function DisputeCard({ dispute }: CardProps) {
               </p>
             </div>
           )}
+
+          {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
         </div>
 
         <div className="text-right">
@@ -63,8 +115,12 @@ export function DisputeCard({ dispute }: CardProps) {
 
           {dispute.status === "Pending" && (
             <div className="flex gap-2 mt-6">
-              <button className="px-4 py-2 rounded bg-red-50 text-red-600 border">
-                Reject
+              <button
+                onClick={handleReject}
+                disabled={rejecting}
+                className="px-4 py-2 rounded bg-red-50 text-red-600 border disabled:opacity-50"
+              >
+                {rejecting ? "Rejecting…" : "Reject"}
               </button>
 
               <button
@@ -79,11 +135,7 @@ export function DisputeCard({ dispute }: CardProps) {
             isOpen={showModal}
             dispute={dispute}
             onClose={() => setShowModal(false)}
-            onSubmit={(data) => {
-              console.log(data);
-
-              setShowModal(false);
-            }}
+            onSubmit={handleApprove}
           />
         </div>
       </div>

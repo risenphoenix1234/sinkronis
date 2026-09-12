@@ -12,9 +12,3 @@ export interface DashboardStat {
   iconBg: string;
 }
 
-export interface ActionItem {
-  id: number;
-  title: string;
-  description: string;
-  status: ActionStatus;
-}

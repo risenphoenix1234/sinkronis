@@ -1,93 +1,91 @@
 "use client";
 
-import { suspensions } from "@/data/hris/conduct";
 import { useState } from "react";
 import StatusBadge from "@/components/ui/StatusBadge";
-import AddEditSuspensionModal from "./AddEditSuspensionModal";
 import { Pencil } from "lucide-react";
+import { ConductRecord } from "@/lib/api/types/hrisTypes";
+import EmptyState from "@/components/shared/EmptyState";
 
-export default function ConductSuspensionModal() {
-  const [selectedQuery, setSelectedQuery] = useState(false);
+interface Props {
+  records: ConductRecord[];
+  loading: boolean;
+}
+
+export default function ConductSuspensionModal({ records, loading }: Props) {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   return (
-    <div className="flex min-h-screen flex-col bg-white space-y-6 p-6">
-      {/* Table */}
+    <div className="mt-4 overflow-hidden rounded-lg border bg-white">
+      <table className="w-full">
+        <thead>
+          <tr className="border-b border-[#E5E7EB] text-left text-xs text-[#6B7280]">
+            <th className="px-4 py-4 font-medium">Employee ID</th>
 
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-[#E5E7EB] text-left text-xs text-[#6B7280]">
-              <th className="py-4 font-medium">Employee ID</th>
+            <th className="px-4 py-4 font-medium">Name</th>
 
-              <th className="py-4 font-medium">Name ↕</th>
+            <th className="px-4 py-4 font-medium">Role</th>
 
-              <th className="py-4 font-medium">Role ↕</th>
+            <th className="px-4 py-4 font-medium">Department</th>
 
-              <th className="py-4 font-medium">Department ↕</th>
+            <th className="px-4 py-4 font-medium">Suspension Type</th>
 
-              <th className="py-4 font-medium">Suspension Type ↕</th>
+            <th className="px-4 py-4 font-medium">Status</th>
 
-              <th className="py-4 font-medium">From</th>
+            <th className="px-4 py-4 font-medium"></th>
+          </tr>
+        </thead>
 
-              <th className="py-4 font-medium">To</th>
-
-              <th className="py-4 font-medium">Status</th>
-
-              <th className="py-4 font-medium"></th>
+        <tbody>
+          {loading ? (
+            <tr>
+              <td colSpan={7} className="py-12 text-center text-sm text-slate-500">
+                Loading records...
+              </td>
             </tr>
-          </thead>
-
-          <tbody>
-            {suspensions.map((employee, index) => (
+          ) : records.length === 0 ? (
+            <tr>
+              <td colSpan={7} className="py-12">
+                <EmptyState
+                  title="No suspension records"
+                  subtitle="No suspensions have been issued yet."
+                />
+              </td>
+            </tr>
+          ) : (
+            records.map((employee, index) => (
               <tr
-                key={index}
-                className="border-b border-[#F3F4F6] text-sm text-[#374151]"
+                key={employee.id}
+                className={`border-b border-[#F3F4F6] text-sm text-[#374151] ${
+                  selectedId === employee.id ? "bg-slate-100" : index % 2 === 1 ? "bg-slate-50/60" : ""
+                }`}
               >
-                <td className="py-5">{employee.id}</td>
+                <td className="px-4 py-5">{employee.employeeId}</td>
 
-                <td>{employee.name}</td>
+                <td className="px-4 py-5">{employee.employeeName}</td>
 
-                <td>{employee.role}</td>
+                <td className="px-4 py-5">{employee.role}</td>
 
-                <td>{employee.department}</td>
+                <td className="px-4 py-5">{employee.department}</td>
 
-                <td>{employee.type}</td>
+                <td className="px-4 py-5">{employee.queryType}</td>
 
-                <td>{employee.from}</td>
-
-                <td>{employee.to}</td>
-
-                <td>
+                <td className="px-4 py-5">
                   <StatusBadge status={employee.status} />
                 </td>
 
                 <td className="px-4 py-5">
                   <button
-                    onClick={(e) => setSelectedQuery(true)}
+                    onClick={() => setSelectedId(employee.id)}
                     className="text-slate-500 hover:text-blue-600"
                   >
                     <Pencil size={15} />
                   </button>
                 </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
-        {selectedQuery && (
-          <AddEditSuspensionModal
-            open={true}
-            onclose={() => setSelectedQuery(false)}
-          />
-        )}
-      </div>
-
-      {/* Bottom */}
-
-      <div className="mt-auto flex justify-end pt-16">
-        <button className="h-11 rounded border border-[#E5E7EB] px-6 text-sm text-[#374151]">
-          Cancel
-        </button>
-      </div>
+            ))
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }

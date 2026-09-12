@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
+import axios from "axios";
 
 import AppraisalSignOff from "./AppraisaalSignOff";
 import { WeightItem } from "./WeightItems";
@@ -15,139 +16,198 @@ import {
 } from "@/data/hris/appraisal";
 
 import type { KeyResult, Objective } from "@/types/hris/appraisal";
+import { createAppraisalTemplate } from "@/lib/api/hris";
+import type {
+  CreateAppraisalTemplatePayload,
+  TemplateSectionInput,
+  ObjectiveInput,
+  KeyResultInput,
+} from "@/lib/api/types/hrisTypes";
 
 type NewTemplateProps = {
   isOpen: boolean;
   onClose: () => void;
+  onCreated?: () => void;
 };
 
 type Section = "A" | "B";
 
-const initialObjectives: Objective[] = [createObjective()];
+const initialObjectives = (): Objective[] => [createObjective()];
 
-export default function NewTemplate({ isOpen, onClose }: NewTemplateProps) {
+export default function NewTemplate({
+  isOpen,
+  onClose,
+  onCreated,
+}: NewTemplateProps) {
   const [activeQuarter, setActiveQuarter] = useState("Q1");
   const [activeSection, setActiveSection] = useState<Section>("A");
 
   const [templateName, setTemplateName] = useState("");
   const [description, setDescription] = useState("");
 
-  const [objectives, setObjectives] = useState<Objective[]>(initialObjectives);
+  const [objectivesA, setObjectivesA] =
+    useState<Objective[]>(initialObjectives());
+  const [objectivesB, setObjectivesB] =
+    useState<Objective[]>(initialObjectives());
 
-  /* -------------------------------------------------------------------------- */
-  /* Don't render anything when modal is closed                                */
-  /* -------------------------------------------------------------------------- */
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   if (!isOpen) {
     return null;
   }
 
-  /* -------------------------------------------------------------------------- */
-  /* Weight calculations                                                       */
-  /* -------------------------------------------------------------------------- */
+  const sumWeight = (objectives: Objective[]) =>
+    objectives.reduce(
+      (total, objective) => total + Number(objective.weight || 0),
+      0,
+    );
 
-  const sectionAWeight = objectives.reduce(
-    (total, objective) => total + Number(objective.weight || 0),
-    0,
-  );
-
-  const sectionBWeight = 0;
-
+  const sectionAWeight = sumWeight(objectivesA);
+  const sectionBWeight = sumWeight(objectivesB);
   const grandTotal = sectionAWeight + sectionBWeight;
 
-  const canSave = templateName.trim().length > 0 && grandTotal === 100;
+  const canSave =
+    templateName.trim().length > 0 &&
+    grandTotal === 100 &&
+    sectionAWeight > 0 &&
+    sectionBWeight > 0;
 
-  /* -------------------------------------------------------------------------- */
-  /* Objective handlers                                                        */
-  /* -------------------------------------------------------------------------- */
-
-  const addObjective = () => {
-    setObjectives((current) => [...current, createObjective()]);
-  };
-
-  const addKeyResult = (objectiveId: number) => {
-    setObjectives((current) =>
-      current.map((objective) =>
-        objective.id === objectiveId
-          ? {
-              ...objective,
-              keyResults: [...objective.keyResults, createKeyResult()],
-            }
-          : objective,
+  // ---- Section A (KRA) handlers ----
+  const addObjectiveA = () => setObjectivesA((c) => [...c, createObjective()]);
+  const addKeyResultA = (objectiveId: number) =>
+    setObjectivesA((c) =>
+      c.map((o) =>
+        o.id === objectiveId
+          ? { ...o, keyResults: [...o.keyResults, createKeyResult()] }
+          : o,
       ),
     );
-  };
-
-  const updateObjective = (
+  const updateObjectiveA = (
     objectiveId: number,
     field: "name" | "weight",
     value: string,
-  ) => {
-    setObjectives((current) =>
-      current.map((objective) =>
-        objective.id === objectiveId
-          ? {
-              ...objective,
-              [field]: value,
-            }
-          : objective,
-      ),
+  ) =>
+    setObjectivesA((c) =>
+      c.map((o) => (o.id === objectiveId ? { ...o, [field]: value } : o)),
     );
-  };
-
-  const updateKeyResult = (
+  const updateKeyResultA = (
     objectiveId: number,
     keyResultId: number,
     field: keyof KeyResult,
     value: string,
-  ) => {
-    setObjectives((current) =>
-      current.map((objective) => {
-        if (objective.id !== objectiveId) {
-          return objective;
-        }
-
-        return {
-          ...objective,
-          keyResults: objective.keyResults.map((keyResult) =>
-            keyResult.id === keyResultId
-              ? {
-                  ...keyResult,
-                  [field]: value,
-                }
-              : keyResult,
-          ),
-        };
-      }),
+  ) =>
+    setObjectivesA((c) =>
+      c.map((o) =>
+        o.id !== objectiveId
+          ? o
+          : {
+              ...o,
+              keyResults: o.keyResults.map((kr) =>
+                kr.id === keyResultId ? { ...kr, [field]: value } : kr,
+              ),
+            },
+      ),
     );
-  };
 
-  /* -------------------------------------------------------------------------- */
-  /* Save                                                                      */
-  /* -------------------------------------------------------------------------- */
+  // ---- Section B (BEHAVIOURAL) handlers — same shape, separate array ----
+  const addObjectiveB = () => setObjectivesB((c) => [...c, createObjective()]);
+  const addKeyResultB = (objectiveId: number) =>
+    setObjectivesB((c) =>
+      c.map((o) =>
+        o.id === objectiveId
+          ? { ...o, keyResults: [...o.keyResults, createKeyResult()] }
+          : o,
+      ),
+    );
+  const updateObjectiveB = (
+    objectiveId: number,
+    field: "name" | "weight",
+    value: string,
+  ) =>
+    setObjectivesB((c) =>
+      c.map((o) => (o.id === objectiveId ? { ...o, [field]: value } : o)),
+    );
+  const updateKeyResultB = (
+    objectiveId: number,
+    keyResultId: number,
+    field: keyof KeyResult,
+    value: string,
+  ) =>
+    setObjectivesB((c) =>
+      c.map((o) =>
+        o.id !== objectiveId
+          ? o
+          : {
+              ...o,
+              keyResults: o.keyResults.map((kr) =>
+                kr.id === keyResultId ? { ...kr, [field]: value } : kr,
+              ),
+            },
+      ),
+    );
 
-  const handleSave = () => {
-    if (!canSave) {
-      return;
-    }
+  // Converts this form's local Objective[] shape into the API's ObjectiveInput[]
+  const toObjectiveInputs = (objectives: Objective[]): ObjectiveInput[] =>
+    objectives.map((o) => ({
+      title: o.name,
+      weight: Number(o.weight || 0),
+      keyResults: o.keyResults.map((kr): KeyResultInput => ({
+        description: kr.description, // confirmed field name, no fallback needed
+        kpiWeight: Number(kr.weight || 0),
+        target: Number(kr.target || 0),
+        initiatives: kr.initiatives,
+      })),
+    }));
 
-    const template = {
+  const handleSave = async () => {
+    if (!canSave) return;
+
+    setSaving(true);
+    setSaveError(null);
+
+    const sections: TemplateSectionInput[] = [
+      {
+        section: "KRA",
+        weight: sectionAWeight,
+        objectives: toObjectiveInputs(objectivesA),
+      },
+      {
+        section: "BEHAVIOURAL",
+        weight: sectionBWeight,
+        objectives: toObjectiveInputs(objectivesB),
+      },
+    ];
+
+    const payload: CreateAppraisalTemplatePayload = {
       name: templateName.trim(),
       description: description.trim(),
-      objectives,
-      sectionAWeight,
-      sectionBWeight,
-      grandTotal,
+      isDefault: false,
+      sections,
+      reflectionQuestions: [],
+      managerReviewQuestions: [],
+      quarterScoring: true,
+      signOffTypes: ["EMPLOYEE"],
     };
 
-    console.log("Template:", template);
-
-    onClose();
+    try {
+      await createAppraisalTemplate(payload);
+      onCreated?.();
+      onClose();
+    } catch (err) {
+      console.error(
+        "Create template failed:",
+        axios.isAxiosError(err) ? err.response?.data : err,
+      );
+      setSaveError(
+        axios.isAxiosError(err)
+          ? (err.response?.data?.message ?? "Couldn't save this template.")
+          : "Couldn't save this template.",
+      );
+    } finally {
+      setSaving(false);
+    }
   };
-
-  /* -------------------------------------------------------------------------- */
-  /* Modal                                                                     */
-  /* -------------------------------------------------------------------------- */
 
   return (
     <div
@@ -169,9 +229,9 @@ export default function NewTemplate({ isOpen, onClose }: NewTemplateProps) {
                 New Template — OKR / KRA Builder
               </h1>
 
-              <p className="mt-1 text-xs text-[#8492A6] sm:text-sm">
-                Build objectives and key results. All KPI weights must total
-                100%.
+              <p className="mt-1 text-sm text-[#8492A6] sm:text-sm">
+                Build objectives and key results for both KRA and Behavioural
+                sections. Grand total must equal 100%.
               </p>
             </div>
 
@@ -187,14 +247,14 @@ export default function NewTemplate({ isOpen, onClose }: NewTemplateProps) {
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={!canSave}
-                className={`h-8 rounded px-3 text-xs font-medium transition sm:px-4 ${
-                  canSave
+                disabled={!canSave || saving}
+                className={`h-8 rounded px-3 text-sm font-medium transition sm:px-4 ${
+                  canSave && !saving
                     ? "bg-[#2388D0] text-white hover:bg-[#1976B8]"
                     : "cursor-not-allowed bg-[#F2F4F7] text-[#BFC7D1]"
                 }`}
               >
-                Save Template
+                {saving ? "Saving…" : "Save Template"}
               </button>
 
               <button
@@ -230,14 +290,13 @@ export default function NewTemplate({ isOpen, onClose }: NewTemplateProps) {
             </section>
 
             {/* Weight Summary */}
-            <section className="mt-4 flex flex-col gap-3 rounded border border-[#E8C968] bg-[#FFF4CC] px-3 py-3 text-xs sm:flex-row sm:items-center sm:justify-between">
+            <section className="mt-4 flex flex-col gap-3 rounded border border-[#E8C968] bg-[#FFF4CC] px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-wrap items-center gap-4">
                 <WeightItem
                   color="bg-[#2388D0]"
                   label="Section A"
                   value={sectionAWeight}
                 />
-
                 <WeightItem
                   color="bg-purple-600"
                   label="Section B"
@@ -250,16 +309,22 @@ export default function NewTemplate({ isOpen, onClose }: NewTemplateProps) {
               </strong>
             </section>
 
+            {saveError && (
+              <p className="mt-3 rounded bg-red-50 px-3 py-2 text-sm text-red-600">
+                {saveError}
+              </p>
+            )}
+
             {/* Quarters */}
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span className="text-xs text-[#475467]">Show quarters:</span>
+              <span className="text-sm text-[#475467]">Show quarters:</span>
 
               {quarters.map((quarter) => (
                 <button
                   key={quarter}
                   type="button"
                   onClick={() => setActiveQuarter(quarter)}
-                  className={`h-7 rounded-full px-3 text-xs font-semibold transition ${
+                  className={`h-7 rounded-full px-3 text-sm font-semibold transition ${
                     activeQuarter === quarter
                       ? "bg-[#2388D0] text-white"
                       : "bg-[#F2F4F7] text-[#98A2B3] hover:bg-[#E5E7EB]"
@@ -269,7 +334,7 @@ export default function NewTemplate({ isOpen, onClose }: NewTemplateProps) {
                 </button>
               ))}
 
-              <span className="text-xs text-[#98A2B3]">
+              <span className="text-sm text-[#98A2B3]">
                 Q1–Q4 data filled during reviews
               </span>
             </div>
@@ -293,20 +358,25 @@ export default function NewTemplate({ isOpen, onClose }: NewTemplateProps) {
               />
             </div>
 
-            {/* Section Content */}
+            {/* Section Content — both sections now use the same builder */}
             {activeSection === "A" ? (
               <ObjectivesSection
-                objectives={objectives}
+                objectives={objectivesA}
                 sectionAWeight={sectionAWeight}
-                onAddObjective={addObjective}
-                onAddKeyResult={addKeyResult}
-                onUpdateObjective={updateObjective}
-                onUpdateKeyResult={updateKeyResult}
+                onAddObjective={addObjectiveA}
+                onAddKeyResult={addKeyResultA}
+                onUpdateObjective={updateObjectiveA}
+                onUpdateKeyResult={updateKeyResultA}
               />
             ) : (
-              <section className="flex min-h-[150px] items-center justify-center border-x border-b border-[#E5E9EF] px-4 text-center text-sm text-[#98A2B3]">
-                Section B: Behavioural Objectives
-              </section>
+              <ObjectivesSection
+                objectives={objectivesB}
+                sectionAWeight={sectionBWeight}
+                onAddObjective={addObjectiveB}
+                onAddKeyResult={addKeyResultB}
+                onUpdateObjective={updateObjectiveB}
+                onUpdateKeyResult={updateKeyResultB}
+              />
             )}
 
             {/* Sign Off */}
@@ -321,7 +391,7 @@ export default function NewTemplate({ isOpen, onClose }: NewTemplateProps) {
           <button
             type="button"
             onClick={onClose}
-            className="h-9 flex-1 rounded border border-[#E5E9EF] bg-white text-xs font-medium text-[#344054]"
+            className="h-9 flex-1 rounded border border-[#E5E9EF] bg-white text-sm font-medium text-[#344054]"
           >
             Cancel
           </button>
@@ -329,14 +399,14 @@ export default function NewTemplate({ isOpen, onClose }: NewTemplateProps) {
           <button
             type="button"
             onClick={handleSave}
-            disabled={!canSave}
-            className={`h-9 flex-1 rounded text-xs font-medium ${
-              canSave
+            disabled={!canSave || saving}
+            className={`h-9 flex-1 rounded text-sm font-medium ${
+              canSave && !saving
                 ? "bg-[#2388D0] text-white"
                 : "cursor-not-allowed bg-[#F2F4F7] text-[#BFC7D1]"
             }`}
           >
-            Save Template
+            {saving ? "Saving…" : "Save Template"}
           </button>
         </div>
       </div>
@@ -363,7 +433,7 @@ function SectionTab({ active, onClick, color, label, value }: SectionTabProps) {
     <button
       type="button"
       onClick={onClick}
-      className={`relative shrink-0 px-3 pb-2 text-xs font-semibold transition sm:px-4 ${
+      className={`relative shrink-0 px-3 pb-2 text-sm font-semibold transition sm:px-4 ${
         active
           ? isBlue
             ? "text-[#2388D0]"
@@ -374,7 +444,7 @@ function SectionTab({ active, onClick, color, label, value }: SectionTabProps) {
       {label}
 
       <span
-        className={`ml-2 rounded-full px-2 py-1 text-[10px] ${
+        className={`ml-2 rounded-full px-2 py-1 text-base ${
           active
             ? isBlue
               ? "bg-[#2388D0] text-white"

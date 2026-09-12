@@ -1,84 +1,73 @@
+"use client";
+
 import SectionHeader from "./SectionHeader";
+import type {
+  TemplateSection,
+  AppraisalKeyResult,
+} from "@/lib/api/types/hrisTypes";
 
-const rows = [
-  {
-    objective: "Revenue & Business Growth",
-    weight: "30%",
-    keyResult: "Achieve monthly sales target",
-    kpi: "20%",
-    target: 100,
-    initiatives:
-      "Weekly pipeline review; pursue 3 enterprise prospects; partner with marketing.",
-    achieved: 75,
-    result: "15%",
-    comment: "Achieved 75% of monthly target — pipeline improving.",
-  },
+type ObjectivesTableProps = {
+  section?: TemplateSection;
+  editable?: boolean;
+  onSectionWeightChange?: (weight: number) => void;
+  onObjectiveChange?: (
+    objIndex: number,
+    field: "title" | "weight",
+    value: string | number,
+  ) => void;
+  onKeyResultChange?: (
+    objIndex: number,
+    krIndex: number,
+    field: keyof AppraisalKeyResult,
+    value: string | number,
+  ) => void;
+  // NEW — self-assessment inputs, keyed by kr.id, lifted to parent
+  achievedById?: Record<string, string>;
+  commentById?: Record<string, string>;
+  onAchievedChange?: (krId: string, value: string) => void;
+  onCommentChange?: (krId: string, value: string) => void;
+};
 
-  {
-    objective: "",
-    weight: "",
-    keyResult: "Onboard 3 new clients per quarter",
-    kpi: "10%",
-    target: 3,
-    initiatives: "Referral programme activation.",
-    achieved: 1,
-    result: "3.3%",
-    comment: "Only one client onboarded.",
-  },
+const SECTION_LABEL: Record<string, string> = {
+  KRA: "SECTION A : OBJECTIVES (KRA)",
+  BEHAVIOURAL: "SECTION B : BEHAVIOURAL COMPETENCIES",
+};
 
-  {
-    objective: "Operational Excellence",
-    weight: "30%",
-    keyResult: "Reduce process turnaround time",
-    kpi: "15%",
-    target: 15,
-    initiatives: "Process mapping workshop.",
-    achieved: 8,
-    result: "8%",
-    comment: "Below target.",
-  },
+export default function ObjectivesTable({
+  section,
+  editable = false,
+  onSectionWeightChange,
+  onObjectiveChange,
+  onKeyResultChange,
+  achievedById = {},
+  commentById = {},
+  onAchievedChange,
+  onCommentChange,
+}: ObjectivesTableProps) {
+  const objectives = section?.objectives ?? [];
+  const sectionKey = section?.section ?? "KRA";
+  const inputCls =
+    "w-full rounded border border-[#E2E8F0] px-2 py-1 text-sm outline-none focus:border-[#2388D0]";
 
-  {
-    objective: "",
-    weight: "",
-    keyResult: "Complete projects on schedule",
-    kpi: "15%",
-    target: 100,
-    initiatives: "Weekly sprint planning.",
-    achieved: 80,
-    result: "12%",
-    comment: "80% completed.",
-  },
-
-  {
-    objective: "Customer & Stakeholder Experience",
-    weight: "20%",
-    keyResult: "Maintain CSAT score ≥85%",
-    kpi: "10%",
-    target: 85,
-    initiatives: "Monthly customer feedback.",
-    achieved: 78,
-    result: "9.2%",
-    comment: "Below target.",
-  },
-
-  {
-    objective: "",
-    weight: "",
-    keyResult: "Resolve escalations within 24 hrs",
-    kpi: "10%",
-    target: 24,
-    initiatives: "Escalation playbook.",
-    achieved: 16,
-    result: "6.7%",
-    comment: "Average resolution 16 hrs.",
-  },
-];
-
-export default function ObjectivesTable() {
   return (
     <div className="overflow-hidden rounded-xl border">
-      <SectionHeader title="SECTION A : OBJECTIVES (KRA)" weight="80%" />
+      <div className="flex items-center justify-between">
+        <SectionHeader
+          title={SECTION_LABEL[sectionKey] ?? sectionKey}
+          weight={`${section?.weight ?? 0}%`}
+        />
+        {editable && (
+          <div className="flex items-center gap-2 px-4">
+            <span className="text-xs text-slate-400">Section weight</span>
+            <input
+              type="number"
+              value={section?.weight ?? 0}
+              onChange={(e) => onSectionWeightChange?.(Number(e.target.value))}
+              className={`${inputCls} w-16`}
+            />
+          </div>
+        )}
+      </div>
 
       <table className="w-full">
         <thead className="bg-[#F9FAFB]">
@@ -90,50 +79,184 @@ export default function ObjectivesTable() {
             <th>Target</th>
             <th>Initiatives</th>
             <th>Achieved</th>
-            <th>Result%</th>
             <th>Comment</th>
           </tr>
         </thead>
 
         <tbody>
-          {rows.map((row, index) => (
-            <tr key={index} className="border-b last:border-none">
-              <td className="px-6 py-5 font-semibold text-[#1677C8]">
-                {row.objective}
+          {objectives.length === 0 ? (
+            <tr>
+              <td
+                colSpan={8}
+                className="px-6 py-8 text-center text-sm text-slate-400"
+              >
+                No {sectionKey} objectives defined for this template.
               </td>
-
-              <td>
-                {row.weight && (
-                  <span className="rounded-full bg-[#1677C8] px-3 py-1 text-xs font-semibold text-white">
-                    {row.weight}
-                  </span>
-                )}
-              </td>
-
-              <td>{row.keyResult}</td>
-
-              <td className="font-semibold text-[#1677C8]">{row.kpi}</td>
-
-              <td>{row.target}</td>
-
-              <td className="max-w-xs text-sm text-slate-500">
-                {row.initiatives}
-              </td>
-
-              <td className="font-semibold">{row.achieved}</td>
-
-              <td className="font-bold text-[#A16207]">{row.result}</td>
-
-              <td className="max-w-sm text-sm text-slate-500">{row.comment}</td>
             </tr>
-          ))}
+          ) : (
+            objectives.flatMap((objective, objIndex) =>
+              objective.keyResults.map((kr, i) => (
+                <tr key={kr.id} className="border-b last:border-none">
+                  <td className="px-6 py-5 font-semibold text-[#1677C8]">
+                    {i === 0 ? (
+                      editable ? (
+                        <input
+                          type="text"
+                          value={objective.title}
+                          onChange={(e) =>
+                            onObjectiveChange?.(
+                              objIndex,
+                              "title",
+                              e.target.value,
+                            )
+                          }
+                          className={inputCls}
+                        />
+                      ) : (
+                        objective.title
+                      )
+                    ) : (
+                      ""
+                    )}
+                  </td>
+
+                  <td>
+                    {i === 0 &&
+                      (editable ? (
+                        <input
+                          type="number"
+                          value={objective.weight}
+                          onChange={(e) =>
+                            onObjectiveChange?.(
+                              objIndex,
+                              "weight",
+                              Number(e.target.value),
+                            )
+                          }
+                          className={`${inputCls} w-16`}
+                        />
+                      ) : (
+                        <span className="rounded-full bg-[#1677C8] px-3 py-1 text-xs font-semibold text-white">
+                          {objective.weight}%
+                        </span>
+                      ))}
+                  </td>
+
+                  <td>
+                    {editable ? (
+                      <input
+                        type="text"
+                        value={kr.description}
+                        onChange={(e) =>
+                          onKeyResultChange?.(
+                            objIndex,
+                            i,
+                            "description",
+                            e.target.value,
+                          )
+                        }
+                        className={inputCls}
+                      />
+                    ) : (
+                      kr.description
+                    )}
+                  </td>
+
+                  <td className="font-semibold text-[#1677C8]">
+                    {editable ? (
+                      <input
+                        type="number"
+                        value={kr.kpiWeight}
+                        onChange={(e) =>
+                          onKeyResultChange?.(
+                            objIndex,
+                            i,
+                            "kpiWeight",
+                            Number(e.target.value),
+                          )
+                        }
+                        className={`${inputCls} w-16`}
+                      />
+                    ) : (
+                      `${kr.kpiWeight}%`
+                    )}
+                  </td>
+
+                  <td>
+                    {editable ? (
+                      <input
+                        type="number"
+                        value={kr.target}
+                        onChange={(e) =>
+                          onKeyResultChange?.(
+                            objIndex,
+                            i,
+                            "target",
+                            Number(e.target.value),
+                          )
+                        }
+                        className={`${inputCls} w-20`}
+                      />
+                    ) : (
+                      kr.target
+                    )}
+                  </td>
+
+                  <td className="max-w-xs text-sm text-slate-500">
+                    {editable ? (
+                      <input
+                        type="text"
+                        value={kr.initiatives}
+                        onChange={(e) =>
+                          onKeyResultChange?.(
+                            objIndex,
+                            i,
+                            "initiatives",
+                            e.target.value,
+                          )
+                        }
+                        className={inputCls}
+                      />
+                    ) : (
+                      kr.initiatives
+                    )}
+                  </td>
+
+                  <td>
+                    <input
+                      type="text"
+                      value={achievedById[kr.id] ?? ""}
+                      onChange={(e) =>
+                        onAchievedChange?.(kr.id, e.target.value)
+                      }
+                      placeholder="—"
+                      className="w-20 rounded border border-[#E2E8F0] px-2 py-1 text-sm outline-none focus:border-[#2388D0]"
+                    />
+                  </td>
+
+                  <td>
+                    <input
+                      type="text"
+                      value={commentById[kr.id] ?? ""}
+                      onChange={(e) => onCommentChange?.(kr.id, e.target.value)}
+                      placeholder="Comment…"
+                      className="w-full min-w-[140px] rounded border border-[#E2E8F0] px-2 py-1 text-sm outline-none focus:border-[#2388D0]"
+                    />
+                  </td>
+                </tr>
+              )),
+            )
+          )}
         </tbody>
       </table>
 
       <div className="flex justify-between bg-[#EEF7FF] px-6 py-4">
-        <span className="font-semibold text-[#1677C8]">TOTAL KRA — Q2</span>
-
-        <span className="text-xl font-bold text-[#1677C8]">54.2%</span>
+        <span className="font-semibold text-[#1677C8]">
+          TOTAL {sectionKey} (target weight)
+        </span>
+        <span className="text-xl font-bold text-[#1677C8]">
+          {section?.weight ?? 0}%
+        </span>
       </div>
     </div>
   );

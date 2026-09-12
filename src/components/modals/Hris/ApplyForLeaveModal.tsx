@@ -1,87 +1,190 @@
 "use client";
 
+import { useState } from "react";
 import { X } from "lucide-react";
+
+import { applyForLeave } from "@/lib/api/hris";
+import { ApplyForLeavePayload } from "@/lib/api/types/hrisTypes";
 
 interface ApplyForLeaveModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onApplied: () => void; // parent refetches list + overview on success
 }
+
+const LEAVE_TYPES = [
+  "Annual Leave",
+  "Sick Leave",
+  "Maternity Leave",
+  "Paternity Leave",
+  "Emergency Leave",
+];
+
+const EMPTY_FORM = {
+  leaveType: LEAVE_TYPES[0],
+  fromDate: "",
+  toDate: "",
+  reason: "",
+};
 
 export default function ApplyForLeaveModal({
   isOpen,
   onClose,
+  onApplied,
 }: ApplyForLeaveModalProps) {
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   if (!isOpen) return null;
+
+  const handleChange = (field: keyof typeof form, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const resetAndClose = () => {
+    setForm(EMPTY_FORM);
+    setError(null);
+    onClose();
+  };
+
+  const handleSubmit = async () => {
+    setError(null);
+
+    if (!form.fromDate || !form.toDate) {
+      setError("Please select both a start and end date.");
+      return;
+    }
+    if (!form.reason.trim()) {
+      setError("Please provide a reason.");
+      return;
+    }
+    if (new Date(form.toDate) < new Date(form.fromDate)) {
+      setError("End date can't be before start date.");
+      return;
+    }
+
+    const payload: ApplyForLeavePayload = {
+      leaveType: form.leaveType,
+      fromDate: form.fromDate,
+      toDate: form.toDate,
+      reason: form.reason.trim(),
+    };
+
+    setSubmitting(true);
+    try {
+      await applyForLeave(payload);
+      onApplied();
+      resetAndClose();
+    } catch (err: any) {
+      const status = err.response?.status;
+      if (status === 400) {
+        setError(
+          err.response?.data?.message ??
+            "Invalid dates, leave type, or no workdays in range.",
+        );
+      } else if (status === 403) {
+        setError("No employee record is linked to your account.");
+      } else if (status === 409) {
+        setError(
+          err.response?.data?.message ??
+            "Overlapping leave request, or insufficient leave balance.",
+        );
+      } else {
+        setError(
+          err.response?.data?.message ?? "Failed to submit leave request.",
+        );
+      }
+      console.error(
+        "Apply for leave failed:",
+        err.response?.data ?? err.message,
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Overlay */}
       <div
         className="absolute inset-0 bg-black/30 backdrop-blur-[1px]"
-        onClick={onClose}
+        onClick={submitting ? undefined : resetAndClose}
       />
 
-      {/* Modal */}
       <div className="relative w-full max-w-md rounded-md bg-white shadow-xl">
-        {/* Header */}
         <div className="flex items-center justify-between border-b px-5 py-4">
           <h2 className="text-sm font-semibold text-slate-800">
             Apply for Leave
           </h2>
-
           <button
-            onClick={onClose}
-            className="text-slate-400 transition hover:text-slate-600"
+            onClick={resetAndClose}
+            disabled={submitting}
+            className="text-slate-400 transition hover:text-slate-600 disabled:opacity-40"
           >
             <X size={16} />
           </button>
         </div>
 
-        {/* Body */}
         <div className="space-y-4 px-5 py-4">
-          {/* Leave Type */}
+          {error && (
+            <p className="rounded bg-red-50 px-3 py-2 text-xs text-red-600">
+              {error}
+            </p>
+          )}
+
           <div>
-            <select className="h-10 w-full rounded border border-slate-200 px-3 text-sm outline-none transition focus:border-blue-500">
-              <option>Annual Leave</option>
-              <option>Sick Leave</option>
-              <option>Maternity Leave</option>
-              <option>Paternity Leave</option>
-              <option>Emergency Leave</option>
+            <select
+              value={form.leaveType}
+              onChange={(e) => handleChange("leaveType", e.target.value)}
+              className="h-10 w-full rounded border border-slate-200 px-3 text-sm outline-none transition focus:border-blue-500"
+            >
+              {LEAVE_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
             </select>
           </div>
 
-          {/* Dates */}
           <div className="grid grid-cols-2 gap-3">
             <input
               type="date"
+              value={form.fromDate}
+              onChange={(e) => handleChange("fromDate", e.target.value)}
               className="h-10 rounded border border-slate-200 px-3 text-sm outline-none focus:border-blue-500"
             />
-
             <input
               type="date"
+              value={form.toDate}
+              onChange={(e) => handleChange("toDate", e.target.value)}
               className="h-10 rounded border border-slate-200 px-3 text-sm outline-none focus:border-blue-500"
             />
           </div>
 
-          {/* Reason */}
           <textarea
             rows={4}
             placeholder="Reason"
+            value={form.reason}
+            onChange={(e) => handleChange("reason", e.target.value)}
             className="w-full resize-none rounded border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
           />
         </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-between gap-4 border-t px-5 py-4">
           <button
-            onClick={onClose}
-            className="h-10 rounded px-6 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+            onClick={resetAndClose}
+            disabled={submitting}
+            className="h-10 rounded px-6 text-sm font-medium text-slate-600 transition hover:bg-slate-100 disabled:opacity-40"
           >
             Cancel
           </button>
 
-          <button className="h-10 rounded bg-sky-300 px-6 text-sm font-medium text-white transition hover:bg-sky-400">
-            Submit Request
+          <button
+            onClick={handleSubmit}
+            disabled={submitting}
+            className="h-10 rounded bg-sky-300 px-6 text-sm font-medium text-white transition hover:bg-sky-400 disabled:opacity-60"
+          >
+            {submitting ? "Submitting..." : "Submit Request"}
           </button>
         </div>
       </div>

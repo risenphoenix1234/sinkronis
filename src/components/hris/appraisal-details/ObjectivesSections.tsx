@@ -34,7 +34,7 @@ export function ObjectivesSection({
   return (
     <section className="overflow-x-auto border-x border-b border-[#E5E9EF]">
       <div
-        className={`${GRID_COLUMNS} items-center bg-[#F4F8FC] px-2 py-2 text-[7px] font-bold uppercase tracking-wide text-[#8492A6]`}
+        className={`${GRID_COLUMNS} items-center bg-[#F4F8FC] px-2 py-2 text-xs font-bold uppercase tracking-wide text-[#8492A6]`}
       >
         <span>Objective</span>
         <span>Total WT.</span>
@@ -61,7 +61,7 @@ export function ObjectivesSection({
         <button
           type="button"
           onClick={onAddObjective}
-          className="flex h-7 w-full items-center justify-center gap-2 rounded border border-dashed border-[#8EC5EA] text-[9px] font-medium text-[#2388D0] transition hover:bg-[#F4FAFF]"
+          className="flex h-7 w-full items-center justify-center gap-2 rounded border border-dashed border-[#8EC5EA] text-sm font-medium text-[#2388D0] transition hover:bg-[#F4FAFF]"
         >
           <Plus size={11} />
           Add Objectives (KRA)
@@ -69,11 +69,11 @@ export function ObjectivesSection({
       </div>
 
       <div className="flex items-center justify-between border-t border-[#E5E9EF] bg-[#FAFBFC] px-4 py-3">
-        <span className="text-[9px] font-bold uppercase text-[#8492A6]">
+        <span className="text-sm font-bold uppercase text-[#8492A6]">
           Total Section A
         </span>
 
-        <span className="text-[11px] font-bold text-[#2388D0]">
+        <span className="text-base font-bold text-[#2388D0]">
           {sectionAWeight}%
         </span>
       </div>

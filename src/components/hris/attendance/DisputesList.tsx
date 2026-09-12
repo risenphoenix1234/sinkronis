@@ -1,14 +1,18 @@
 import { useState } from "react";
-import { disputes } from "@/data/hris/attendance";
+import type { AttendanceDispute } from "@/lib/api/types/hrisTypes";
 import { DisputeCard } from "./DisputeCard";
 
-export default function DisputesList() {
+interface DisputesListProps {
+  disputes: AttendanceDispute[];
+}
+
+export default function DisputesList({ disputes }: DisputesListProps) {
   const [filter, setFilter] = useState<
     "All" | "Pending" | "Approved" | "Rejected"
   >("All");
 
   const filteredDisputes = disputes.filter(
-    (item) => filter === "All" || item.status === filter,
+    (item: any) => filter === "All" || item.status === filter,
   );
 
   return (
@@ -39,9 +43,15 @@ export default function DisputesList() {
       </div>
 
       <div className="space-y-4 mt-5">
-        {filteredDisputes.map((dispute) => (
-          <DisputeCard key={dispute.id} dispute={dispute} />
-        ))}
+        {filteredDisputes.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-400">
+            No disputes found.
+          </div>
+        ) : (
+          filteredDisputes.map((dispute: any) => (
+            <DisputeCard key={dispute.id} dispute={dispute} />
+          ))
+        )}
       </div>
     </div>
   );

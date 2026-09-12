@@ -1,9 +1,17 @@
 // components/StatusBadge.tsx
 
+import { AppraisalCycle } from "@/lib/api/types/hrisTypes";
+
 interface StatusBadgeProps {
   status: string;
   variant?: "text" | "pill";
 }
+
+export const STATUS_LABELS: Record<AppraisalCycle["status"], string> = {
+  DRAFT: "Draft", // no matching key in StatusBadge → falls through to its gray default, fine as-is
+  ACTIVE: "Active", // matches StatusBadge's green "Active" style
+  COMPLETED: "Completed", // reuses StatusBadge's existing gray "Completed" style
+};
 
 const statusStyles: Record<
   string,
@@ -70,20 +78,29 @@ const statusStyles: Record<
     pill: "bg-orange-100 text-orange-700",
   },
 
-  "Not Started": {
-    text: "text-gray-500",
-    pill: "bg-gray-100 text-gray-600",
+  "Goal Setting": {
+    text: "text-amber-600",
+    pill: "bg-amber-50 text-amber-700 border border-amber-200/60",
   },
 
-  // Cycle statuses
-  Active: {
-    text: "text-green-500",
-    pill: "bg-green-100 text-green-700",
+  "Self Assessment": {
+    text: "text-sky-600",
+    pill: "bg-sky-50 text-sky-700 border border-sky-200/60",
   },
 
-  Completed: {
-    text: "text-gray-500",
-    pill: "bg-gray-100 text-gray-600",
+  "Manager Review": {
+    text: "text-indigo-600",
+    pill: "bg-indigo-50 text-indigo-700 border border-indigo-200/60",
+  },
+
+  "HR Approval": {
+    text: "text-purple-600",
+    pill: "bg-purple-50 text-purple-700 border border-purple-200/60",
+  },
+
+  Acknowledgment: {
+    text: "text-emerald-600",
+    pill: "bg-emerald-50 text-emerald-700 border border-emerald-200/60",
   },
 };
 

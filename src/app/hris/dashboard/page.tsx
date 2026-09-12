@@ -1,37 +1,29 @@
 "use client";
 
+import AttendanceMetricCard from "@/components/hris/dashboard/AttendanceMetricCard";
 import Button from "@/components/ui/Button";
-// import { useHRISDashboard } from "@/hooks/useHRISDashbord";
+import { getHrisDashboard } from "@/lib/api/hris";
+import type { HrisDashboardData } from "@/lib/api/types/hrisTypes";
+import { timeAgo } from "@/utils/timeAgo";
 import { departments, requests } from "@/utils/types";
 import { useEffect, useState } from "react";
 
-// src/app/hris/overview/page.tsx
 export default function HRISDashboardPage() {
-  // const { data, loading, error, refetch } = useHRISDashboard();
+const [data, setData] = useState<HrisDashboardData | null>(null)
+const [loading, setLoading] = useState(true)
+const [error, setError] = useState<string | null>(null)
 
-  // if (loading) {
-  //   return (
-  //     <div className="flex min-h-[400px] items-center justify-center">
-  //       <p className="text-sm text-gray-500">Loading dashboard...</p>
-  //     </div>
-  //   );
-  // }
+  useEffect(() => {
+    getHrisDashboard()
+      .then((res) => setData(res.data.data)) // note: unwrap the outer envelope
+      .catch((err) => setError(err?.response?.data?.message || "Failed to load dashboard"))
+      .finally(() => setLoading(false));
+  }, []);
 
-  // if (error) {
-  //   return (
-  //     <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
-  //       <p className="text-sm text-red-500">{error}</p>
-
-  //       <button
-  //         type="button"
-  //         onClick={refetch}
-  //         className="rounded-lg bg-black px-4 py-2 text-sm text-white"
-  //       >
-  //         Try Again
-  //       </button>
-  //     </div>
-  //   );
-  // }
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p className="text-red-500">{error}</p>;
+  if (!data) return null;
+  
   return (
     <section className="p-6">
       <div>
@@ -41,39 +33,55 @@ export default function HRISDashboardPage() {
           <h1 className="text-4xl font-bold text-[#1D2939]">Welcome Back</h1>
 
           <div className="flex items-center font-light gap-3">
-            <p>Monday, 1 June 2026</p>
+            <p>{data.currentDate} ({data.timeZone})</p>
           </div>
 
-          {/* <pre className="rounded-lg bg-gray-100 p-4 text-sm">
-            {JSON.stringify(data, null, 2)}
-          </pre> */}
         </div>
 
         {/* {StatCard} */}
-        <div className="flex items-center justify-between gap-6 mb-4">
-          <div className="bg-white p-4 w-full">
-            <p className="text-xs text-gray-500">Total Employees</p>
-            <h2 className="text-3xl font-bold mt-1">248</h2>
-            <p className="text-xs text-green-800 mt-1">+3 this month</p>
-          </div>
+              <div className="flex items-center justify-between gap-6 mb-4">
+        <div className="bg-white p-4 w-full">
+          <p className="text-xs text-gray-500">Total Employees</p>
+          <h2 className="text-3xl font-bold mt-1">
+            {data.employeeOverview.totalEmployees}
+          </h2>
+          <p className="text-xs text-green-800 mt-1">
+            {data.employeeOverview.activeEmployeePercentage}%
+          </p>
+        </div>
 
-          <div className="bg-white p-4 w-full">
-            <p className="text-xs text-gray-500">Active Employees</p>
-            <h2 className="text-3xl font-bold mt-1">231</h2>
-            <p className="text-xs text-green-800 mt-1">+93 of total</p>
-          </div>
+        <div className="bg-white p-4 w-full">
+          <p className="text-xs text-gray-500">Active</p>
+          <h2 className="text-3xl font-bold mt-1">
+            {data.employeeOverview.activeEmployees}
+          </h2>
+          <p className="text-xs text-green-800 mt-1">
+            {data.employeeOverview.activeEmployeePercentage}% of total
+          </p>
+        </div>
 
-          <div className="bg-white p-4 w-full">
-            <p className="text-xs text-gray-500">On Leave Today</p>
-            <h2 className="text-3xl font-bold mt-1">12</h2>
-            <p className="text-xs text-green-800 mt-1">5 pending approval</p>
-          </div>
+        <div className="bg-white p-4 w-full">
+          <p className="text-xs text-gray-500">On Leave Today</p>
+          <h2 className="text-3xl font-bold mt-1">
+            {data.employeeOverview.employeesOnLeave}
+          </h2>
+          <p className="text-xs text-green-800 mt-1">
+            {data.employeeOverview.pendingLeaveApprovals} pending approval
+          </p>
+        </div>
 
-          <div className="bg-white p-4 w-full">
-            <p className="text-xs text-gray-500">New Hires (MTD)</p>
-            <h2 className="text-3xl font-bold mt-1">6</h2>
-            <p className="text-xs text-green-800 mt-1">+2 vs last month</p>
-          </div>
+        <div className="bg-white p-4 w-full">
+          <p className="text-xs text-gray-500">New Hires (MTD)</p>
+          <h2 className="text-3xl font-bold mt-1">{data.newHires.currentMonth}</h2>
+          <p
+            className={`text-xs mt-1 ${
+              data.newHires.trend === "UP" ? "text-green-800" : "text-red-600"
+            }`}
+          >
+            {data.newHires.trend === "UP" ? "+" : "-"}
+            {Math.abs(data.newHires.difference)} vs last month
+          </p>
+        </div>
         </div>
         {/* Row 1 */}
         <div className="grid grid-cols-12 gap-4 mb-4">
@@ -83,45 +91,15 @@ export default function HRISDashboardPage() {
               Today's Attendance
             </h3>
 
-            <div className="grid grid-cols-3 gap-y-10">
-              <div>
-                <p className="text-xs text-gray-500">On Time</p>
-                <h2 className="text-3xl font-semibold mt-1">200</h2>
-                <p className="text-xs text-green-600 mt-1">+12 vs Yesterday</p>
-              </div>
-
-              <div>
-                <p className="text-xs text-gray-500">Late Clock-in</p>
-                <h2 className="text-3xl font-semibold mt-1">45</h2>
-                <p className="text-xs text-red-500 mt-1">-12 vs Yesterday</p>
-              </div>
-
-              <div>
-                <p className="text-xs text-gray-500">Early Clock-in</p>
-                <h2 className="text-3xl font-semibold mt-1">220</h2>
-                <p className="text-xs text-green-600 mt-1">+10 vs Yesterday</p>
-              </div>
-
-              <div>
-                <p className="text-xs text-gray-500">Absent</p>
-                <h2 className="text-3xl font-semibold mt-1">65</h2>
-                <p className="text-xs text-green-600 mt-1">+9 vs Yesterday</p>
-              </div>
-
-              <div>
-                <p className="text-xs text-gray-500">No Clock-in</p>
-                <h2 className="text-3xl font-semibold mt-1">34</h2>
-                <p className="text-xs text-red-500 mt-1">-1 vs Yesterday</p>
-              </div>
-
-              <div>
-                <p className="text-xs text-gray-500">No Clock-out</p>
-                <h2 className="text-3xl font-semibold mt-1">0</h2>
-                <p className="text-xs text-green-600 mt-1">0 vs Yesterday</p>
-              </div>
-            </div>
+           <div className="grid grid-cols-3 gap-y-10">
+            <AttendanceMetricCard label="On Time" metric={data.attendanceOverview.onTime} />
+            <AttendanceMetricCard label="Late Clock-in" metric={data.attendanceOverview.lateClockIn} />
+            <AttendanceMetricCard label="Early Clock-in" metric={data.attendanceOverview.earlyClockIn} />
+            <AttendanceMetricCard label="Absent" metric={data.attendanceOverview.absent} />
+            <AttendanceMetricCard label="No Clock-in" metric={data.attendanceOverview.noClockIn} />
+            <AttendanceMetricCard label="No Clock-out" metric={data.attendanceOverview.noClockOut} />
           </div>
-
+        </div>
           {/* Recent Activity */}
           <div className="col-span-4 bg-white rounded-lg p-6 border border-gray-100">
             <h3 className="text-sm font-semibold text-gray-800 mb-5">
@@ -129,40 +107,14 @@ export default function HRISDashboardPage() {
             </h3>
 
             <div className="space-y-5">
-              <div>
-                <p className="text-xs text-gray-700">
-                  Amara Okafor submitted a leave request
-                </p>
-                <p className="text-[11px] text-gray-400">2 mins ago</p>
-              </div>
-
-              <div>
-                <p className="text-xs text-gray-700">
-                  New employee Jide Mensah was added to Finance
-                </p>
-                <p className="text-[11px] text-gray-400">1 hr ago</p>
-              </div>
-
-              <div>
-                <p className="text-xs text-gray-700">
-                  Chukwuemeka Adeyemi clocked in
-                </p>
-                <p className="text-[11px] text-gray-400">2 hrs ago</p>
-              </div>
-
-              <div>
-                <p className="text-xs text-gray-700">
-                  Appraisal cycle Q2 2026 was created
-                </p>
-                <p className="text-[11px] text-gray-400">Yesterday</p>
-              </div>
-
-              <div>
-                <p className="text-xs text-gray-700">
-                  Fatima Al-Hassan conduct query resolved
-                </p>
-                <p className="text-[11px] text-gray-400">Yesterday</p>
-              </div>
+              {data.recentActivity.map((activity: { id: string; description: string; createdAt: string }) => (
+                <div key={activity.id}>
+                  <p className="text-xs text-gray-700">{activity.description}</p>
+                  <p className="text-[11px] text-gray-400">
+                    {timeAgo(activity.createdAt)}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -188,13 +140,10 @@ export default function HRISDashboardPage() {
               </thead>
 
               <tbody>
-                {requests.map((item) => (
-                  <tr
-                    key={item.id}
-                    className="border-b border-gray-50 last:border-0"
-                  >
-                    <td className="py-4">{item.employee}</td>
-                    <td>{item.department}</td>
+                {data.pendingLeaveRequests.map((item: { id: string; employee: { name: string }; department: { name: string }; type: string; days: number; from: string }) => (
+                  <tr key={item.id} className="border-b border-gray-50 last:border-0">
+                    <td className="py-4">{item.employee.name}</td>
+                    <td>{item.department.name}</td>
                     <td>{item.type}</td>
                     <td>{item.days}</td>
                     <td>{item.from}</td>
@@ -202,7 +151,6 @@ export default function HRISDashboardPage() {
                     <td>
                       <div className="flex gap-2">
                         <Button size="sm">Approve</Button>
-
                         <Button size="sm" variant="outline">
                           Reject
                         </Button>
@@ -212,6 +160,12 @@ export default function HRISDashboardPage() {
                 ))}
               </tbody>
             </table>
+
+            {data.pendingLeaveRequests.length === 0 && (
+              <p className="text-xs text-gray-400 py-6 text-center">
+                No pending leave requests
+              </p>
+            )}
           </div>
 
           {/* Headcount */}
@@ -221,22 +175,35 @@ export default function HRISDashboardPage() {
             </h3>
 
             <div className="space-y-5">
-              {departments.map((dept) => (
-                <div key={dept.name}>
-                  <div className="flex justify-between text-xs mb-2">
-                    <span className="text-gray-600">{dept.name}</span>
-                    <span className="text-gray-500">{dept.count}</span>
-                  </div>
+              {data.headcountByDepartment.map((dept: { departmentId: string; departmentName: string; headcount: number }) => {
+                const percent =
+                  data.employeeOverview.totalEmployees > 0
+                    ? (dept.headcount / data.employeeOverview.totalEmployees) * 100
+                    : 0;
 
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-500 rounded-full"
-                      style={{ width: `${dept.percent}%` }}
-                    />
+                return (
+                  <div key={dept.departmentId}>
+                    <div className="flex justify-between text-xs mb-2">
+                      <span className="text-gray-600">{dept.departmentName}</span>
+                      <span className="text-gray-500">{dept.headcount}</span>
+                    </div>
+
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-blue-500 rounded-full"
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
+
+            {data.headcountByDepartment.length === 0 && (
+              <p className="text-xs text-gray-400 py-6 text-center">
+                No department data available
+              </p>
+            )}
           </div>
         </div>
       </div>

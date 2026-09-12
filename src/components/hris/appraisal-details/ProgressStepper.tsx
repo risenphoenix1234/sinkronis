@@ -1,48 +1,53 @@
-import { Check, Shield, ThumbsUp } from "lucide-react";
+import { AppraisalStatus, WORKFLOW_STEPS } from "@/lib/api/types/hrisTypes";
+import {
+  Check,
+  Target,
+  ClipboardList,
+  Shield,
+  ThumbsUp,
+  type LucideIcon,
+} from "lucide-react";
 
-const steps = [
-  {
-    title: "Goal Setting",
-    icon: Check,
-    completed: true,
-  },
-  {
-    title: "Self-Assessment",
-    icon: Check,
-    completed: true,
-  },
-  {
-    title: "Manager Review",
-    icon: Check,
-    completed: true,
-  },
-  {
-    title: "HR Approval",
-    icon: Shield,
-    active: true,
-  },
-  {
-    title: "Acknowledgement",
-    icon: ThumbsUp,
-  },
-];
+interface ProgressStepperProps {
+  currentStatus: AppraisalStatus;
+}
 
-export default function ProgressStepper() {
+const STEP_CONFIG = {
+  GOAL_SETTING: { title: "Goal Setting", icon: Target },
+  SELF_ASSESSMENT: { title: "Self-Assessment", icon: ClipboardList },
+  MANAGER_REVIEW: { title: "Manager Review", icon: Check },
+  PENDING_HR_APPROVAL: { title: "HR Approval", icon: Shield },
+  ACKNOWLEDGEMENT: { title: "Acknowledgement", icon: ThumbsUp },
+} satisfies Record<
+  (typeof WORKFLOW_STEPS)[number],
+  { title: string; icon: LucideIcon }
+>;
+
+export default function ProgressStepper({
+  currentStatus,
+}: ProgressStepperProps) {
+  const currentIndex =
+    currentStatus === "COMPLETED"
+      ? WORKFLOW_STEPS.length
+      : WORKFLOW_STEPS.indexOf(currentStatus);
+
   return (
     <div className="rounded-xl border bg-white px-10 py-8">
       <div className="flex items-center justify-between">
-        {steps.map((step, index) => {
-          const Icon = step.icon;
+        {WORKFLOW_STEPS.map((statusKey, index) => {
+          const { title, icon: Icon } = STEP_CONFIG[statusKey];
+          const completed = index < currentIndex;
+          const active = index === currentIndex;
 
           return (
-            <div key={step.title} className="flex flex-1 items-center">
+            <div key={statusKey} className="flex flex-1 items-center">
               <div className="flex flex-col items-center">
                 <div
                   className={`flex h-10 w-10 items-center justify-center rounded-full
                   ${
-                    step.completed
+                    completed
                       ? "bg-green-700 text-white"
-                      : step.active
+                      : active
                         ? "bg-[#1677C8] text-white"
                         : "bg-gray-100 text-gray-400"
                   }`}
@@ -52,19 +57,23 @@ export default function ProgressStepper() {
 
                 <span
                   className={`mt-3 text-xs font-medium ${
-                    step.active
+                    active
                       ? "text-[#1677C8]"
-                      : step.completed
+                      : completed
                         ? "text-green-700"
                         : "text-gray-400"
                   }`}
                 >
-                  {step.title}
+                  {title}
                 </span>
               </div>
 
-              {index !== steps.length - 1 && (
-                <div className="mx-5 h-[2px] flex-1 bg-green-700" />
+              {index !== WORKFLOW_STEPS.length - 1 && (
+                <div
+                  className={`mx-5 h-[2px] flex-1 ${
+                    completed ? "bg-green-700" : "bg-gray-200"
+                  }`}
+                />
               )}
             </div>
           );

@@ -7,14 +7,71 @@ import AppraisalCyclePage from "@/components/modals/Hris/AppraisalCyclePage";
 import AppraisalModal from "@/components/modals/Hris/AppraisalModal";
 import AppraisalReviewPage from "@/components/modals/Hris/AppraisalReviewPage";
 import AppraisalSettingPage from "@/components/modals/Hris/AppraisalSettingPage";
+import {
+  getActiveAppraisalCycle,
+  getAppraisalsOverview,
+  getAppraisalReviews,
+} from "@/lib/api/hris";
+import {
+  ActiveAppraisalCycle,
+  AppraisalsOverviewData,
+  AppraisalReview,
+} from "@/lib/api/types/hrisTypes";
+import axios from "axios";
 import { Users, CheckCircle2, Clock3, Shield } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export default function AppraisalPage() {
   const [view, setView] = useState<
     "overview" | "reviews" | "cycles" | "settings"
   >("overview");
   const [open, setOpen] = useState(false);
+
+  const [overview, setOverview] = useState<AppraisalsOverviewData | null>(null);
+  const [overviewLoading, setOverviewLoading] = useState(true);
+  const [activeCycle, setActiveCycle] = useState<ActiveAppraisalCycle | null>(
+    null,
+  );
+  const [cycleLoading, setCycleLoading] = useState(true);
+  const [overviewReviews, setOverviewReviews] = useState<AppraisalReview[]>([]);
+  const [overviewReviewsLoading, setOverviewReviewsLoading] = useState(true);
+
+  const fetchOverviewAndCycle = useCallback(() => {
+    setOverviewLoading(true);
+    setCycleLoading(true);
+    setOverviewReviewsLoading(true);
+
+    getAppraisalsOverview()
+      .then((res) => setOverview(res.data))
+      .catch((err) => {
+        console.error(
+          "Appraisals overview failed:",
+          axios.isAxiosError(err) ? err.response?.data : err,
+        );
+      })
+      .finally(() => setOverviewLoading(false));
+
+    getActiveAppraisalCycle()
+      .then((res) => setActiveCycle(res))
+      .catch((err) => {
+        console.error("Active cycle failed:", err);
+      })
+      .finally(() => setCycleLoading(false));
+
+    getAppraisalReviews({ limit: 5 })
+      .then((res) => {
+        setOverviewReviews(Array.isArray(res?.data) ? res.data : []);
+      })
+      .catch((err) => {
+        console.error("Overview reviews failed:", err);
+        setOverviewReviews([]);
+      })
+      .finally(() => setOverviewReviewsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetchOverviewAndCycle();
+  }, [fetchOverviewAndCycle]);
 
   return (
     <>
@@ -38,7 +95,11 @@ export default function AppraisalPage() {
             New Cycle
           </button>
 
-          <AppraisalModal isOpen={open} onClose={() => setOpen(false)} />
+          <AppraisalModal
+            isOpen={open}
+            onClose={() => setOpen(false)}
+            onSuccess={fetchOverviewAndCycle}
+          />
         </div>
 
         {/* Tabs */}
@@ -63,9 +124,6 @@ export default function AppraisalPage() {
             }`}
           >
             Reviews
-            <span className="ml-2 rounded-full bg-red-500 px-2 py-0.5 text-xs text-white">
-              1
-            </span>
           </button>
 
           <button
@@ -97,7 +155,11 @@ export default function AppraisalPage() {
             <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-4">
               <StatsCard
                 title="Total Employees"
-                value="6"
+                value={
+                  overviewLoading
+                    ? "—"
+                    : String(overview?.analytics.totalEmployees ?? 0)
+                }
                 icon={<Users size={18} />}
                 iconBg="bg-blue-100"
                 iconColor="text-blue-600"
@@ -105,7 +167,11 @@ export default function AppraisalPage() {
 
               <StatsCard
                 title="Completed"
-                value="1"
+                value={
+                  overviewLoading
+                    ? "—"
+                    : String(overview?.analytics.completed ?? 0)
+                }
                 icon={<CheckCircle2 size={18} />}
                 iconBg="bg-green-100"
                 iconColor="text-green-600"
@@ -113,7 +179,11 @@ export default function AppraisalPage() {
 
               <StatsCard
                 title="In Progress"
-                value="3"
+                value={
+                  overviewLoading
+                    ? "—"
+                    : String(overview?.analytics.inProgress ?? 0)
+                }
                 icon={<Clock3 size={18} />}
                 iconBg="bg-yellow-100"
                 iconColor="text-yellow-600"
@@ -121,16 +191,26 @@ export default function AppraisalPage() {
 
               <StatsCard
                 title="Pending HR"
-                value="1"
+                value={
+                  overviewLoading
+                    ? "—"
+                    : String(overview?.analytics.pendingHR ?? 0)
+                }
                 icon={<Shield size={18} />}
                 iconBg="bg-purple-100"
                 iconColor="text-purple-600"
               />
             </div>
+            <CycleOverview
+              cycle={activeCycle}
+              loading={cycleLoading}
+              onCreateCycle={() => setOpen(true)}
+            />
 
-            <CycleOverview />
-
-            <EmployeeTable />
+            <EmployeeTable
+              reviews={overviewReviews}
+              loading={overviewReviewsLoading}
+            />
           </>
         )}
         {view === "reviews" && (

@@ -1,27 +1,39 @@
+import { Goal } from "@/lib/api/types/hrisTypes";
 import StatusBadge from "../appraisal/StatusBadge";
 import RatingScale from "./RatingScale";
 
-export default function GoalCard() {
+interface GoalCardProps {
+  goal: Goal;
+}
+
+const STATUS_LABEL: Record<Goal["status"], string> = {
+  PENDING: "Pending",
+  IN_PROGRESS: "In Progress",
+  COMPLETED: "Completed",
+};
+
+export default function GoalCard({ goal }: GoalCardProps) {
   return (
     <div className="rounded-xl border bg-white p-6">
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-xl font-semibold">
-            Process Optimisation Initiative
-          </h2>
+          <h2 className="text-xl font-semibold">{goal.title}</h2>
 
-          <p className="mt-2 text-gray-500">
-            Identify and eliminate 3 operational inefficiencies.
+          <p className="mt-2 text-gray-500">{goal.description}</p>
+
+          <p className="mt-2 text-[#7A8DA8]">✓ {goal.successCriteria}</p>
+
+          <p className="mt-2 text-sm text-gray-500">
+            Target:{" "}
+            {new Date(goal.targetDate).toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })}
           </p>
-
-          <p className="mt-2 text-[#7A8DA8]">
-            ✓ 3 documented bottlenecks resolved.
-          </p>
-
-          <p className="mt-2 text-sm text-gray-500">Target: 30 Jun 2026</p>
         </div>
 
-        <StatusBadge text="Completed" />
+        <StatusBadge text={STATUS_LABEL[goal.status]} />
       </div>
 
       <hr className="my-8" />
@@ -30,25 +42,25 @@ export default function GoalCard() {
         <div>
           <RatingScale
             title="Employee"
-            selected={4}
-            subtitle="Exceeds Expectations"
+            selected={goal.employeeRating ?? 0}
+            subtitle={goal.employeeRatingLabel ?? ""}
           />
 
-          <p className="mt-4 text-gray-600">
-            Identified and resolved 3 bottlenecks, saving ~5 hrs/week.
-          </p>
+          {goal.employeeComment && (
+            <p className="mt-4 text-gray-600">{goal.employeeComment}</p>
+          )}
         </div>
 
         <div>
           <RatingScale
             title="Manager"
-            selected={3}
-            subtitle="Meets Expectations"
+            selected={goal.managerRating ?? 0}
+            subtitle={goal.managerRatingLabel ?? ""}
           />
 
-          <p className="mt-4 text-gray-600">
-            Good outcome but took longer than expected.
-          </p>
+          {goal.managerComment && (
+            <p className="mt-4 text-gray-600">{goal.managerComment}</p>
+          )}
         </div>
       </div>
     </div>

@@ -1,47 +1,45 @@
-import { ChevronRight } from "lucide-react";
-import { ActionItem as ActionItemType } from "@/types/employee/dashboard";
-
-interface Props {
-  item: ActionItemType;
-}
-
-const badgeStyles = {
-  "Action Required": "bg-blue-100 text-blue-700",
-
-  Approved: "bg-green-100 text-green-700",
-
-  Upcoming: "bg-yellow-100 text-yellow-700",
-};
-
-const borderStyles = {
-  "Action Required": "border-l-4 border-blue-500",
-
-  Approved: "border-l-4 border-green-500",
-
-  Upcoming: "border-l-4 border-yellow-500",
+const statusMap: Record<
+  string,
+  { label: string; badge: string; border: string }
+> = {
+  ACTION_REQUIRED: {
+    label: "Action Required",
+    badge: "bg-blue-100 text-blue-700",
+    border: "border-l-4 border-blue-500",
+  },
+  APPROVED: {
+    label: "Approved",
+    badge: "bg-green-100 text-green-700",
+    border: "border-l-4 border-green-500",
+  },
+  UPCOMING: {
+    label: "Upcoming",
+    badge: "bg-yellow-100 text-yellow-700",
+    border: "border-l-4 border-yellow-500",
+  },
 };
 
 export default function ActionItem({ item }: Props) {
+  const style = statusMap[item.status] ?? {
+    label: item.status,
+    badge: "bg-gray-100 text-gray-700",
+    border: "border-l-4 border-gray-300",
+  };
+
   return (
     <div
-      className={`flex flex-col gap-5 p-5 md:flex-row md:items-center md:justify-between ${borderStyles[item.status]}`}
+      className={`flex flex-col gap-5 p-5 md:flex-row md:items-center md:justify-between ${style.border}`}
     >
       <div>
         <h3 className="font-semibold text-gray-800">{item.title}</h3>
-
         <p className="mt-2 text-sm text-gray-500">{item.description}</p>
       </div>
-
       <div className="flex items-center gap-3">
         <span
-          className={`rounded-full px-4 py-1 text-xs font-medium ${badgeStyles[item.status]}`}
+          className={`rounded-full px-4 py-1 text-xs font-medium ${style.badge}`}
         >
-          {item.status}
+          {style.label}
         </span>
-
-        <button className="rounded-full p-1 transition hover:bg-gray-100">
-          <ChevronRight size={18} className="text-gray-500" />
-        </button>
       </div>
     </div>
   );

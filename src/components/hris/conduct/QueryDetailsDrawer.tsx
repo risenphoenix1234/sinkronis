@@ -1,16 +1,28 @@
 "use client";
 
-import { EmployeeQuery } from "@/types/hris/conduct";
+import { ConductRecord } from "@/lib/api/types/hrisTypes";
 import { Plus } from "lucide-react";
 
+// The backend may return notes as objects with these fields
+interface NoteItem {
+  id: string;
+  author: string;
+  date: string;
+  type?: string;
+  message: string;
+}
+
 interface Props {
-  query: EmployeeQuery | null;
+  query: ConductRecord | null;
 }
 
 export default function QueryDetailsDrawer({ query }: Props) {
   if (!query) {
     return <aside className="w-[340px] border-l bg-white" />;
   }
+
+  const history: string[] = query.history ?? [];
+  const notes: NoteItem[] = (query.notes ?? []) as NoteItem[];
 
   return (
     <aside className="w-[340px] border-l bg-white flex flex-col">
@@ -48,13 +60,17 @@ export default function QueryDetailsDrawer({ query }: Props) {
         <div className="mt-6">
           <h4 className="text-xs text-slate-500 mb-3">Query History</h4>
 
-          <div className="space-y-2">
-            {query.history.map((item) => (
-              <div key={item} className="flex justify-between text-sm">
-                <span>{item}</span>
-              </div>
-            ))}
-          </div>
+          {history.length === 0 ? (
+            <p className="text-xs text-slate-400">No history yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {history.map((item, i) => (
+                <div key={i} className="flex justify-between text-sm">
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Notes */}
@@ -62,23 +78,27 @@ export default function QueryDetailsDrawer({ query }: Props) {
         <div className="mt-6">
           <h4 className="text-xs text-slate-500 mb-3">Notes</h4>
 
-          <div className="space-y-3">
-            {query.notes.map((note) => (
-              <div key={note.id} className="rounded-md border p-3">
-                <div className="flex justify-between">
-                  <span className="font-medium">{note.author}</span>
+          {notes.length === 0 ? (
+            <p className="text-xs text-slate-400">No notes yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {notes.map((note, i) => (
+                <div key={note.id ?? i} className="rounded-md border p-3">
+                  <div className="flex justify-between">
+                    <span className="font-medium">{note.author}</span>
 
-                  <span className="text-xs text-slate-400">{note.date}</span>
+                    <span className="text-xs text-slate-400">{note.date}</span>
+                  </div>
+
+                  {note.type === "query" && (
+                    <p className="text-orange-500 text-xs mt-1">New Query</p>
+                  )}
+
+                  <p className="mt-1 text-xs text-slate-600">{note.message}</p>
                 </div>
-
-                {note.type === "query" && (
-                  <p className="text-orange-500 text-xs mt-1">New Query</p>
-                )}
-
-                <p className="mt-1 text-xs text-slate-600">{note.message}</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -111,7 +131,7 @@ function Detail({ label, value }: { label: string; value: string }) {
     <div>
       <p className="text-xs text-slate-400">{label}</p>
 
-      <p className="font-medium">{value}</p>
+      <p className="font-medium">{value ?? "—"}</p>
     </div>
   );
 }

@@ -1,85 +1,111 @@
-type Status = "Pending" | "Approved" | "Rejected";
+"use client";
 
-interface LeaveRequest {
-  employee: string;
-  department: string;
-  leaveType: string;
-  from: string;
-  to: string;
-  days: number;
-  status: Status;
+import { approveLeaveReq, rejectLeaveReq } from "@/lib/api/hris";
+import { LeaveRequestRecord } from "@/lib/api/types/hrisTypes";
+import { useState } from "react";
+
+interface LeaveTableProps {
+  requests: LeaveRequestRecord[];
+  loading: boolean;
+  onActionComplete: () => void;
+  page: number;
+  totalPages: number;
+  total: number;
+  onPageChange: (page: number) => void;
 }
 
-export default function LeaveTable() {
-  const requests: LeaveRequest[] = [
-    {
-      employee: "Amara Okafor",
-      department: "Human Resources",
-      leaveType: "Annual Leave",
-      from: "20 May 2026",
-      to: "24 May 2026",
-      days: 5,
-      status: "Pending",
-    },
-    {
-      employee: "Chinweze Akinemi",
-      department: "Finance",
-      leaveType: "Sick Leave",
-      from: "19 May 2026",
-      to: "16 May 2026",
-      days: 2,
-      status: "Pending",
-    },
-    {
-      employee: "Fatima Al-Hassan",
-      department: "Operations",
-      leaveType: "Maternity Leave",
-      from: "01 Jun 2026",
-      to: "29 Aug 2026",
-      days: 90,
-      status: "Approved",
-    },
-    {
-      employee: "Tunde Balogun",
-      department: "IT & Technology",
-      leaveType: "Annual Leave",
-      from: "18 May 2026",
-      to: "20 May 2026",
-      days: 3,
-      status: "Approved",
-    },
-    {
-      employee: "Ngozi Eze",
-      department: "Sales & Marketing",
-      leaveType: "Compassionate Leave",
-      from: "08 May 2026",
-      to: "10 May 2026",
-      days: 3,
-      status: "Approved",
-    },
-    {
-      employee: "Adebayo Nwachukwu",
-      department: "Customer Support",
-      leaveType: "Study Leave",
-      from: "25 May 2026",
-      to: "28 May 2026",
-      days: 4,
-      status: "Rejected",
-    },
-  ];
+export default function LeaveTable({
+  requests,
+  loading,
+  onActionComplete,
+  page,
+  totalPages,
+  total,
+  onPageChange,
+}: LeaveTableProps) {
+  const [actingId, setActingId] = useState<string | null>(null);
 
-  const statusClass = (status: Status) => {
-    switch (status) {
-      case "Approved":
+  const statusClass = (status: string) => {
+    switch (status?.toUpperCase()) {
+      case "APPROVED":
         return "bg-green-100 text-green-600";
-
-      case "Pending":
+      case "PENDING":
         return "bg-yellow-100 text-yellow-700";
-
-      case "Rejected":
+      case "REJECTED":
         return "bg-red-100 text-red-600";
+      default:
+        return "bg-slate-100 text-slate-600";
     }
   };
+
+  const handleApprove = async (id: string) => {
+    const comment =
+      window.prompt("Comment for the employee (optional):") ?? undefined;
+    setActingId(id);
+    try {
+      await approveLeaveReq(id, comment ? { comment } : undefined);
+      onActionComplete();
+    } catch (err: any) {
+      const status = err.response?.status;
+      if (status === 409)
+        alert("This request was already reviewed by someone else.");
+      else if (status === 404) alert("This leave request no longer exists.");
+      else if (status === 403)
+        alert("You don't have permission to approve leave requests.");
+      else
+        alert(
+          err.response?.data?.message ?? "Failed to approve leave request.",
+        );
+      console.error("Approve leave failed:", err.response?.data ?? err.message);
+      onActionComplete();
+    } finally {
+      setActingId(null);
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    const reason =
+      window.prompt("Reason for rejection (optional):") ?? undefined;
+
+    setActingId(id);
+    try {
+      await rejectLeaveReq(id, reason ? { reason } : undefined);
+      onActionComplete();
+    } catch (err: any) {
+      const status = err.response?.status;
+      if (status === 409) {
+        alert("This request was already reviewed by someone else.");
+      } else if (status === 404) {
+        alert("This leave request no longer exists.");
+      } else if (status === 403) {
+        alert("You don't have permission to reject leave requests.");
+      } else if (status === 400) {
+        alert(err.response?.data?.message ?? "Invalid request.");
+      } else {
+        alert(err.response?.data?.message ?? "Failed to reject leave request.");
+      }
+      console.error("Reject leave failed:", err.response?.data ?? err.message);
+      onActionComplete();
+    } finally {
+      setActingId(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <p className="text-sm text-gray-400 py-8 text-center">
+        Loading leave requests...
+      </p>
+    );
+  }
+
+  if (requests.length === 0) {
+    return (
+      <p className="text-sm text-gray-400 py-8 text-center">
+        No leave requests found.
+      </p>
+    );
+  }
 
   return (
     <>
@@ -88,79 +114,53 @@ export default function LeaveTable() {
           <thead className="text-xs text-gray-400 border-b">
             <tr className="h-12">
               <th className="text-left">Employee</th>
-
               <th className="text-left">Department</th>
-
               <th className="text-left">Leave Type</th>
-
               <th className="text-left">From</th>
-
               <th className="text-left">To</th>
-
               <th className="text-left">Days</th>
-
               <th className="text-left">Status</th>
+              <th className="text-left">Actions</th>
             </tr>
           </thead>
 
           <tbody>
             {requests.map((item) => (
-              <tr key={item.employee} className="border-b h-14 text-sm">
-                <td>{item.employee}</td>
-
-                <td>{item.department}</td>
-
+              <tr key={item.id} className="border-b h-14 text-sm">
+                <td>{item.employee?.name ?? "—"}</td>
+                <td>{item.department?.name ?? "—"}</td>
                 <td>{item.leaveType}</td>
-
                 <td>{item.from}</td>
-
                 <td>{item.to}</td>
-
                 <td>{item.days}d</td>
-
                 <td>
                   <span
-                    className={`
-                    px-3
-                    py-1
-                    rounded-full
-                    text-xs
-                    font-medium
-                    ${statusClass(item.status)}
-                  `}
+                    className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${statusClass(item.status)}`}
                   >
-                    {item.status}
+                    {item.status?.toLowerCase()}
                   </span>
                 </td>
-
                 <td>
-                  <div className="flex gap-2">
-                    <button
-                      className="
-                      bg-blue-500
-                      text-white
-                      text-xs
-                      px-3
-                      py-1
-                      rounded
-                    "
-                    >
-                      Approve
-                    </button>
-
-                    <button
-                      className="
-                      bg-red-100
-                      text-red-500
-                      text-xs
-                      px-3
-                      py-1
-                      rounded
-                    "
-                    >
-                      Reject
-                    </button>
-                  </div>
+                  {item.status?.toUpperCase() === "PENDING" ? (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleApprove(item.id)}
+                        disabled={actingId === item.id}
+                        className="bg-blue-500 text-white text-xs px-3 py-1 rounded disabled:opacity-50"
+                      >
+                        {actingId === item.id ? "..." : "Approve"}
+                      </button>
+                      <button
+                        onClick={() => handleReject(item.id)}
+                        disabled={actingId === item.id}
+                        className="bg-red-100 text-red-500 text-xs px-3 py-1 rounded disabled:opacity-50"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-300">—</span>
+                  )}
                 </td>
               </tr>
             ))}
@@ -168,27 +168,28 @@ export default function LeaveTable() {
         </table>
       </div>
 
-      {/* Footer */}
-
       <div className="flex items-center justify-between mt-6">
-        <p className="text-xs text-gray-400">Showing 1-6 of 6</p>
-
+        <p className="text-xs text-gray-400">
+          Page {page} of {totalPages} · {total} total
+        </p>
         <div className="flex gap-2">
-          <button className="w-8 h-8 border rounded">‹</button>
-
           <button
-            className="
-            w-8
-            h-8
-            rounded
-            bg-blue-500
-            text-white
-          "
+            onClick={() => onPageChange(Math.max(1, page - 1))}
+            disabled={page <= 1}
+            className="w-8 h-8 border rounded disabled:opacity-40"
           >
-            1
+            ‹
           </button>
-
-          <button className="w-8 h-8 border rounded">›</button>
+          <button className="w-8 h-8 rounded bg-blue-500 text-white">
+            {page}
+          </button>
+          <button
+            onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+            disabled={page >= totalPages}
+            className="w-8 h-8 border rounded disabled:opacity-40"
+          >
+            ›
+          </button>
         </div>
       </div>
     </>

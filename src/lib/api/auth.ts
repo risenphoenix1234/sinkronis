@@ -1,6 +1,9 @@
 import api from "../axios";
 import { LoginPayload, LoginResponse, MeResponse } from "./types/auth.types";
 
+// Re-export so consumers can import from "@/lib/api/auth" directly
+export type { LoginPayload, LoginResponse };
+
 export const login = async (payload: LoginPayload) => {
   const { data } = await api.post<LoginResponse>("/auth/login", payload);
   return data;
