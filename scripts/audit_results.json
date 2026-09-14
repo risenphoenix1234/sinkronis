@@ -1,0 +1,794 @@
+{
+  "auth": {
+    "status": "OK",
+    "user": {
+      "id": "cmtcx5a5m000repg2elcqkges",
+      "organizationId": "cmtcx599d000nepg2gzl3sjgf",
+      "isPlatformAdmin": false,
+      "accountType": "TENANT_USER",
+      "email": "sowolefemifestus@gmail.com",
+      "firstName": "sowolefemifestus",
+      "lastName": "Admin",
+      "role": "Owner",
+      "lastLoginAt": "2026-09-12T16:57:09.548Z"
+    }
+  },
+  "dashboard": {
+    "status": "SUCCESS",
+    "httpStatus": 200,
+    "success": true,
+    "message": "HRIS dashboard retrieved successfully",
+    "dataIsArray": false,
+    "count": 1,
+    "sample": {
+      "currentDate": "2026-09-12",
+      "timeZone": "Africa/Lagos",
+      "employeeOverview": {
+        "totalEmployees": 2,
+        "activeEmployees": 2,
+        "activeEmployeePercentage": 100,
+        "employeesOnLeave": 0,
+        "pendingLeaveApprovals": 0
+      },
+      "newHires": {
+        "currentMonth": 0,
+        "previousMonth": 0,
+        "difference": 0,
+        "trend": "UNCHANGED"
+      },
+      "attendanceOverview": {
+        "onTime": {
+          "count": 0,
+          "previousDayCount": 0,
+          "difference": 0,
+          "trend": "UNCHANGED"
+        },
+        "lateClockIn": {
+          "count": 0,
+          "previousDayCount": 0,
+          "difference": 0,
+          "trend": "UNCHANGED"
+        },
+        "earlyClockIn": {
+          "count": 0,
+          "previousDayCount": 0,
+          "difference": 0,
+          "trend": "UNCHANGED"
+        },
+        "absent": {
+          "count": 0,
+          "previousDayCount": 2,
+          "difference": -2,
+          "trend": "DOWN"
+        },
+        "noClockIn": {
+          "count": 0,
+          "previousDayCount": 0,
+          "difference": 0,
+          "trend": "UNCHANGED"
+        },
+        "noClockOut": {
+          "count": 0,
+          "previousDayCount": 0,
+          "difference": 0,
+          "trend": "UNCHANGED"
+        }
+      },
+      "attendanceClassification": {
+        "workStartTime": "09:00",
+        "workEndTime": "17:00",
+        "gracePeriodMinutes": 0,
+        "onTimeIncludesEarlyClockIn": true,
+        "noClockInAvailability": "NOT_TRACKED",
+        "holidayExclusionAvailability": "NOT_TRACKED"
+      },
+      "recentActivity": [
+        {
+          "id": "cmtx4xn6o000eb02uuch6b1gk",
+          "type": "HRIS_APPRAISAL_SETTINGS_UPDATED",
+          "employeeId": null,
+          "employeeName": null,
+          "description": "Updated appraisal settings",
+          "createdAt": "2026-09-11T15:52:49.823Z"
+        },
+        {
+          "id": "cmtx4xbuq0009b02uz4k0syjj",
+          "type": "HRIS_APPRAISAL_SETTINGS_UPDATED",
+          "employeeId": null,
+          "employeeName": null,
+          "description": "Updated appraisal settings",
+          "createdAt": "2026-09-11T15:52:35.137Z"
+        },
+        {
+          "id": "cmtx4ww4i0004b02uz3meufyr",
+          "type": "HRIS_APPRAISAL_SETTINGS_UPDATED",
+          "employeeId": null,
+          "employeeName": null,
+          "description": "Updated appraisal settings",
+          "createdAt": "2026-09-11T15:52:14.738Z"
+        },
+        {
+          "id": "cmtwyo0qv0014x33efxoef1a9",
+          "type": "HRIS_APPRAISAL_CYCLE_LAUNCHED",
+          "employeeId": null,
+          "employeeName": null,
+          "description": "Launched appraisal cycle __WORKFLOW_TEST_1789131424110__",
+          "createdAt": "2026-09-11T12:57:23.142Z"
+        },
+        {
+          "id": "cmtwynwg0000yx33ehmx43pnw",
+          "type": "HRIS_APPRAISAL_CYCLE_CREATED",
+          "employeeId": null,
+          "employeeName": null,
+          "description": "Created appraisal cycle __WORKFLOW_TEST_1789131424110__",
+          "createdAt": "2026-09-11T12:57:17.568Z"
+        },
+        {
+          "id": "cmtwygnnh000sx33es4kkibcs",
+          "type": "HRIS_APPRAISAL_CYCLE_DELETED",
+          "employeeId": null,
+          "employeeName": null,
+          "description": "Permanently deleted appraisal cycle __WORKFLOW_TEST_1789131029687__",
+          "createdAt": "2026-09-11T12:51:39.580Z"
+        },
+        {
+          "id": "cmtwyfw58000px33edo1ftpx1",
+          "type": "HRIS_APPRAISAL_GOALS_READY_FOR_CONFIRMATION",
+          "employeeId": "cmtn3slha0002nntukg0zru2s",
+          "employeeName": "eMMAN Sails",
+          "description": "Marked appraisal goals ready for employee confirmation",
+          "createdAt": "2026-09-11T12:51:03.931Z"
+        },
+        {
+          "id": "cmtwyft29000mx33ege7xilgp",
+          "type": "HRIS_APPRAISAL_GOAL_PROPOSED",
+          "employeeId": "cmtn3slha0002nntukg0zru2s",
+          "employeeName": "eMMAN Sails",
+          "description": "Proposed appraisal goal: Process Optimisation Initiative",
+          "createdAt": "2026-09-11T12:50:59.937Z"
+        },
+        {
+          "id": "cmtwyfhul000hx33esv28k514",
+          "type": "HRIS_APPRAISAL_CYCLE_LAUNCHED",
+          "employeeId": null,
+          "employeeName": null,
+          "description": "Launched appraisal cycle __WORKFLOW_TEST_1789131029687__",
+          "createdAt": "2026-09-11T12:50:45.404Z"
+        },
+        {
+          "id": "cmtwyfdyh000bx33egoywxn8h",
+          "type": "HRIS_APPRAISAL_CYCLE_CREATED",
+          "employeeId": null,
+          "employeeName": null,
+          "description": "Created appraisal cycle __WORKFLOW_TEST_1789131029687__",
+          "createdAt": "2026-09-11T12:50:40.361Z"
+        }
+      ],
+      "pendingLeaveRequests": [],
+      "headcountByDepartment": []
+    }
+  },
+  "employees_list": {
+    "status": "SUCCESS",
+    "httpStatus": 200,
+    "success": true,
+    "message": "Employees retrieved successfully",
+    "dataIsArray": true,
+    "count": 2,
+    "pagination": {
+      "page": 1,
+      "limit": 25,
+      "total": 2,
+      "totalPages": 1,
+      "hasNextPage": false,
+      "hasPreviousPage": false
+    },
+    "sample": {
+      "id": "cmtn3slha0002nntukg0zru2s",
+      "employeeId": "EMP-EXAMPLE-001",
+      "name": "eMMAN Sails",
+      "role": "Hr",
+      "department": null,
+      "status": "PROBATION",
+      "operationalStatus": "ACTIVE",
+      "lifecycleStatus": "PROBATION",
+      "joinedDate": "2026-08-19T00:00:00.000Z",
+      "phoneNumber": "+2349012345678",
+      "profileImage": "https://iaqiwy99ixfpq0cl.public.blob.vercel-storage.com/hris/cmtcx599d000nepg2gzl3sjgf/employees/1788535391957-bc07aeaf-dea4-486a-9b94-7e6c36d58264.png"
+    }
+  },
+  "attendance_my_today": {
+    "status": "FAIL",
+    "httpStatus": 404,
+    "error": {
+      "success": false,
+      "message": "Resource not found",
+      "data": null,
+      "errorCode": "HTTP_404",
+      "validationErrors": null
+    }
+  },
+  "attendance_overview": {
+    "status": "SUCCESS",
+    "httpStatus": 200,
+    "success": true,
+    "message": "Attendance overview retrieved successfully",
+    "dataIsArray": false,
+    "count": 1,
+    "sample": {
+      "range": {
+        "from": "2026-09-12",
+        "to": "2026-09-12",
+        "timeZone": "Africa/Lagos"
+      },
+      "attendanceRate": 0,
+      "daysPresent": 0,
+      "daysAbsent": null,
+      "onLeave": null,
+      "lateClockIns": 0,
+      "totalHours": 0,
+      "availability": {
+        "daysAbsent": "Requires historical workday/holiday snapshots",
+        "onLeave": "Use approved leave date-range aggregation"
+      }
+    }
+  },
+  "attendance_daily": {
+    "status": "SUCCESS",
+    "httpStatus": 200,
+    "success": true,
+    "message": "Attendance retrieved successfully",
+    "dataIsArray": false,
+    "count": 1,
+    "sample": {
+      "selectedDate": "2026-09-12",
+      "employeeCount": 2,
+      "analytics": {
+        "onTime": 0,
+        "late": 0,
+        "absent": 0,
+        "onLeave": 0,
+        "noClockOut": 0,
+        "overtime": 0,
+        "totalHoursWorked": 0,
+        "totalOvertimeHours": 0,
+        "attendanceRate": 0,
+        "shiftsActive": 1,
+        "pendingDisputes": 0
+      },
+      "records": []
+    }
+  },
+  "attendance_department_summary": {
+    "status": "FAIL",
+    "httpStatus": 404,
+    "error": {
+      "success": false,
+      "message": "Resource not found",
+      "data": null,
+      "errorCode": "HTTP_404",
+      "validationErrors": null
+    }
+  },
+  "attendance_logs": {
+    "status": "SUCCESS",
+    "httpStatus": 200,
+    "success": true,
+    "message": "Attendance logs retrieved successfully",
+    "dataIsArray": true,
+    "count": 0,
+    "pagination": {
+      "page": 1,
+      "limit": 25,
+      "total": 0,
+      "totalPages": 0,
+      "hasNextPage": false,
+      "hasPreviousPage": false
+    }
+  },
+  "attendance_disputes": {
+    "status": "SUCCESS",
+    "httpStatus": 200,
+    "success": true,
+    "message": "Attendance disputes retrieved successfully",
+    "dataIsArray": true,
+    "count": 0,
+    "pagination": {
+      "page": 1,
+      "limit": 25,
+      "total": 0,
+      "totalPages": 0,
+      "hasNextPage": false,
+      "hasPreviousPage": false
+    }
+  },
+  "leave_overview": {
+    "status": "FAIL",
+    "httpStatus": 404,
+    "error": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET /api/v1/hris/leave-requests/overview</pre>\n</body>\n</html>\n"
+  },
+  "leave_requests": {
+    "status": "FAIL",
+    "httpStatus": 404,
+    "error": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET /api/v1/hris/leave-requests</pre>\n</body>\n</html>\n"
+  },
+  "conduct_queries": {
+    "status": "SUCCESS",
+    "httpStatus": 200,
+    "success": true,
+    "message": "Conduct records retrieved successfully",
+    "dataIsArray": true,
+    "count": 0,
+    "pagination": {
+      "page": 1,
+      "limit": 25,
+      "total": 0,
+      "totalPages": 0,
+      "hasNextPage": false,
+      "hasPreviousPage": false
+    }
+  },
+  "conduct_suspensions": {
+    "status": "FAIL",
+    "httpStatus": 404,
+    "error": {
+      "success": false,
+      "message": "Conduct record not found",
+      "data": null,
+      "errorCode": "HTTP_404",
+      "validationErrors": null
+    }
+  },
+  "appraisals_overview": {
+    "status": "SUCCESS",
+    "httpStatus": 200,
+    "success": true,
+    "message": "Appraisal overview retrieved successfully",
+    "dataIsArray": false,
+    "count": 1,
+    "sample": {
+      "analytics": {
+        "totalEmployees": 2,
+        "completed": 0,
+        "inProgress": 2,
+        "pendingHR": 0
+      },
+      "activeCycle": {
+        "id": "cmtwynvjj000vx33ecyj07csq",
+        "name": "__WORKFLOW_TEST_1789131424110__",
+        "description": null,
+        "status": "ACTIVE",
+        "periodFrom": "2026-10-01T00:00:00.000Z",
+        "periodTo": "2026-12-31T00:00:00.000Z",
+        "submissionDeadline": "2027-01-07T00:00:00.000Z",
+        "quarter": "Q4",
+        "year": 2026,
+        "template": {
+          "id": "cmttps5hv00014ntq2z6k4zh8",
+          "name": "Test Template 1788935114213"
+        },
+        "totalEmployees": 2,
+        "acknowledgedEmployees": 0,
+        "acknowledgedPercentage": 0,
+        "progress": {
+          "acknowledged": 0,
+          "totalEmployees": 2,
+          "percentage": 0
+        },
+        "workflow": {
+          "goalsProposed": 2,
+          "selfAssessmentOpen": 0,
+          "underManagerReview": 0,
+          "pendingHRApproval": 0,
+          "acknowledged": 0
+        }
+      },
+      "workflow": {
+        "GOAL_SETTING": 2
+      }
+    }
+  },
+  "appraisals_active_cycle": {
+    "status": "SUCCESS",
+    "httpStatus": 200,
+    "success": true,
+    "message": "Active appraisal cycle retrieved successfully",
+    "dataIsArray": false,
+    "count": 1,
+    "sample": {
+      "id": "cmtwynvjj000vx33ecyj07csq",
+      "name": "__WORKFLOW_TEST_1789131424110__",
+      "description": null,
+      "status": "ACTIVE",
+      "periodFrom": "2026-10-01T00:00:00.000Z",
+      "periodTo": "2026-12-31T00:00:00.000Z",
+      "submissionDeadline": "2027-01-07T00:00:00.000Z",
+      "quarter": "Q4",
+      "year": 2026,
+      "template": {
+        "id": "cmttps5hv00014ntq2z6k4zh8",
+        "name": "Test Template 1788935114213"
+      },
+      "totalEmployees": 2,
+      "acknowledgedEmployees": 0,
+      "acknowledgedPercentage": 0,
+      "progress": {
+        "acknowledged": 0,
+        "totalEmployees": 2,
+        "percentage": 0
+      },
+      "workflow": {
+        "goalsProposed": 2,
+        "selfAssessmentOpen": 0,
+        "underManagerReview": 0,
+        "pendingHRApproval": 0,
+        "acknowledged": 0
+      }
+    }
+  },
+  "appraisals_cycles": {
+    "status": "SUCCESS",
+    "httpStatus": 200,
+    "success": true,
+    "message": "Appraisal cycles retrieved successfully",
+    "dataIsArray": true,
+    "count": 4,
+    "pagination": {
+      "page": 1,
+      "limit": 25,
+      "total": 4,
+      "totalPages": 1,
+      "hasNextPage": false,
+      "hasPreviousPage": false
+    },
+    "sample": {
+      "id": "cmtwq8w7b0002dmcdegowneok",
+      "name": "__WORKFLOW_TEST_1789117289236__",
+      "description": null,
+      "status": "DRAFT",
+      "template": {
+        "id": "cmttps5hv00014ntq2z6k4zh8",
+        "name": "Test Template 1788935114213"
+      },
+      "periodFrom": "2026-10-01T00:00:00.000Z",
+      "periodTo": "2026-12-31T00:00:00.000Z",
+      "submissionDeadline": "2027-01-07T00:00:00.000Z",
+      "progress": {
+        "acknowledged": 0,
+        "totalEmployees": 0,
+        "percentage": 0
+      }
+    }
+  },
+  "appraisals_reviews": {
+    "status": "SUCCESS",
+    "httpStatus": 200,
+    "success": true,
+    "message": "Appraisals retrieved successfully",
+    "dataIsArray": true,
+    "count": 2,
+    "pagination": {
+      "page": 1,
+      "limit": 25,
+      "total": 2,
+      "totalPages": 1,
+      "hasNextPage": false,
+      "hasPreviousPage": false
+    },
+    "sample": {
+      "appraisalId": "cmtwynzup0011x33e7vzi06qb",
+      "employee": {
+        "id": "cmtn3slha0002nntukg0zru2s",
+        "employeeId": "EMP-EXAMPLE-001",
+        "name": "eMMAN Sails",
+        "role": "Hr"
+      },
+      "department": null,
+      "manager": null,
+      "cycle": {
+        "id": "cmtwynvjj000vx33ecyj07csq",
+        "name": "__WORKFLOW_TEST_1789131424110__"
+      },
+      "template": {
+        "id": "cmttps5hv00014ntq2z6k4zh8",
+        "name": "Test Template 1788935114213"
+      },
+      "stage": "GOAL_SETTING",
+      "status": "IN_PROGRESS",
+      "score": null,
+      "ratingValue": null,
+      "rating": null
+    }
+  },
+  "appraisals_settings": {
+    "status": "SUCCESS",
+    "httpStatus": 200,
+    "success": true,
+    "message": "Appraisal settings retrieved successfully",
+    "dataIsArray": false,
+    "count": 1,
+    "sample": {
+      "id": "cmtsve8850001mynlj4mktuge",
+      "organizationId": "cmtcx599d000nepg2gzl3sjgf",
+      "defaultReviewFrequency": "MONTHLY",
+      "updatedById": "cmtcx5a5m000repg2elcqkges",
+      "createdAt": "2026-09-08T16:14:42.724Z",
+      "updatedAt": "2026-09-11T15:52:48.962Z"
+    }
+  },
+  "appraisals_templates": {
+    "status": "SUCCESS",
+    "httpStatus": 200,
+    "success": true,
+    "message": "Appraisal templates retrieved successfully",
+    "dataIsArray": true,
+    "count": 4,
+    "pagination": {
+      "page": 1,
+      "limit": 25,
+      "total": 4,
+      "totalPages": 1,
+      "hasNextPage": false,
+      "hasPreviousPage": false
+    },
+    "sample": {
+      "id": "cmtwo8zt7000r57bg7g3nno6z",
+      "name": "__SCHEMA_TEST_TEMPLATE_EDITED__",
+      "description": "Schema probe edit — safe to delete",
+      "isDefault": false,
+      "version": 2,
+      "archivedAt": null,
+      "totalWeight": 100,
+      "summary": {
+        "sectionAObjectives": 1,
+        "sectionAKeyResults": 1,
+        "sectionBObjectives": 1,
+        "sectionBKeyResults": 1,
+        "quarterScoring": true
+      }
+    }
+  },
+  "employee_detail": {
+    "status": "SUCCESS",
+    "httpStatus": 200,
+    "success": true,
+    "message": "Employee retrieved successfully",
+    "dataIsArray": false,
+    "count": 1,
+    "sample": {
+      "header": {
+        "id": "cmtn3slha0002nntukg0zru2s",
+        "name": "eMMAN Sails",
+        "role": "Hr",
+        "profileImage": "https://iaqiwy99ixfpq0cl.public.blob.vercel-storage.com/hris/cmtcx599d000nepg2gzl3sjgf/employees/1788535391957-bc07aeaf-dea4-486a-9b94-7e6c36d58264.png",
+        "employeeId": "EMP-EXAMPLE-001",
+        "status": "PROBATION",
+        "operationalStatus": "ACTIVE",
+        "lifecycleStatus": "PROBATION",
+        "joinedDate": "2026-08-19T00:00:00.000Z"
+      },
+      "personalInformation": {
+        "fullName": "eMMAN Sails",
+        "gender": "MALE",
+        "employmentType": "FULL_TIME",
+        "emailAddress": "gyeman@gmail.com",
+        "dateOfBirth": "1990-11-15T00:00:00.000Z",
+        "department": null,
+        "phoneNumber": "+2349012345678",
+        "address": "lagos",
+        "role": "Hr",
+        "city": null,
+        "nationality": "nigerian",
+        "state": null,
+        "workMode": "ONSITE",
+        "maritalStatus": "MARRIED"
+      },
+      "bankDetails": {
+        "bankName": "hub",
+        "accountNumber": "908765642",
+        "monthlySalary": "70000"
+      },
+      "attendanceOverview": {
+        "presentDays": 0,
+        "lateArrivals": 0,
+        "absentDays": null,
+        "overtimeHours": 0,
+        "availability": {
+          "absentDays": "Requires historical workday/holiday snapshots"
+        }
+      },
+      "leaveOverview": {
+        "usedApprovedDays": 0,
+        "balances": [],
+        "availability": "NOT_CONFIGURED"
+      },
+      "payrollOverview": {
+        "available": false,
+        "salaryStructure": null
+      },
+      "nextOfKin": {
+        "name": "carlos diaz",
+        "phoneNumber": "+2348012345678",
+        "address": "lagos",
+        "relationship": null
+      },
+      "guarantor": {
+        "firstName": "pLMs",
+        "lastName": "cole",
+        "relationship": "relative",
+        "phoneNumber": "+2348765432012",
+        "address": "lagos"
+      },
+      "documents": [
+        {
+          "id": "cmtn3slsu0003nntunkizg3r1",
+          "type": "APPOINTMENT_LETTER",
+          "fileName": "Screenshot 2026-08-28 164844.png",
+          "mimeType": "image/png",
+          "size": 67702,
+          "uploadedAt": "2026-09-04T15:23:13.374Z",
+          "downloadPath": "/hris/employees/cmtn3slha0002nntukg0zru2s/documents/cmtn3slsu0003nntunkizg3r1/download"
+        }
+      ]
+    }
+  },
+  "appraisal_detail": {
+    "status": "SUCCESS",
+    "httpStatus": 200,
+    "success": true,
+    "message": "Appraisal retrieved successfully",
+    "dataIsArray": false,
+    "count": 1,
+    "sample": {
+      "appraisalId": "cmtwynzup0011x33e7vzi06qb",
+      "employee": {
+        "id": "cmtn3slha0002nntukg0zru2s",
+        "employeeCode": "EMP-EXAMPLE-001",
+        "name": "eMMAN Sails",
+        "role": "Hr",
+        "department": null,
+        "manager": null,
+        "startDate": "2026-08-19T00:00:00.000Z",
+        "profileImage": "https://iaqiwy99ixfpq0cl.public.blob.vercel-storage.com/hris/cmtcx599d000nepg2gzl3sjgf/employees/1788535391957-bc07aeaf-dea4-486a-9b94-7e6c36d58264.png"
+      },
+      "reviewer": null,
+      "cycle": {
+        "id": "cmtwynvjj000vx33ecyj07csq",
+        "name": "__WORKFLOW_TEST_1789131424110__",
+        "periodFrom": "2026-10-01T00:00:00.000Z",
+        "periodTo": "2026-12-31T00:00:00.000Z",
+        "submissionDeadline": "2027-01-07T00:00:00.000Z",
+        "quarter": "Q4",
+        "year": 2026
+      },
+      "template": {
+        "id": "cmttps5hv00014ntq2z6k4zh8",
+        "name": "Test Template 1788935114213",
+        "version": 1
+      },
+      "criteria": [
+        {
+          "objectives": [
+            {
+              "id": "4bbf00c8-c54f-42c8-be00-41407c0fca3f",
+              "keyResults": [
+                {
+                  "description": "Test Key Result",
+                  "id": "6341bdd8-3213-4ef8-a04f-91da0bf01a08",
+                  "initiatives": "Test initiative",
+                  "kpiWeight": 50,
+                  "target": 10
+                }
+              ],
+              "title": "Test Objective",
+              "weight": 50
+            }
+          ],
+          "section": "KRA",
+          "weight": 50
+        },
+        {
+          "objectives": [
+            {
+              "id": "625384a7-dc4b-478d-aa8d-7b41573319f2",
+              "keyResults": [
+                {
+                  "description": "Test Behavioural Key Result",
+                  "id": "c87f3969-1a83-4ba9-be45-78da8b1bcd31",
+                  "initiatives": "Test initiative",
+                  "kpiWeight": 50,
+                  "target": 10
+                }
+              ],
+              "title": "Test Behavioural Objective",
+              "weight": 50
+            }
+          ],
+          "section": "BEHAVIOURAL",
+          "weight": 50
+        }
+      ],
+      "ratingScale": [
+        {
+          "key": "OUTSTANDING",
+          "minimumExclusive": 120,
+          "value": 5
+        },
+        {
+          "key": "ABOVE_EXPECTATION",
+          "minimumExclusive": 100,
+          "value": 4
+        },
+        {
+          "key": "MEETS_EXPECTATION",
+          "minimum": 80,
+          "value": 3
+        },
+        {
+          "key": "BELOW_EXPECTATION",
+          "minimum": 60,
+          "value": 2
+        },
+        {
+          "key": "POOR_PERFORMANCE",
+          "minimum": 0,
+          "value": 1
+        }
+      ],
+      "stage": "GOAL_SETTING",
+      "status": "IN_PROGRESS",
+      "goalsConfirmedAt": null,
+      "finalScore": null,
+      "ratingValue": null,
+      "rating": null,
+      "workflow": {
+        "goalSetting": "IN_PROGRESS",
+        "selfAssessment": "NOT_STARTED",
+        "managerReview": "NOT_STARTED",
+        "hrApproval": "NOT_STARTED",
+        "acknowledgment": "NOT_STARTED"
+      },
+      "workflowHistory": [
+        {
+          "stage": "GOAL_SETTING",
+          "completedAt": null
+        },
+        {
+          "stage": "SELF_ASSESSMENT",
+          "completedAt": null
+        },
+        {
+          "stage": "MANAGER_REVIEW",
+          "completedAt": null
+        },
+        {
+          "stage": "HR_APPROVAL",
+          "completedAt": null
+        },
+        {
+          "stage": "ACKNOWLEDGMENT",
+          "completedAt": null
+        }
+      ],
+      "goals": [],
+      "selfAssessment": null,
+      "managerReview": null,
+      "hrApproval": null,
+      "acknowledgement": {
+        "acknowledged": false,
+        "response": null,
+        "acknowledgedAt": null
+      },
+      "acknowledgedResponse": null,
+      "signOffs": [],
+      "timestamps": {
+        "createdAt": "2026-09-11T12:57:21.985Z",
+        "updatedAt": "2026-09-11T12:57:21.985Z",
+        "selfAssessmentSubmittedAt": null,
+        "managerReviewedAt": null,
+        "hrApprovedAt": null,
+        "acknowledgedAt": null
+      }
+    }
+  }
+}

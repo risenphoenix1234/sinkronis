@@ -141,7 +141,7 @@ export default function AttendancePage() {
                 onClick={isClockedIn ? handleClockOut : handleClockIn}
                 disabled={linkedEmployeeId === null}
                 className={`px-5 py-2 rounded-md text-white disabled:opacity-50 disabled:cursor-not-allowed ${
-                  isClockedIn ? "bg-red-500" : "bg-blue-600"
+                  isClockedIn ? "bg-red-500" : "bg-sky-600"
                 }`}
               >
                 {linkedEmployeeId === null

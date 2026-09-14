@@ -105,7 +105,7 @@ export default function LeaveManagementPage() {
         <h1 className="text-3xl font-semibold">Leave Management</h1>
         <button
           onClick={() => setShowModal(true)}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white"
+          className="rounded-md bg-sky-600 px-4 py-2 text-sm text-white"
         >
           + Apply for Leave
         </button>
@@ -115,7 +115,7 @@ export default function LeaveManagementPage() {
           <LeaveSummaryCard
             key={item.title}
             title={item.title}
-            value={overviewLoading ? 0 : item.value}
+            value={overviewLoading ? 0 : item.value} bg-blue-600
             color={item.color}
           />
         ))}

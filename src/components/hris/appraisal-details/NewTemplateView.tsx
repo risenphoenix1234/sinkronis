@@ -90,7 +90,9 @@ export default function TemplateView({
 
   const updateSectionWeight = (sectionName: string, weight: number) => {
     setDraft((prev) =>
-      (prev ?? sections).map((s) => (s.section === sectionName ? { ...s, weight } : s)),
+      (prev ?? sections).map((s) =>
+        s.section === sectionName ? { ...s, weight } : s,
+      ),
     );
   };
 
@@ -133,7 +135,10 @@ export default function TemplateView({
     );
   };
 
-  const updateMeta = <K extends keyof DraftMeta>(field: K, value: DraftMeta[K]) => {
+  const updateMeta = <K extends keyof DraftMeta>(
+    field: K,
+    value: DraftMeta[K],
+  ) => {
     setDraftMeta((prev) => (prev ? { ...prev, [field]: value } : prev));
   };
 
@@ -214,15 +219,21 @@ export default function TemplateView({
             section={kraSection}
             editable={editable}
             onSectionWeightChange={(w) => updateSectionWeight("KRA", w)}
-            onObjectiveChange={(i, field, v) => updateObjective("KRA", i, field, v)}
-            onKeyResultChange={(oi, ki, field, v) => updateKeyResult("KRA", oi, ki, field, v)}
+            onObjectiveChange={(i, field, v) =>
+              updateObjective("KRA", i, field, v)
+            }
+            onKeyResultChange={(oi, ki, field, v) =>
+              updateKeyResult("KRA", oi, ki, field, v)
+            }
           />
 
           <BehaviourTable
             section={behaviouralSection}
             editable={editable}
             onSectionWeightChange={(w) => updateSectionWeight("BEHAVIOURAL", w)}
-            onObjectiveChange={(i, field, v) => updateObjective("BEHAVIOURAL", i, field, v)}
+            onObjectiveChange={(i, field, v) =>
+              updateObjective("BEHAVIOURAL", i, field, v)
+            }
             onKeyResultChange={(oi, ki, field, v) =>
               updateKeyResult("BEHAVIOURAL", oi, ki, field, v)
             }

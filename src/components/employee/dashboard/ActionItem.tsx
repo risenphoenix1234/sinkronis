@@ -1,3 +1,9 @@
+import type { ActionItem as ActionItemType } from "@/types/employee/dashboard";
+
+interface Props {
+  item: ActionItemType;
+}
+
 const statusMap: Record<
   string,
   { label: string; badge: string; border: string }

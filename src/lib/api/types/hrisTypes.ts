@@ -472,17 +472,7 @@ export interface GetEmployeeAttendanceParams {
   limit?: number;
 }
 
-// GET /hris/employees/{employeeId}/activity
-// Swagger gives no example response body ("Paginated activity" only) —
-// this is an audited action log, so likely something like actor/action/
-// timestamp. UNCONFIRMED until tested against a real response.
-export interface EmployeeActivityRecord {
-  id: string;
-  action: string;
-  actor: string;
-  createdAt: string;
-  description?: string;
-}
+// GET /hris/employees/{employeeId}/activity — full confirmed shape below at EmployeeActivityRecord (line ~513)
 
 export interface GetEmployeeActivityResponse {
   success: boolean;
@@ -574,11 +564,7 @@ export interface ClockInResponse {
   data: unknown; // shape not shown in Swagger yet — inspect once tested live
 }
 
-export interface GetMyTodayAttendanceResponse {
-  success: boolean;
-  message: string;
-  data: MyTodayAttendance | null; // null seems plausible if no record exists yet today
-}
+// GetMyTodayAttendanceResponse — full version below, after MyTodayAttendance is defined
 
 // POST /hris/attendance/{id}/clock-out
 export interface ClockOutPayload {
@@ -991,8 +977,8 @@ export interface AppraisalsAnalytics {
 
 export interface AppraisalsOverviewData {
   analytics: AppraisalsAnalytics;
-  activeCycle: Record<string, unknown> | null; // shape unknown — null until a cycle exists
-  workflow: Record<string, unknown>; // "stage counts" per description — empty until populated
+  activeCycle: Record<string, unknown> | null;
+  workflow: Record<string, unknown>;
 }
 
 export interface GetAppraisalsOverviewResponse {
@@ -1087,10 +1073,7 @@ export interface GetAppraisalReviewsResponse {
   };
 }
 
-export interface AppraisalSettings {
-  organizationId: string;
-  defaultReviewFrequency: "MONTHLY" | "QUARTERLY" | "BIANNUAL" | "ANNUAL"; // QUARTERLY confirmed; others inferred from the UI's existing 4 options
-}
+// AppraisalSettings — full version below (see line ~1310)
 
 export interface GetAppraisalTemplatesParams {
   page?: number;

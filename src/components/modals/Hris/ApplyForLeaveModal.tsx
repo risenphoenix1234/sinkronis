@@ -182,7 +182,7 @@ export default function ApplyForLeaveModal({
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="h-10 rounded bg-sky-300 px-6 text-sm font-medium text-white transition hover:bg-sky-400 disabled:opacity-60"
+            className="h-10 rounded bg-sky-500 px-6 text-sm font-medium text-white transition hover:bg-sky-400 disabled:opacity-60"
           >
             {submitting ? "Submitting..." : "Submit Request"}
           </button>

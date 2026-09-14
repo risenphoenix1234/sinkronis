@@ -20,6 +20,8 @@ const sidebarItems: SidebarItem[] = [
     href: "/employee/appraisal",
     icon: "employee-appraisal",
   },
+  { label: "My Payslip", href: "/employee/payslip", icon: "payslips" },
+
   { label: "My Inbox", href: "/employee/inbox", icon: "inbox" },
 ];
 
@@ -29,10 +31,7 @@ export default function EmployeeLayout({
   children: React.ReactNode;
 }) {
   return (
-    <DashboardLayout
-      sidebarTitle="Employee"
-      sidebarItems={sidebarItems}
-    >
+    <DashboardLayout sidebarTitle="Employee" sidebarItems={sidebarItems}>
       {children}
     </DashboardLayout>
   );

@@ -1,11 +1,23 @@
+// components/employee/profile/Tabs.tsx
 "use client";
 
 import { useState } from "react";
 import ProfileCard from "./ProfileCard";
 import DocumentsTable from "./DocumentsTable";
 import BankDetails from "./BankDetails";
+import { BankDetailsData, DocumentItem } from "@/lib/api/employee";
 
-export default function Tabs() {
+interface TabsProps {
+  documents: DocumentItem[];
+  bankDetails: BankDetailsData;
+  onBankRequestSubmitted: () => void;
+}
+
+export default function Tabs({
+  documents,
+  bankDetails,
+  onBankRequestSubmitted,
+}: TabsProps) {
   const [activeTab, setActiveTab] = useState<"documents" | "bank">("documents");
 
   return (
@@ -22,7 +34,6 @@ export default function Tabs() {
           >
             Documents
           </button>
-
           <button
             onClick={() => setActiveTab("bank")}
             className={`pb-3 text-sm ${
@@ -37,7 +48,14 @@ export default function Tabs() {
       </div>
 
       <div>
-        {activeTab === "documents" ? <DocumentsTable /> : <BankDetails />}
+        {activeTab === "documents" ? (
+          <DocumentsTable documents={documents} />
+        ) : (
+          <BankDetails
+            data={bankDetails}
+            onRequestSubmitted={onBankRequestSubmitted}
+          />
+        )}
       </div>
     </ProfileCard>
   );

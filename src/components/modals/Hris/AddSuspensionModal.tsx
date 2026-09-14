@@ -19,26 +19,31 @@ type FormData = {
   notes: string;
 };
 
-const initialFormData: FormData = {
-  employeeId: "",
-  queryType: "MISCONDUCT",
-  durationValue: "1",
-  durationUnit: "DAYS",
-  notes: "",
-};
-
 const SUSPENSION_TYPES = [
-  { value: "MISCONDUCT", label: "Misconduct" },
-  { value: "PERFORMANCE", label: "Performance" },
-  { value: "POLICY_VIOLATION", label: "Policy Violation" },
   { value: "GROSS_MISCONDUCT", label: "Gross Misconduct" },
+  { value: "PERFORMANCE_RELATED", label: "Performance Related" },
+  { value: "ATTENDANCE", label: "Attendance" },
+  { value: "INSUBORDINATION", label: "Insubordination" },
 ];
 
 const DURATION_UNITS = [
-  { value: "DAYS", label: "Day(s)" },
-  { value: "WEEKS", label: "Week(s)" },
-  { value: "MONTHS", label: "Month(s)" },
+  { value: "DAY", label: "Day" },
+  { value: "WEEK", label: "Week" },
+  { value: "MONTH", label: "Month" },
 ];
+
+// IMPORTANT: every field that backs a controlled <select> must default to a
+// value that actually exists in that select's options. If it doesn't, the
+// <select> will *visually* fall back to showing its first option while the
+// React state silently stays at "" (since no onChange ever fires unless the
+// user touches it) — and that's the "" you end up submitting to the API.
+const initialFormData: FormData = {
+  employeeId: "",
+  queryType: SUSPENSION_TYPES[0].value, // was hardcoded "ATTENDANCE" — now guaranteed valid
+  durationValue: "",
+  durationUnit: DURATION_UNITS[0].value, // was "" — this was the actual bug
+  notes: "",
+};
 
 const inputClassName =
   "h-11 w-full rounded-md border border-[#D9DEE7] bg-white px-3 text-sm text-[#344054] outline-none transition placeholder:text-[#98A2B3] focus:border-[#2388D0] focus:ring-1 focus:ring-[#2388D0]";
@@ -52,7 +57,9 @@ export default function AddSuspensionModal({
   const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -60,13 +67,28 @@ export default function AddSuspensionModal({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // Defensive guard: never let an empty enum value reach the API, even if
+    // some future change reintroduces a blank initial/edit state.
+    const queryType = formData.queryType || SUSPENSION_TYPES[0].value;
+    const durationUnit = formData.durationUnit || DURATION_UNITS[0].value;
+
+    if (!SUSPENSION_TYPES.some((t) => t.value === queryType)) {
+      toast.error("Please select a valid suspension type");
+      return;
+    }
+    if (!DURATION_UNITS.some((u) => u.value === durationUnit)) {
+      toast.error("Please select a valid duration unit");
+      return;
+    }
+
     setSubmitting(true);
     try {
       await createSuspension({
         employeeId: formData.employeeId,
-        queryType: formData.queryType,
+        queryType,
         durationValue: Number(formData.durationValue),
-        durationUnit: formData.durationUnit,
+        durationUnit,
         notes: formData.notes,
       });
       toast.success("Suspension created successfully");
@@ -76,7 +98,8 @@ export default function AddSuspensionModal({
     } catch (err: unknown) {
       const msg =
         err && typeof err === "object" && "response" in err
-          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+          ? (err as { response?: { data?: { message?: string } } }).response
+              ?.data?.message
           : undefined;
       toast.error(msg ?? "Failed to create suspension");
     } finally {

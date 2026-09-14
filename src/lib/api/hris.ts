@@ -694,8 +694,10 @@ export const getCycleReviewsDebug = async (cycleId: string): Promise<unknown> =>
   return response.data;
 };
 
-export const getAppraisalDetail = async (appraisalId: string): Promise<any> => {
-  const response = await api.get(`/hris/appraisals/${appraisalId}`);
+export const getAppraisalDetail = async (appraisalId: string): Promise<Record<string, unknown>> => {
+  const response = await api.get<{ success: boolean; message: string; data: Record<string, unknown> }>(
+    `/hris/appraisals/${appraisalId}`
+  );
   return response.data.data;
 };
 
@@ -829,6 +831,55 @@ export const submitSelfAssessment = async (
   const response = await api.post(
     `/hris/appraisals/${appraisalId}/self-assessment`,
     payload
+  );
+  return response.data;
+};
+
+// Add these near getEmployeeActivity in hris.ts
+
+export const getEmployeeLeaveHistory = async (
+  employeeId: string,
+  params?: { page?: number; limit?: number },
+): Promise<{ success: boolean; message: string; data: unknown[] }> => {
+  const response = await api.get(`/hris/employees/${employeeId}/leave-history`, { params });
+  return response.data;
+};
+
+// Permission-protected per the Swagger description — expect a 403 for
+// non-payroll-authorized roles and handle it as a distinct empty state,
+// not a generic load error.
+export const getEmployeePayrollHistory = async (
+  employeeId: string,
+  params?: { page?: number; limit?: number },
+): Promise<{ success: boolean; message: string; data: unknown[] }> => {
+  const response = await api.get(`/hris/employees/${employeeId}/payroll-history`, { params });
+  return response.data;
+};
+
+export const getEmployeeAppraisals = async (
+  employeeId: string,
+): Promise<{ success: boolean; message: string; data: unknown[] }> => {
+  const response = await api.get(`/hris/employees/${employeeId}/appraisals`);
+  return response.data;
+};
+
+export const getEmployeeConduct = async (
+  employeeId: string,
+): Promise<{ success: boolean; message: string; data: unknown[] }> => {
+  const response = await api.get(`/hris/employees/${employeeId}/conduct`);
+  return response.data;
+};
+
+// Downloads a specific employee document. Returns a blob — caller is
+// responsible for turning it into an <a download> link, same pattern as
+// downloadEmployeeTemplate.
+export const downloadEmployeeDocument = async (
+  employeeId: string,
+  documentId: string,
+): Promise<Blob> => {
+  const response = await api.get(
+    `/hris/employees/${employeeId}/documents/${documentId}/download`,
+    { responseType: "blob" },
   );
   return response.data;
 };

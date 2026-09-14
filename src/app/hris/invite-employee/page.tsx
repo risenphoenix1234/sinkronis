@@ -103,7 +103,7 @@ export default function InviteEmployeePage() {
   const handleTestInvite = async () => {
     try {
       const res = await inviteEmployee({
-        email: "sowolefemi@yahoo.com", // ⚠️ use plato plato's real email here
+        email: "femifestus0002@gmail.com", // ⚠️ use plato plato's real email here
         roleId: "cmtcx59js000pepg2273duugz", // Owner role — quick test only, not for real use
         moduleAccess: ["HRIS"],
       });

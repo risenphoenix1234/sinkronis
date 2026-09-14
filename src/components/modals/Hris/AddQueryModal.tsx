@@ -24,10 +24,10 @@ const initialFormData: FormData = {
 };
 
 const QUERY_TYPES = [
-  { value: "PERFORMANCE", label: "Performance-Related" },
-  { value: "CONDUCT", label: "Conduct" },
+  { value: "PERFORMANCE_RELATED", label: "Performance Related" },
+  { value: "INSUBORDINATION", label: "Insubordination" },
   { value: "ATTENDANCE", label: "Attendance" },
-  { value: "POLICY_VIOLATION", label: "Policy Violation" },
+  { value: "GROSS_MISCONDUCT", label: "Gross Misconduct" },
 ];
 
 const inputClassName =

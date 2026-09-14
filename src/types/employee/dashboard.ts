@@ -11,4 +11,5 @@ export interface DashboardStat {
   icon: string;
   iconBg: string;
 }
-
+// Re-export the API-authoritative ActionItem so legacy imports keep working
+export type { ActionItem } from "@/lib/api/types/employeeTypes";
