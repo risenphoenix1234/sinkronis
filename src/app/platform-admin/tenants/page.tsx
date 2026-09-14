@@ -32,6 +32,7 @@ export default function TenantsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [moduleFilter, setModuleFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const fetchTenants = async () => {
     setLoading(true);
@@ -55,20 +56,25 @@ export default function TenantsPage() {
     return () => clearTimeout(debounce);
   }, [searchTerm, statusFilter, moduleFilter]);
 
+  useEffect(() => {
+    if (!successMessage) return;
+    const timeout = setTimeout(() => setSuccessMessage(null), 6000);
+    return () => clearTimeout(timeout);
+  }, [successMessage]);
+
   const handleAddTenant = async (input: NewTenantInput) => {
-    try {
-      await createTenant({
-        companyName: input.companyName,
-        adminEmail: input.adminEmail,
-        subscriptionPlan: input.subscriptionPlan as any,
-        country: input.country,
-        industry: input.industry,
-      });
-      setShowModal(false);
-      fetchTenants();
-    } catch (err) {
-      alert("Failed to add tenant.");
-    }
+    await createTenant({
+      companyName: input.companyName,
+      adminEmail: input.adminEmail,
+      subscriptionPlan: input.subscriptionPlan as any,
+      country: input.country,
+      industry: input.industry,
+    });
+    setShowModal(false);
+    setSuccessMessage(
+      "Tenant created successfully. Password setup instructions would be sent to the Tenant Admin."
+    );
+    fetchTenants();
   };
 
   const handleSuspend = async (tenantId: string) => {
@@ -97,6 +103,12 @@ export default function TenantsPage() {
           Add Tenant
         </button>
       </div>
+
+      {successMessage && (
+        <div className="rounded-md bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          {successMessage}
+        </div>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-[2fr_1fr_1fr]">
         <div className="relative">
@@ -177,25 +189,22 @@ export default function TenantsPage() {
                     <p className="font-medium text-slate-800">{tenant.organizationName}</p>
                     <p className="text-xs text-slate-400">{tenant.companyEmail}</p>
                   </td>
-                
-                
-                
                   <td className="px-5 py-3 text-slate-700">{tenant.currentPlan.name}</td>
-                 <td className="px-5 py-3">
-  <div className="flex flex-wrap gap-1">
-    {tenant.activeModules.length === 0 && (
-      <span className="text-xs text-slate-400">—</span>
-    )}
-    {tenant.activeModules.map((mod) => (
-      <span
-        key={mod.id}
-        className={`rounded-full px-2 py-0.5 text-xs font-medium ${moduleStyles[mod.key] ?? "bg-slate-50 text-slate-600"}`}
-      >
-        {mod.name}
-      </span>
-    ))}
-  </div>
-</td>
+                  <td className="px-5 py-3">
+                    <div className="flex flex-wrap gap-1">
+                      {tenant.activeModules.length === 0 && (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
+                      {tenant.activeModules.map((mod) => (
+                        <span
+                          key={mod.id}
+                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${moduleStyles[mod.key] ?? "bg-slate-50 text-slate-600"}`}
+                        >
+                          {mod.name}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
                   <td className="px-5 py-3 text-slate-700">{tenant.totalUsers}</td>
                   <td className="px-5 py-3 text-slate-700">{naira(tenant.monthlyRecurringRevenue)}</td>
                   <td className="px-5 py-3">
@@ -206,12 +215,14 @@ export default function TenantsPage() {
                     </span>
                   </td>
                   <td className="px-5 py-3 text-slate-500">
-                    {new Date(tenant.lastActiveAt).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </td>
+  {tenant.lastActiveAt
+    ? new Date(tenant.lastActiveAt).toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : "—"}
+</td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
                       <Link

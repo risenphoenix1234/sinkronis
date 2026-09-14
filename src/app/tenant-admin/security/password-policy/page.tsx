@@ -1,14 +1,10 @@
-// src/app/tenant-admin/security/password-policy/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Toggle from "@/components/ui/Toggle";
+import { getSecurityPolicy, updatePasswordPolicy } from "@/lib/api/admin";
 
-type ComplexityKey =
-  | "uppercase"
-  | "lowercase"
-  | "number"
-  | "specialChar";
+type ComplexityKey = "uppercase" | "lowercase" | "number" | "specialChar";
 
 const complexityLabels: Record<ComplexityKey, string> = {
   uppercase: "Require uppercase letter (A-Z)",
@@ -17,40 +13,107 @@ const complexityLabels: Record<ComplexityKey, string> = {
   specialChar: "Require special character (!@#$...)",
 };
 
-const minLengthOptions = ["6 characters", "8 characters", "10 characters", "12 characters"];
-const expiryOptions = ["30 days", "60 days", "90 days", "180 days", "Never"];
-const lockoutOptions = [
-  "3 failed attempts",
-  "5 failed attempts",
-  "10 failed attempts",
+const minLengthOptions = [6, 8, 10, 12];
+const expiryOptions: { label: string; value: number | null }[] = [
+  { label: "30 days", value: 30 },
+  { label: "60 days", value: 60 },
+  { label: "90 days", value: 90 },
+  { label: "180 days", value: 180 },
+  { label: "Never", value: null },
 ];
+const lockoutOptions = [3, 5, 10];
 
 export default function PasswordPolicyPage() {
-  const [minLength, setMinLength] = useState("8 characters");
-  const [expiry, setExpiry] = useState("90 days");
-  const [lockoutAfter, setLockoutAfter] = useState("5 failed attempts");
+  const [minLength, setMinLength] = useState(8);
+  const [expiry, setExpiry] = useState<number | null>(90);
+  const [lockoutAfter, setLockoutAfter] = useState(5);
   const [complexity, setComplexity] = useState<Record<ComplexityKey, boolean>>({
     uppercase: true,
     lowercase: true,
     number: true,
     specialChar: false,
   });
+
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const policy = await getSecurityPolicy();
+        setMinLength(policy.minPasswordLength);
+        setExpiry(policy.passwordExpiryDays);
+        setLockoutAfter(policy.lockoutMaxAttempts);
+        setComplexity({
+          uppercase: policy.requireUppercase,
+          lowercase: policy.requireLowercase,
+          number: policy.requireNumber,
+          specialChar: policy.requireSpecialCharacter,
+        });
+      } catch (err) {
+        setError("Failed to load password policy.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   const toggleComplexity = (key: ComplexityKey) => {
     setComplexity((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaving(true);
-    setTimeout(() => setSaving(false), 600);
+    setError(null);
+    setSaveMessage(null);
+    try {
+      await updatePasswordPolicy({
+        minPasswordLength: minLength,
+        passwordExpiryDays: expiry,
+        lockoutMaxAttempts: lockoutAfter,
+        requireUppercase: complexity.uppercase,
+        requireLowercase: complexity.lowercase,
+        requireNumber: complexity.number,
+        requireSpecialCharacter: complexity.specialChar,
+      });
+      setSaveMessage("Password policy saved.");
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Failed to save policy.");
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="max-w-2xl rounded-lg border border-slate-200 bg-white p-6">
+        <p className="text-sm text-slate-400">Loading password policy...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl rounded-lg border border-slate-200 bg-white p-6">
       <h2 className="mb-5 text-base font-semibold text-slate-900">
         Password Requirements
       </h2>
+
+      {error && (
+        <div className="mb-4 rounded-md bg-red-50 px-4 py-2.5 text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
+      {saveMessage && (
+        <div className="mb-4 rounded-md bg-emerald-50 px-4 py-2.5 text-sm text-emerald-700">
+          {saveMessage}
+        </div>
+      )}
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
@@ -59,12 +122,12 @@ export default function PasswordPolicyPage() {
           </label>
           <select
             value={minLength}
-            onChange={(e) => setMinLength(e.target.value)}
+            onChange={(e) => setMinLength(Number(e.target.value))}
             className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400"
           >
             {minLengthOptions.map((opt) => (
               <option key={opt} value={opt}>
-                {opt}
+                {opt} characters
               </option>
             ))}
           </select>
@@ -75,13 +138,15 @@ export default function PasswordPolicyPage() {
             Password Expiry
           </label>
           <select
-            value={expiry}
-            onChange={(e) => setExpiry(e.target.value)}
+            value={expiry === null ? "null" : expiry}
+            onChange={(e) =>
+              setExpiry(e.target.value === "null" ? null : Number(e.target.value))
+            }
             className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400"
           >
             {expiryOptions.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
+              <option key={opt.label} value={opt.value === null ? "null" : opt.value}>
+                {opt.label}
               </option>
             ))}
           </select>
@@ -93,12 +158,12 @@ export default function PasswordPolicyPage() {
           </label>
           <select
             value={lockoutAfter}
-            onChange={(e) => setLockoutAfter(e.target.value)}
+            onChange={(e) => setLockoutAfter(Number(e.target.value))}
             className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400"
           >
             {lockoutOptions.map((opt) => (
               <option key={opt} value={opt}>
-                {opt}
+                {opt} failed attempts
               </option>
             ))}
           </select>
@@ -111,13 +176,8 @@ export default function PasswordPolicyPage() {
         </p>
         <div className="divide-y divide-slate-100 rounded-md border border-slate-100">
           {(Object.keys(complexityLabels) as ComplexityKey[]).map((key) => (
-            <div
-              key={key}
-              className="flex items-center justify-between px-4 py-3"
-            >
-              <span className="text-sm text-slate-700">
-                {complexityLabels[key]}
-              </span>
+            <div key={key} className="flex items-center justify-between px-4 py-3">
+              <span className="text-sm text-slate-700">{complexityLabels[key]}</span>
               <Toggle
                 checked={complexity[key]}
                 onChange={() => toggleComplexity(key)}

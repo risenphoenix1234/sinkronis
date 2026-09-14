@@ -5,18 +5,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { FiBell, FiBriefcase, FiChevronDown, FiChevronRight, FiLogOut, FiSliders } from "react-icons/fi";
+import { FiBell, FiChevronDown, FiChevronRight, FiLogOut, FiSliders } from "react-icons/fi";
 
 interface NavbarProps {
   title: string;
   notificationCount?: number;
-  tenantAdminHref?: string;
   onSignOut?: () => void;
 }
 
-// Turns a URL segment like "general-settings" or "locale-region" into
-// readable breadcrumb text. Handles the segments that need a special-cased
-// label (acronyms, "&", renamed routes) and falls back to Title Case.
 const SEGMENT_LABEL_OVERRIDES: Record<string, string> = {
   hris: "HRIS",
   "general-settings": "Settings",
@@ -52,17 +48,10 @@ function useBreadcrumb(pathname: string) {
   });
 }
 
-// Some modules use a different settings route name than the default
-// "settings" (e.g. tenant-admin uses "general-settings"). Add module
-// roots here only when their settings route deviates from the default.
 const MODULE_SETTINGS_SEGMENT: Record<string, string> = {
   "tenant-admin": "general-settings",
 };
 
-// Builds the settings link for whichever module the user is currently in,
-// e.g. /accounting/*   -> /accounting/settings
-//      /tenant-admin/* -> /tenant-admin/general-settings
-//      /hris/*         -> /hris/settings
 function useSettingsHref(pathname: string): string {
   const moduleRoot = pathname.split("/").filter(Boolean)[0];
   if (!moduleRoot) return "/settings";
@@ -73,7 +62,6 @@ function useSettingsHref(pathname: string): string {
 export default function Navbar({
   title,
   notificationCount = 2,
-  tenantAdminHref = "/tenant-admin/overview",
   onSignOut,
 }: NavbarProps) {
   const pathname = usePathname();
@@ -95,7 +83,6 @@ export default function Navbar({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [menuOpen]);
 
-  // Close the menu on route change
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
@@ -141,7 +128,6 @@ export default function Navbar({
           )}
         </Link>
 
-        {/* Avatar + Settings dropdown */}
         <div className="relative" ref={menuRef}>
           <button
             type="button"
@@ -173,14 +159,6 @@ export default function Navbar({
 
           {menuOpen && (
             <div className="absolute right-0 top-[calc(100%+10px)] z-20 w-52 origin-top-right animate-[dropdown_0.12s_ease-out] overflow-hidden rounded-lg border border-slate-200 bg-white py-1.5 shadow-xl ring-1 ring-black/5">
-              <Link
-                href={tenantAdminHref}
-                className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
-              >
-                <FiBriefcase size={16} className="text-slate-500" />
-                Tenant Admin
-              </Link>
-
               <Link
                 href={settingsHref}
                 className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100"

@@ -1,64 +1,57 @@
 // src/app/tenant-admin/user-management/pending-invitations/page.tsx
 "use client";
 
-import { useState } from "react";
-
-type Invitation = {
-  id: string;
-  email: string;
-  role: "Manager" | "Employee" | "Admin";
-  modules: string[];
-  sent: string;
-  status: "Pending" | "Expired";
-};
-
-const initialInvitations: Invitation[] = [
-  {
-    id: "inv-1",
-    email: "k.adewale@sinkronis.com",
-    role: "Manager",
-    modules: ["HRIS", "Accounting"],
-    sent: "Jun 6, 2026",
-    status: "Pending",
-  },
-  {
-    id: "inv-2",
-    email: "o.ibrahim@sinkronis.com",
-    role: "Employee",
-    modules: ["HRIS"],
-    sent: "Jun 5, 2026",
-    status: "Pending",
-  },
-  {
-    id: "inv-3",
-    email: "r.thomas@sinkronis.com",
-    role: "Employee",
-    modules: ["Accounting"],
-    sent: "May 25, 2026",
-    status: "Expired",
-  },
-];
+import { useEffect, useState } from "react";
+import { getInvitations, resendInvitation } from "@/lib/api/admin";
+import { TenantInvitation } from "@/lib/api/types/admin.types";
 
 const moduleBadgeColor: Record<string, string> = {
   HRIS: "bg-emerald-50 text-emerald-700",
-  Accounting: "bg-sky-50 text-sky-700",
-  Payroll: "bg-violet-50 text-violet-700",
+  ACCOUNTING: "bg-sky-50 text-sky-700",
+  PAYROLL: "bg-violet-50 text-violet-700",
 };
 
-export default function PendingInvitationsPage() {
-  const [invitations, setInvitations] =
-    useState<Invitation[]>(initialInvitations);
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
 
-  const handleResend = (id: string) => {
-    setInvitations((prev) =>
-      prev.map((inv) =>
-        inv.id === id ? { ...inv, status: "Pending" as const } : inv
-      )
-    );
+export default function PendingInvitationsPage() {
+  const [invitations, setInvitations] = useState<TenantInvitation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [resendingId, setResendingId] = useState<string | null>(null);
+
+  const fetchInvitations = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await getInvitations();
+      setInvitations(res.data);
+    } catch (err) {
+      setError("Failed to load invitations.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setInvitations((prev) => prev.filter((inv) => inv.id !== id));
+  useEffect(() => {
+    fetchInvitations();
+  }, []);
+
+  const handleResend = async (id: string) => {
+    setResendingId(id);
+    try {
+      await resendInvitation(id);
+      await fetchInvitations();
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Failed to resend invitation.");
+    } finally {
+      setResendingId(null);
+    }
   };
 
   return (
@@ -76,59 +69,67 @@ export default function PendingInvitationsPage() {
             </tr>
           </thead>
           <tbody>
-            {invitations.map((inv) => (
-              <tr key={inv.id} className="border-b border-slate-50">
-                <td className="px-4 py-3 text-slate-800">{inv.email}</td>
-                <td className="px-4 py-3 text-slate-600">{inv.role}</td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap gap-1.5">
-                    {inv.modules.map((mod) => (
-                      <span
-                        key={mod}
-                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ${moduleBadgeColor[mod] ?? "bg-slate-100 text-slate-600"}`}
-                      >
-                        {mod}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-slate-500">{inv.sent}</td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                      inv.status === "Pending"
-                        ? "bg-amber-50 text-amber-700"
-                        : "bg-rose-50 text-rose-600"
-                    }`}
-                  >
-                    {inv.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3 text-sm">
-                    <button
-                      onClick={() => handleResend(inv.id)}
-                      className="text-sky-600 hover:underline"
-                    >
-                      Resend
-                    </button>
-                    <button
-                      onClick={() => handleDelete(inv.id)}
-                      className="text-rose-600 hover:underline"
-                    >
-                      Delete
-                    </button>
-                  </div>
+            {loading && (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center text-sm text-slate-400">
+                  Loading invitations...
                 </td>
               </tr>
-            ))}
+            )}
 
-            {invitations.length === 0 && (
+            {!loading && error && (
               <tr>
-                <td
-                  colSpan={6}
-                  className="px-4 py-8 text-center text-sm text-slate-400"
-                >
+                <td colSpan={6} className="px-4 py-8 text-center text-sm text-red-500">
+                  {error}
+                </td>
+              </tr>
+            )}
+
+            {!loading &&
+              !error &&
+              invitations.map((inv) => (
+                <tr key={inv.id} className="border-b border-slate-50">
+                  <td className="px-4 py-3 text-slate-800">{inv.email}</td>
+                  <td className="px-4 py-3 text-slate-600">{inv.role}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-1.5">
+                      {inv.modules.map((mod) => (
+                        <span
+                          key={mod}
+                          className={`rounded-full px-2.5 py-1 text-xs font-semibold ${moduleBadgeColor[mod] ?? "bg-slate-100 text-slate-600"}`}
+                        >
+                          {mod}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-slate-500">{formatDate(inv.sentAt)}</td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        inv.status === "PENDING" ? "bg-amber-50 text-amber-700" : "bg-rose-50 text-rose-600"
+                      }`}
+                    >
+                      {inv.status === "PENDING" ? "Pending" : "Expired"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3 text-sm">
+                      <button
+                        onClick={() => handleResend(inv.id)}
+                        disabled={resendingId === inv.id}
+                        className="text-sky-600 hover:underline disabled:opacity-60"
+                      >
+                        {resendingId === inv.id ? "Resending..." : "Resend"}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+
+            {!loading && !error && invitations.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center text-sm text-slate-400">
                   No pending invitations.
                 </td>
               </tr>

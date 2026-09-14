@@ -33,3 +33,15 @@ export const getMe = async () => {
   const { data } = await api.get<MeResponse>("/auth/me");
   return data;
 };
+
+export interface RefreshTokenResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export const refreshToken = async (currentRefreshToken: string) => {
+  const { data } = await api.post<RefreshTokenResponse>("/auth/refresh", {
+    refreshToken: currentRefreshToken,
+  });
+  return data;
+};

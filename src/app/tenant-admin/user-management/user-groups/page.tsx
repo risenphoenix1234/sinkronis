@@ -1,74 +1,57 @@
 // src/app/tenant-admin/user-management/user-groups/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CreateGroupModal from "@/components/modals/CreateGroupModal";
+import { getUserGroups, createUserGroup, deleteUserGroup } from "@/lib/api/admin";
+import { TenantUserGroup } from "@/lib/api/types/admin.types";
 
-type GroupType = "Department" | "Function";
-
-type UserGroup = {
-  id: string;
-  name: string;
-  type: GroupType;
-  memberInitials: { label: string; color: string }[];
-  memberCount: number;
-};
-
-const initialGroups: UserGroup[] = [
-  {
-    id: "grp-1",
-    name: "Engineering",
-    type: "Department",
-    memberInitials: [
-      { label: "BO", color: "bg-rose-100 text-rose-700" },
-      { label: "EO", color: "bg-sky-100 text-sky-700" },
-    ],
-    memberCount: 12,
-  },
-  {
-    id: "grp-2",
-    name: "Finance",
-    type: "Department",
-    memberInitials: [{ label: "FB", color: "bg-amber-100 text-amber-700" }],
-    memberCount: 6,
-  },
-  {
-    id: "grp-3",
-    name: "HR & People Ops",
-    type: "Function",
-    memberInitials: [
-      { label: "TA", color: "bg-sky-100 text-sky-700" },
-      { label: "NE", color: "bg-emerald-100 text-emerald-700" },
-    ],
-    memberCount: 5,
-  },
-];
-
-const typeBadgeColor: Record<GroupType, string> = {
-  Department: "bg-emerald-50 text-emerald-700",
-  Function: "bg-violet-50 text-violet-700",
+const typeBadgeColor: Record<string, string> = {
+  DEPARTMENT: "bg-emerald-50 text-emerald-700",
+  FUNCTION: "bg-violet-50 text-violet-700",
 };
 
 export default function UserGroupsPage() {
-  const [groups, setGroups] = useState<UserGroup[]>(initialGroups);
+  const [groups, setGroups] = useState<TenantUserGroup[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const handleCreate = (group: { name: string; type: GroupType }) => {
-    setGroups((prev) => [
-      ...prev,
-      {
-        id: `grp-${Date.now()}`,
-        name: group.name,
-        type: group.type,
-        memberInitials: [],
-        memberCount: 0,
-      },
-    ]);
-    setModalOpen(false);
+  const fetchGroups = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await getUserGroups();
+      setGroups(res.data);
+    } catch (err) {
+      setError("Failed to load groups.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setGroups((prev) => prev.filter((g) => g.id !== id));
+  useEffect(() => {
+    fetchGroups();
+  }, []);
+
+  const handleCreate = async (group: { name: string; type: "DEPARTMENT" | "FUNCTION" }) => {
+    try {
+      await createUserGroup(group);
+      setModalOpen(false);
+      await fetchGroups();
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Failed to create group.");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Delete this group?")) return;
+    try {
+      await deleteUserGroup(id);
+      await fetchGroups();
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Failed to delete group.");
+    }
   };
 
   return (
@@ -82,63 +65,47 @@ export default function UserGroupsPage() {
         </button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {groups.map((group) => (
-          <div
-            key={group.id}
-            className="rounded-lg border border-slate-100 p-4"
-          >
-            <div className="mb-2 flex items-start justify-between">
-              <p className="font-medium text-slate-800">{group.name}</p>
-              <div className="flex items-center gap-3 text-xs">
-                <button className="text-slate-400 hover:text-sky-600">
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(group.id)}
-                  className="text-slate-400 hover:text-rose-600"
-                >
-                  🗑
-                </button>
-              </div>
-            </div>
+      {loading && <p className="py-8 text-center text-sm text-slate-400">Loading groups...</p>}
 
-            <span
-              className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${typeBadgeColor[group.type]}`}
-            >
-              {group.type}
-            </span>
+      {!loading && error && <p className="py-8 text-center text-sm text-red-500">{error}</p>}
 
-            <div className="mt-4 flex items-center gap-2">
-              <div className="flex -space-x-2">
-                {group.memberInitials.map((m, i) => (
-                  <span
-                    key={i}
-                    className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-white text-[10px] font-semibold ${m.color}`}
+      {!loading && !error && (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {groups.map((group) => (
+            <div key={group.id} className="rounded-lg border border-slate-100 p-4">
+              <div className="mb-2 flex items-start justify-between">
+                <p className="font-medium text-slate-800">{group.name}</p>
+                <div className="flex items-center gap-3 text-xs">
+                  <button
+                    onClick={() => handleDelete(group.id)}
+                    className="text-slate-400 hover:text-rose-600"
                   >
-                    {m.label}
-                  </span>
-                ))}
+                    🗑
+                  </button>
+                </div>
               </div>
-              <span className="text-sm text-slate-500">
-                {group.memberCount} member{group.memberCount === 1 ? "" : "s"}
+
+              <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${typeBadgeColor[group.type]}`}>
+                {group.type === "DEPARTMENT" ? "Department" : "Function"}
               </span>
+
+              <div className="mt-4 flex items-center gap-2">
+                <span className="text-sm text-slate-500">
+                  {group.memberCount} member{group.memberCount === 1 ? "" : "s"}
+                </span>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
 
-        {groups.length === 0 && (
-          <p className="col-span-full py-8 text-center text-sm text-slate-400">
-            No groups created yet.
-          </p>
-        )}
-      </div>
+          {groups.length === 0 && (
+            <p className="col-span-full py-8 text-center text-sm text-slate-400">
+              No groups created yet.
+            </p>
+          )}
+        </div>
+      )}
 
-      <CreateGroupModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onCreate={handleCreate}
-      />
+      <CreateGroupModal open={modalOpen} onClose={() => setModalOpen(false)} onCreate={handleCreate} />
     </div>
   );
 }

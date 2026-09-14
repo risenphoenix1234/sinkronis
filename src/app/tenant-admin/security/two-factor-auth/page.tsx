@@ -1,8 +1,8 @@
-// src/app/tenant-admin/security/two-factor-auth/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Toggle from "@/components/ui/Toggle";
+import { getSecurityPolicy, updateTwoFactorPolicy } from "@/lib/api/admin";
 
 type MethodKey = "authenticatorApp" | "sms" | "emailOtp";
 
@@ -32,16 +32,65 @@ export default function TwoFactorAuthPage() {
     sms: false,
     emailOtp: true,
   });
+
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const policy = await getSecurityPolicy();
+        setTwoFactorEnabled(policy.twoFactorEnabled);
+        setEnforceForAll(policy.enforceTwoFactorForAllUsers);
+        setMethodState({
+          authenticatorApp: policy.allowAuthenticatorApp,
+          sms: policy.allowSmsOtp,
+          emailOtp: policy.allowEmailOtp,
+        });
+      } catch (err) {
+        setError("Failed to load two-factor settings.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   const toggleMethod = (key: MethodKey) => {
     setMethodState((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaving(true);
-    setTimeout(() => setSaving(false), 600);
+    setError(null);
+    setSaveMessage(null);
+    try {
+      await updateTwoFactorPolicy({
+        twoFactorEnabled,
+        enforceTwoFactorForAllUsers: enforceForAll,
+        allowAuthenticatorApp: methodState.authenticatorApp,
+        allowSmsOtp: methodState.sms,
+        allowEmailOtp: methodState.emailOtp,
+      });
+      setSaveMessage("Two-factor settings saved.");
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Failed to save settings.");
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="max-w-2xl rounded-lg border border-slate-200 bg-white p-6">
+        <p className="text-sm text-slate-400">Loading two-factor settings...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl rounded-lg border border-slate-200 bg-white p-6">
@@ -60,6 +109,18 @@ export default function TwoFactorAuthPage() {
           ariaLabel="Two-Factor Authentication"
         />
       </div>
+
+      {error && (
+        <div className="mt-4 rounded-md bg-red-50 px-4 py-2.5 text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
+      {saveMessage && (
+        <div className="mt-4 rounded-md bg-emerald-50 px-4 py-2.5 text-sm text-emerald-700">
+          {saveMessage}
+        </div>
+      )}
 
       <div className="mt-4 flex items-start justify-between border-t border-slate-100 pt-4">
         <div>
@@ -84,14 +145,9 @@ export default function TwoFactorAuthPage() {
         </p>
         <div className="divide-y divide-slate-100 rounded-md border border-slate-100">
           {methods.map((method) => (
-            <div
-              key={method.key}
-              className="flex items-center justify-between px-4 py-3"
-            >
+            <div key={method.key} className="flex items-center justify-between px-4 py-3">
               <div>
-                <p className="text-sm font-medium text-slate-800">
-                  {method.title}
-                </p>
+                <p className="text-sm font-medium text-slate-800">{method.title}</p>
                 <p className="text-sm text-slate-500">{method.subtitle}</p>
               </div>
               <Toggle

@@ -1,7 +1,6 @@
-// src/components/modals/AddTenantModal.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 
 const PLAN_MODULES: Record<string, string[]> = {
@@ -31,7 +30,7 @@ export interface NewTenantInput {
 interface AddTenantModalProps {
   open: boolean;
   onClose: () => void;
-  onAdd: (input: NewTenantInput) => void;
+  onAdd: (input: NewTenantInput) => Promise<void>;
 }
 
 export default function AddTenantModal({ open, onClose, onAdd }: AddTenantModalProps) {
@@ -40,23 +39,48 @@ export default function AddTenantModal({ open, onClose, onAdd }: AddTenantModalP
   const [subscriptionPlan, setSubscriptionPlan] = useState("");
   const [country, setCountry] = useState("NG");
   const [industry, setIndustry] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setCompanyName("");
+      setAdminEmail("");
+      setSubscriptionPlan("");
+      setCountry("NG");
+      setIndustry("");
+      setFormError(null);
+      setSubmitting(false);
+    }
+  }, [open]);
 
   if (!open) return null;
 
   const derivedModules = subscriptionPlan ? PLAN_MODULES[subscriptionPlan] ?? [] : [];
 
-  const handleSubmit = () => {
-    if (!companyName || !adminEmail || !subscriptionPlan) return;
+  const handleSubmit = async () => {
+    if (!companyName || !adminEmail || !subscriptionPlan) {
+      setFormError("Please fill in all required fields.");
+      return;
+    }
 
-    onAdd({
-      companyName,
-      adminEmail,
-      subscriptionPlan,
-      country,
-      industry: industry || undefined,
-    });
-
-    onClose();
+    setFormError(null);
+    setSubmitting(true);
+    try {
+      await onAdd({
+        companyName,
+        adminEmail,
+        subscriptionPlan,
+        country,
+        industry: industry || undefined,
+      });
+    } catch (err: any) {
+      setFormError(
+        err?.response?.data?.message || "Failed to add tenant. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -77,6 +101,12 @@ export default function AddTenantModal({ open, onClose, onAdd }: AddTenantModalP
             <X className="h-4 w-4" />
           </button>
         </div>
+
+        {formError && (
+          <div className="mt-4 rounded-md bg-red-50 px-3 py-2 text-xs text-red-600">
+            {formError}
+          </div>
+        )}
 
         <div className="mt-5 space-y-4">
           <div>
@@ -170,13 +200,15 @@ export default function AddTenantModal({ open, onClose, onAdd }: AddTenantModalP
         <div className="mt-6 flex gap-3">
           <button
             onClick={handleSubmit}
-            className="flex-1 rounded-md bg-sky-600 py-2 text-sm font-medium text-white hover:bg-sky-700"
+            disabled={submitting}
+            className="flex-1 rounded-md bg-sky-600 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-60"
           >
-            Add Tenant
+            {submitting ? "Adding..." : "Add Tenant"}
           </button>
           <button
             onClick={onClose}
-            className="flex-1 rounded-md border border-slate-200 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            disabled={submitting}
+            className="flex-1 rounded-md border border-slate-200 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
           >
             Cancel
           </button>

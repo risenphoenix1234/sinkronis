@@ -3,12 +3,12 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import { EmailTemplate, AVAILABLE_VARIABLES } from "@/lib/platform-settings-data";
+import { EmailTemplate } from "@/lib/api/types/platform-admin.types";
 
 interface EditEmailTemplateModalProps {
   template: EmailTemplate | null;
   onClose: () => void;
-  onSave: (id: string, subject: string, body: string) => void;
+  onSave: (key: string, subject: string, body: string) => void;
 }
 
 export default function EditEmailTemplateModal({
@@ -22,7 +22,7 @@ export default function EditEmailTemplateModal({
   if (!template) return null;
 
   const handleSave = () => {
-    onSave(template.id, subject.trim(), body);
+    onSave(template.key, subject.trim(), body);
     onClose();
   };
 
@@ -62,7 +62,7 @@ export default function EditEmailTemplateModal({
           </div>
 
           <p className="text-xs text-slate-400">
-            Available variables: {AVAILABLE_VARIABLES.join(", ")}
+            Available variables: {template.availableVariables.join(", ")}
           </p>
         </div>
 

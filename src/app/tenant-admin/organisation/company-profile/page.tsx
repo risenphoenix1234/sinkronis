@@ -1,33 +1,7 @@
-// src/app/tenant-admin/organisation/company-profile/page.tsx
 "use client";
 
-import { useState } from "react";
-
-type CompanyInfo = {
-  companyName: string;
-  companyEmail: string;
-  phoneNumber: string;
-  website: string;
-  cacNumber: string;
-  taxId: string;
-  industry: string;
-  companySize: string;
-  registeredAddress: string;
-  fiscalYearStart: string;
-};
-
-const initialInfo: CompanyInfo = {
-  companyName: "Sinkronis Technologies Ltd",
-  companyEmail: "admin@sinkronis.com",
-  phoneNumber: "+234 1 234 5678",
-  website: "www.sinkronis.com",
-  cacNumber: "RC-1234567",
-  taxId: "TIN-987654321",
-  industry: "Technology",
-  companySize: "5 - 10",
-  registeredAddress: "14 Adeola Odeku Street, Victoria Island, Lagos",
-  fiscalYearStart: "January",
-};
+import { useEffect, useState } from "react";
+import { getOrganizationProfile, updateOrganizationProfile } from "@/lib/api/admin";
 
 const industryOptions = [
   "Technology",
@@ -36,33 +10,28 @@ const industryOptions = [
   "Manufacturing",
   "Retail",
   "Education",
+  "Restaurant",
   "Other",
 ];
 
 const companySizeOptions = ["1 - 4", "5 - 10", "11 - 50", "51 - 200", "200+"];
 
 const monthOptions = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
+  { label: "January", value: "01-01" },
+  { label: "February", value: "02-01" },
+  { label: "March", value: "03-01" },
+  { label: "April", value: "04-01" },
+  { label: "May", value: "05-01" },
+  { label: "June", value: "06-01" },
+  { label: "July", value: "07-01" },
+  { label: "August", value: "08-01" },
+  { label: "September", value: "09-01" },
+  { label: "October", value: "10-01" },
+  { label: "November", value: "11-01" },
+  { label: "December", value: "12-01" },
 ];
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
       <label className="mb-1.5 block text-sm text-slate-500">{label}</label>
@@ -75,41 +44,102 @@ const inputClass =
   "w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400";
 
 export default function CompanyProfilePage() {
-  const [info, setInfo] = useState<CompanyInfo>(initialInfo);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [website, setWebsite] = useState("");
+  const [cacNumber, setCacNumber] = useState("");
+  const [taxId, setTaxId] = useState("");
+  const [industry, setIndustry] = useState("Technology");
+  const [companySize, setCompanySize] = useState("5 - 10");
+  const [address, setAddress] = useState("");
+  const [fiscalYearStart, setFiscalYearStart] = useState("01-01");
+
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
-  // companyEmail intentionally excluded — it's the account's registration
-  // email and shouldn't be editable from this form.
-  const update = (key: Exclude<keyof CompanyInfo, "companyEmail">, value: string) => {
-    setInfo((prev) => ({ ...prev, [key]: value }));
-  };
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const profile = await getOrganizationProfile();
+        setName(profile.name);
+        setEmail(profile.email);
+        setPhone(profile.phone ?? "");
+        setWebsite(profile.website ?? "");
+        setCacNumber(profile.cacNumber ?? "");
+        setTaxId(profile.taxId ?? "");
+        setIndustry(profile.industry ?? "Technology");
+        setCompanySize(profile.companySize ?? "5 - 10");
+        setAddress(profile.address ?? "");
+        setFiscalYearStart(profile.fiscalYearStart ?? "01-01");
+      } catch (err) {
+        setError("Failed to load company profile.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaving(true);
-    // Placeholder for real persistence
-    setTimeout(() => setSaving(false), 600);
+    setError(null);
+    setSaveMessage(null);
+    try {
+      await updateOrganizationProfile({
+        name,
+        phone: phone || undefined,
+        website: website || undefined,
+        cacNumber: cacNumber || undefined,
+        taxId: taxId || undefined,
+        industry,
+        companySize,
+        address: address || undefined,
+        fiscalYearStart,
+      });
+      setSaveMessage("Company profile saved.");
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Failed to save changes.");
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="max-w-3xl rounded-lg border border-slate-200 bg-white p-6">
+        <p className="text-sm text-slate-400">Loading company profile...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl rounded-lg border border-slate-200 bg-white p-6">
-      <h2 className="mb-5 text-base font-semibold text-slate-900">
-        Company Information
-      </h2>
+      <h2 className="mb-5 text-base font-semibold text-slate-900">Company Information</h2>
+
+      {error && (
+        <div className="mb-4 rounded-md bg-red-50 px-4 py-2.5 text-sm text-red-600">{error}</div>
+      )}
+      {saveMessage && (
+        <div className="mb-4 rounded-md bg-emerald-50 px-4 py-2.5 text-sm text-emerald-700">
+          {saveMessage}
+        </div>
+      )}
 
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Company Name">
-          <input
-            className={inputClass}
-            value={info.companyName}
-            onChange={(e) => update("companyName", e.target.value)}
-          />
+          <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
 
         <Field label="Company Email">
           <input
             type="email"
             className={`${inputClass} cursor-not-allowed bg-slate-50 text-slate-500`}
-            value={info.companyEmail}
+            value={email}
             readOnly
             disabled
           />
@@ -119,42 +149,30 @@ export default function CompanyProfilePage() {
         </Field>
 
         <Field label="Phone Number">
-          <input
-            className={inputClass}
-            value={info.phoneNumber}
-            onChange={(e) => update("phoneNumber", e.target.value)}
-          />
+          <input className={inputClass} value={phone} onChange={(e) => setPhone(e.target.value)} />
         </Field>
 
         <Field label="Website">
-          <input
-            className={inputClass}
-            value={info.website}
-            onChange={(e) => update("website", e.target.value)}
-          />
+          <input className={inputClass} value={website} onChange={(e) => setWebsite(e.target.value)} />
         </Field>
 
         <Field label="CAC Number">
           <input
             className={inputClass}
-            value={info.cacNumber}
-            onChange={(e) => update("cacNumber", e.target.value)}
+            value={cacNumber}
+            onChange={(e) => setCacNumber(e.target.value)}
           />
         </Field>
 
         <Field label="Tax ID (TIN)">
-          <input
-            className={inputClass}
-            value={info.taxId}
-            onChange={(e) => update("taxId", e.target.value)}
-          />
+          <input className={inputClass} value={taxId} onChange={(e) => setTaxId(e.target.value)} />
         </Field>
 
         <Field label="Industry">
           <select
             className={inputClass}
-            value={info.industry}
-            onChange={(e) => update("industry", e.target.value)}
+            value={industry}
+            onChange={(e) => setIndustry(e.target.value)}
           >
             {industryOptions.map((opt) => (
               <option key={opt} value={opt}>
@@ -167,8 +185,8 @@ export default function CompanyProfilePage() {
         <Field label="Company Size">
           <select
             className={inputClass}
-            value={info.companySize}
-            onChange={(e) => update("companySize", e.target.value)}
+            value={companySize}
+            onChange={(e) => setCompanySize(e.target.value)}
           >
             {companySizeOptions.map((opt) => (
               <option key={opt} value={opt}>
@@ -182,8 +200,8 @@ export default function CompanyProfilePage() {
           <Field label="Registered Address">
             <input
               className={inputClass}
-              value={info.registeredAddress}
-              onChange={(e) => update("registeredAddress", e.target.value)}
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
             />
           </Field>
         </div>
@@ -191,12 +209,12 @@ export default function CompanyProfilePage() {
         <Field label="Fiscal Year Start">
           <select
             className={inputClass}
-            value={info.fiscalYearStart}
-            onChange={(e) => update("fiscalYearStart", e.target.value)}
+            value={fiscalYearStart}
+            onChange={(e) => setFiscalYearStart(e.target.value)}
           >
             {monthOptions.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
               </option>
             ))}
           </select>

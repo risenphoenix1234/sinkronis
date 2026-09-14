@@ -87,7 +87,7 @@ export const MODULES: ModuleDef[] = [
   },
   {
     id: "payroll",
-    href: "/payroll/dashboard",
+    href: "/payroll/overview",
     name: "Payroll",
     subtitle: "Salary, PAYE & pension",
     description:
@@ -117,7 +117,7 @@ export const MODULES: ModuleDef[] = [
   },
   {
     id: "employee",
-    href: "/employee/dashboard",
+    href: "/employee/overview",
     name: "Employee Portal",
     subtitle: "My workspace",
     description:

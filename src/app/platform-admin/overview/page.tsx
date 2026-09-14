@@ -1,44 +1,21 @@
-// src/app/platform-admin/overview/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Building2,
   CheckCircle2,
   Users,
   Wallet,
   Boxes,
-  Plus,
-  RefreshCcw,
-  UserPlus2,
-  FlaskConical,
 } from "lucide-react";
-
-const stats = [
-  { label: "Total Tenants", value: "6", icon: Building2, iconBg: "bg-brand-50", iconColor: "text-brand-600" },
-  { label: "Active This Month", value: "5", icon: CheckCircle2, iconBg: "bg-green-50", iconColor: "text-green-600" },
-  { label: "Total Users", value: "519", icon: Users, iconBg: "bg-purple-50", iconColor: "text-purple-600" },
-  { label: "Platform MRR", value: "₦1,670,000", icon: Wallet, iconBg: "bg-amber-50", iconColor: "text-amber-600" },
-  { label: "Avg Modules/Tenant", value: "2.5", icon: Boxes, iconBg: "bg-indigo-50", iconColor: "text-indigo-600" },
-];
-
-const revenueTrend = [
-  { month: "Feb", mrr: 1150000 },
-  { month: "Mar", mrr: 1250000 },
-  { month: "Apr", mrr: 1350000 },
-  { month: "May", mrr: 1500000 },
-  { month: "Jun", mrr: 1600000 },
-  { month: "Jul", mrr: 1670000 },
-];
-
-const REVENUE_MAX = 1800000;
-const Y_TICKS = [0, 500000, 900000, 1400000, 1800000];
+import { getPlatformDashboard } from "@/lib/api/platform-admin";
+import { PlatformDashboard } from "@/lib/api/types/platform-admin.types";
 
 function formatNaira(value: number) {
   return `₦${(value / 1_000_000).toFixed(1)}M`;
 }
 
-function RevenueTrendChart() {
+function RevenueTrendChart({ months }: { months: { month: string; monthlyRevenue: number }[] }) {
   const [hovered, setHovered] = useState<number | null>(null);
 
   const width = 640;
@@ -48,21 +25,18 @@ function RevenueTrendChart() {
   const chartWidth = width - paddingLeft;
   const chartHeight = height - paddingBottom;
   const barGap = 24;
-  const barWidth =
-    (chartWidth - barGap * (revenueTrend.length - 1)) / revenueTrend.length;
+  const barWidth = (chartWidth - barGap * (months.length - 1)) / months.length;
+
+  const max = Math.max(...months.map((m) => m.monthlyRevenue), 1);
+  const yTicks = [0, max * 0.25, max * 0.5, max * 0.75, max];
 
   return (
     <div className="relative">
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        className="w-full"
-        role="img"
-        aria-label="Monthly revenue trend"
-      >
-        {Y_TICKS.map((tick) => {
-          const y = chartHeight - (tick / REVENUE_MAX) * chartHeight;
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full" role="img" aria-label="Monthly revenue trend">
+        {yTicks.map((tick, i) => {
+          const y = chartHeight - (tick / max) * chartHeight;
           return (
-            <g key={tick}>
+            <g key={i}>
               <line x1={paddingLeft} x2={width} y1={y} y2={y} stroke="#f1f5f9" strokeWidth={1} />
               <text x={paddingLeft - 8} y={y + 4} textAnchor="end" fontSize={11} fill="#94a3b8">
                 {formatNaira(tick)}
@@ -71,8 +45,8 @@ function RevenueTrendChart() {
           );
         })}
 
-        {revenueTrend.map((point, i) => {
-          const barHeight = (point.mrr / REVENUE_MAX) * chartHeight;
+        {months.map((point, i) => {
+          const barHeight = (point.monthlyRevenue / max) * chartHeight;
           const x = paddingLeft + i * (barWidth + barGap);
           const y = chartHeight - barHeight;
           const isHovered = hovered === i;
@@ -91,7 +65,7 @@ function RevenueTrendChart() {
                 className="cursor-pointer transition-colors"
               />
               <text x={x + barWidth / 2} y={height - 6} textAnchor="middle" fontSize={11} fill="#94a3b8">
-                {point.month}
+                {point.month.slice(0, 3)}
               </text>
             </g>
           );
@@ -106,66 +80,87 @@ function RevenueTrendChart() {
             transform: "translate(-50%, -100%)",
           }}
         >
-          <p className="font-medium text-slate-700">{revenueTrend[hovered].month}</p>
-          <p className="text-slate-500">₦{revenueTrend[hovered].mrr.toLocaleString()}</p>
+          <p className="font-medium text-slate-700">{months[hovered].month}</p>
+          <p className="text-slate-500">₦{months[hovered].monthlyRevenue.toLocaleString()}</p>
         </div>
       )}
     </div>
   );
 }
 
-const moduleAdoption = [
-  { name: "HRIS", used: 5, total: 6 },
-  { name: "Accounting", used: 4, total: 6 },
-  { name: "Payroll", used: 4, total: 6 },
-];
-
-const recentActivity = [
-  { icon: Building2, iconColor: "text-brand-600", text: "Nova Healthcare upgraded to Enterprise", time: "2 days ago" },
-  { icon: FlaskConical, iconColor: "text-amber-600", text: "Sterling Logistics started a Trial", time: "9 days ago" },
-  { icon: Plus, iconColor: "text-green-600", text: "Kainos Technologies added Payroll module", time: "12 days ago" },
-  { icon: RefreshCcw, iconColor: "text-brand-600", text: "Pinnacle Foods renewed Growth plan", time: "17 days ago" },
-  { icon: UserPlus2, iconColor: "text-indigo-600", text: "Bravo Group added 8 new users", time: "21 days ago" },
-];
-
-type Plan = "Growth" | "Enterprise" | "Starter" | "Trial";
-
-const planStyles: Record<Plan, string> = {
-  Growth: "bg-brand-50 text-brand-700",
-  Enterprise: "bg-purple-50 text-purple-700",
-  Starter: "bg-slate-100 text-slate-600",
-  Trial: "bg-amber-50 text-amber-700",
+const statusStyles: Record<string, string> = {
+  ACTIVE: "bg-green-50 text-green-700",
+  TRIAL: "bg-amber-50 text-amber-700",
+  SUSPENDED: "bg-red-50 text-red-700",
 };
 
 const moduleStyles: Record<string, string> = {
-  HRIS: "bg-brand-50 text-brand-700",
-  Accounting: "bg-purple-50 text-purple-700",
-  Payroll: "bg-green-50 text-green-700",
+  hris: "bg-brand-50 text-brand-700",
+  accounting: "bg-purple-50 text-purple-700",
+  payroll: "bg-green-50 text-green-700",
 };
 
-const tenants: {
-  company: string;
-  plan: Plan;
-  users: number;
-  modules: string[];
-  lastActive: string;
-  mrr: string;
-  status: "Active" | "Trial";
-}[] = [
-  { company: "Bravo Group", plan: "Growth", users: 42, modules: ["HRIS", "Accounting", "Payroll"], lastActive: "7 Jul 2026", mrr: "₦185,000", status: "Active" },
-  { company: "Kainos Technologies", plan: "Enterprise", users: 180, modules: ["HRIS", "Accounting", "Payroll"], lastActive: "6 Jul 2026", mrr: "₦540,000", status: "Active" },
-  { company: "Zenith Ventures", plan: "Starter", users: 12, modules: ["HRIS"], lastActive: "5 Jul 2026", mrr: "₦45,000", status: "Active" },
-  { company: "Pinnacle Foods", plan: "Growth", users: 67, modules: ["HRIS", "Payroll"], lastActive: "7 Jul 2026", mrr: "₦220,000", status: "Active" },
-  { company: "Sterling Logistics", plan: "Trial", users: 8, modules: ["Accounting"], lastActive: "2 Jul 2026", mrr: "₦0", status: "Trial" },
-  { company: "Nova Healthcare", plan: "Enterprise", users: 210, modules: ["HRIS", "Accounting", "Payroll"], lastActive: "7 Jul 2026", mrr: "₦680,000", status: "Active" },
-];
+function timeAgo(timestamp: string) {
+  const diffMs = Date.now() - new Date(timestamp).getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "1 day ago";
+  return `${diffDays} days ago`;
+}
 
 export default function PlatformAdminOverviewPage() {
+  const [dashboard, setDashboard] = useState<PlatformDashboard | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await getPlatformDashboard({ page: 1, limit: 25, activityLimit: 10 });
+        setDashboard(res.data);
+      } catch (err) {
+        setError("Failed to load dashboard.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboard();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="p-6">
+        <p className="text-sm text-slate-400">Loading dashboard...</p>
+      </section>
+    );
+  }
+
+  if (error || !dashboard) {
+    return (
+      <section className="p-6">
+        <p className="text-sm text-red-500">{error ?? "No data available."}</p>
+      </section>
+    );
+  }
+
+  const { analytics, revenueTrend, moduleAdoption, recentActivity, tenantHealth } = dashboard;
+
+  const stats = [
+    { label: "Total Tenants", value: analytics.totalTenants, icon: Building2, iconBg: "bg-brand-50", iconColor: "text-brand-600" },
+    { label: "Active This Month", value: analytics.activeTenants, icon: CheckCircle2, iconBg: "bg-green-50", iconColor: "text-green-600" },
+    { label: "Total Users", value: analytics.totalUsers, icon: Users, iconBg: "bg-purple-50", iconColor: "text-purple-600" },
+    { label: "Platform MRR", value: `₦${analytics.platformMrr.toLocaleString()}`, icon: Wallet, iconBg: "bg-amber-50", iconColor: "text-amber-600" },
+    { label: "Avg Modules/Tenant", value: analytics.averageModulesPerTenant, icon: Boxes, iconBg: "bg-indigo-50", iconColor: "text-indigo-600" },
+  ];
+
   return (
     <section className="space-y-6 bg-slate-50 p-6">
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">Platform Dashboard</h1>
-        <p className="mt-1 text-sm text-slate-500">Sinkronis tenant overview — July 2026</p>
+        <p className="mt-1 text-sm text-slate-500">Sinkronis tenant overview</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -187,7 +182,7 @@ export default function PlatformAdminOverviewPage() {
           <h3 className="text-sm font-semibold text-slate-900">Revenue Trend</h3>
           <p className="text-xs text-slate-500">Monthly MRR — last 6 months</p>
           <div className="mt-4">
-            <RevenueTrendChart />
+            <RevenueTrendChart months={revenueTrend.months} />
           </div>
         </div>
 
@@ -195,20 +190,19 @@ export default function PlatformAdminOverviewPage() {
           <h3 className="text-sm font-semibold text-slate-900">Module Adoption</h3>
           <p className="text-xs text-slate-500">Tenants using each module</p>
           <div className="mt-5 space-y-4">
-            {moduleAdoption.map((mod) => {
-              const pct = Math.round((mod.used / mod.total) * 100);
-              return (
-                <div key={mod.name}>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-slate-700">{mod.name}</span>
-                    <span className="text-slate-500">{mod.used}/{mod.total} ({pct}%)</span>
-                  </div>
-                  <div className="mt-1.5 h-1.5 w-full rounded-full bg-slate-100">
-                    <div className="h-1.5 rounded-full bg-brand-600" style={{ width: `${pct}%` }} />
-                  </div>
+            {moduleAdoption.modules.map((mod) => (
+              <div key={mod.moduleId}>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-slate-700">{mod.moduleName}</span>
+                  <span className="text-slate-500">
+                    {mod.tenantCount}/{moduleAdoption.totalActiveTenants} ({Math.round(mod.percentageAdoption)}%)
+                  </span>
                 </div>
-              );
-            })}
+                <div className="mt-1.5 h-1.5 w-full rounded-full bg-slate-100">
+                  <div className="h-1.5 rounded-full bg-brand-600" style={{ width: `${mod.percentageAdoption}%` }} />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -216,14 +210,14 @@ export default function PlatformAdminOverviewPage() {
           <h3 className="text-sm font-semibold text-slate-900">Recent Activity</h3>
           <p className="text-xs text-slate-500">Latest platform events</p>
           <ul className="mt-4 space-y-4">
-            {recentActivity.map((item, i) => (
-              <li key={i} className="flex items-start gap-3">
-                <span className="mt-0.5">
-                  <item.icon className={`h-4 w-4 ${item.iconColor}`} />
-                </span>
+            {recentActivity.length === 0 && (
+              <li className="text-sm text-slate-400">No recent activity.</li>
+            )}
+            {recentActivity.map((item) => (
+              <li key={item.activityId} className="flex items-start gap-3">
                 <div>
-                  <p className="text-sm text-slate-700">{item.text}</p>
-                  <p className="text-xs text-slate-400">{item.time}</p>
+                  <p className="text-sm text-slate-700">{item.description}</p>
+                  <p className="text-xs text-slate-400">{timeAgo(item.timestamp)}</p>
                 </div>
               </li>
             ))}
@@ -248,33 +242,30 @@ export default function PlatformAdminOverviewPage() {
               </tr>
             </thead>
             <tbody>
-              {tenants.map((tenant) => (
-                <tr key={tenant.company} className="cursor-pointer border-b border-slate-50 last:border-0 hover:bg-slate-50">
-                  <td className="py-3 font-medium text-slate-800">{tenant.company}</td>
-                  <td className="py-3">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${planStyles[tenant.plan]}`}>
-                      {tenant.plan}
-                    </span>
-                  </td>
-                  <td className="py-3 text-slate-700">{tenant.users}</td>
+              {tenantHealth.records.map((tenant) => (
+                <tr key={tenant.organizationId} className="cursor-pointer border-b border-slate-50 last:border-0 hover:bg-slate-50">
+                  <td className="py-3 font-medium text-slate-800">{tenant.organizationName}</td>
+                  <td className="py-3 text-slate-700">{tenant.currentPlan.name}</td>
+                  <td className="py-3 text-slate-700">{tenant.userCount}</td>
                   <td className="py-3">
                     <div className="flex flex-wrap gap-1">
-                      {tenant.modules.map((mod) => (
-                        <span key={mod} className={`rounded-full px-2 py-0.5 text-xs font-medium ${moduleStyles[mod]}`}>
-                          {mod}
+                      {tenant.activeModules.length === 0 && <span className="text-xs text-slate-400">—</span>}
+                      {tenant.activeModules.map((mod) => (
+                        <span key={mod.key} className={`rounded-full px-2 py-0.5 text-xs font-medium ${moduleStyles[mod.key] ?? "bg-slate-100 text-slate-600"}`}>
+                          {mod.name}
                         </span>
                       ))}
                     </div>
                   </td>
-                  <td className="py-3 text-slate-500">{tenant.lastActive}</td>
-                  <td className="py-3 text-slate-700">{tenant.mrr}</td>
+                  <td className="py-3 text-slate-500">
+                    {tenant.lastActiveDate
+                      ? new Date(tenant.lastActiveDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+                      : "—"}
+                  </td>
+                  <td className="py-3 text-slate-700">₦{tenant.monthlyRecurringRevenue.toLocaleString()}</td>
                   <td className="py-3">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        tenant.status === "Active" ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"
-                      }`}
-                    >
-                      {tenant.status}
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusStyles[tenant.subscriptionStatus]}`}>
+                      {tenant.subscriptionStatus}
                     </span>
                   </td>
                 </tr>
