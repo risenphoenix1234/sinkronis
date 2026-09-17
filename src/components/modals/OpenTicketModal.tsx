@@ -3,37 +3,44 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import { TicketPriority } from "@/lib/platform-support-data";
 
-const PRIORITIES: TicketPriority[] = ["Low", "Medium", "High", "Critical"];
+const PRIORITIES = ["MEDIUM", "HIGH", "CRITICAL"] as const;
+type Priority = (typeof PRIORITIES)[number];
 
 export interface NewTicketInput {
-  tenant: string;
+  tenantId: string;
   subject: string;
-  priority: TicketPriority;
+  priority: Priority;
   description: string;
+}
+
+interface TenantOption {
+  id: string;
+  name: string;
 }
 
 interface OpenTicketModalProps {
   open: boolean;
+  tenants: TenantOption[];
   onClose: () => void;
   onSubmit: (input: NewTicketInput) => void;
 }
 
-export default function OpenTicketModal({ open, onClose, onSubmit }: OpenTicketModalProps) {
-  const [tenant, setTenant] = useState("");
+export default function OpenTicketModal({ open, tenants, onClose, onSubmit }: OpenTicketModalProps) {
+  const [tenantId, setTenantId] = useState("");
   const [subject, setSubject] = useState("");
-  const [priority, setPriority] = useState<TicketPriority | "">("");
+  const [priority, setPriority] = useState<Priority>("MEDIUM");
   const [description, setDescription] = useState("");
 
   if (!open) return null;
 
-  const isValid = tenant.trim() && subject.trim();
+  const isValid =
+    tenantId && subject.trim().length >= 3 && description.trim().length >= 10;
 
   const resetForm = () => {
-    setTenant("");
+    setTenantId("");
     setSubject("");
-    setPriority("");
+    setPriority("MEDIUM");
     setDescription("");
   };
 
@@ -45,13 +52,12 @@ export default function OpenTicketModal({ open, onClose, onSubmit }: OpenTicketM
   const handleSubmit = () => {
     if (!isValid) return;
     onSubmit({
-      tenant: tenant.trim(),
+      tenantId,
       subject: subject.trim(),
-      priority: priority || "Medium",
+      priority,
       description: description.trim(),
     });
     resetForm();
-    onClose();
   };
 
   return (
@@ -73,13 +79,18 @@ export default function OpenTicketModal({ open, onClose, onSubmit }: OpenTicketM
             <label className="text-xs font-medium text-slate-700">
               Tenant <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              value={tenant}
-              onChange={(e) => setTenant(e.target.value)}
-              placeholder="Which tenant is this for?"
-              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-            />
+            <select
+              value={tenantId}
+              onChange={(e) => setTenantId(e.target.value)}
+              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+            >
+              <option value="">Select a tenant</option>
+              {tenants.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -91,7 +102,7 @@ export default function OpenTicketModal({ open, onClose, onSubmit }: OpenTicketM
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="Brief description of the issue"
-              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
             />
           </div>
 
@@ -99,10 +110,9 @@ export default function OpenTicketModal({ open, onClose, onSubmit }: OpenTicketM
             <label className="text-xs font-medium text-slate-700">Priority</label>
             <select
               value={priority}
-              onChange={(e) => setPriority(e.target.value as TicketPriority)}
-              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              onChange={(e) => setPriority(e.target.value as Priority)}
+              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
             >
-              <option value="">Select priority</option>
               {PRIORITIES.map((p) => (
                 <option key={p} value={p}>
                   {p}
@@ -112,13 +122,15 @@ export default function OpenTicketModal({ open, onClose, onSubmit }: OpenTicketM
           </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-700">Description</label>
+            <label className="text-xs font-medium text-slate-700">
+              Description <span className="text-red-500">*</span>
+            </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Detailed description of the issue..."
+              placeholder="Detailed description of the issue... (min 10 characters)"
               rows={3}
-              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
             />
           </div>
         </div>
@@ -133,7 +145,7 @@ export default function OpenTicketModal({ open, onClose, onSubmit }: OpenTicketM
           <button
             onClick={handleSubmit}
             disabled={!isValid}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+            className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
           >
             Open Ticket
           </button>

@@ -1,116 +1,77 @@
-// src/app/tenant-admin/organisation/departments/page.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { FiPlus, FiX } from "react-icons/fi";
+import { getDepartmentsTable, createDepartment } from "@/lib/api/admin";
+import { DepartmentTableRow } from "@/lib/api/types/admin.types";
 
-type Department = {
-  id: string;
-  name: string;
-  headOfDepartment: string;
-  employees: number;
-  dateCreated: string;
-};
+const emptyForm = { name: "", description: "" };
 
-const initialDepartments: Department[] = [
-  {
-    id: "dept-1",
-    name: "Human Resources",
-    headOfDepartment: "Amara Okafor",
-    employees: 4,
-    dateCreated: "15 Jan 2024",
-  },
-  {
-    id: "dept-2",
-    name: "Finance",
-    headOfDepartment: "Chukwuemeka Adeyemi",
-    employees: 6,
-    dateCreated: "15 Jan 2024",
-  },
-  {
-    id: "dept-3",
-    name: "Operations",
-    headOfDepartment: "Dapo Olawale",
-    employees: 8,
-    dateCreated: "15 Jan 2024",
-  },
-  {
-    id: "dept-4",
-    name: "IT & Technology",
-    headOfDepartment: "Emeka Nwosu",
-    employees: 5,
-    dateCreated: "3 Feb 2024",
-  },
-  {
-    id: "dept-5",
-    name: "Sales & Marketing",
-    headOfDepartment: "Ngozi Eze",
-    employees: 7,
-    dateCreated: "10 Feb 2024",
-  },
-  {
-    id: "dept-6",
-    name: "Legal",
-    headOfDepartment: "Babajide Lawson",
-    employees: 3,
-    dateCreated: "1 Mar 2024",
-  },
-  {
-    id: "dept-7",
-    name: "Customer Support",
-    headOfDepartment: "Adaeze Nwachukwu",
-    employees: 5,
-    dateCreated: "20 Mar 2024",
-  },
-];
-
-const emptyForm = { name: "", headOfDepartment: "", employees: "" };
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 export default function DepartmentsPage() {
-  const [departments, setDepartments] = useState<Department[]>(initialDepartments);
+  const [departments, setDepartments] = useState<DepartmentTableRow[]>([]);
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return departments;
-    return departments.filter(
-      (d) =>
-        d.name.toLowerCase().includes(q) ||
-        d.headOfDepartment.toLowerCase().includes(q)
-    );
-  }, [search, departments]);
+  const fetchDepartments = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await getDepartmentsTable({ search: search || undefined, limit: 100 });
+      setDepartments(res.data);
+    } catch (err) {
+      setError("Failed to load departments.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const debounce = setTimeout(fetchDepartments, 400);
+    return () => clearTimeout(debounce);
+  }, [search]);
 
   const closeModal = () => {
     setModalOpen(false);
     setForm(emptyForm);
-    setError(null);
+    setFormError(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!form.name.trim()) {
-      setError("Department name is required.");
+      setFormError("Department name is required.");
       return;
     }
 
-    const newDept: Department = {
-      id: `dept-${Date.now()}`,
-      name: form.name.trim(),
-      headOfDepartment: form.headOfDepartment.trim() || "Unassigned",
-      employees: Number(form.employees) || 0,
-      dateCreated: new Date().toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      }),
-    };
-
-    setDepartments((prev) => [newDept, ...prev]);
-    closeModal();
+    setSubmitting(true);
+    setFormError(null);
+    try {
+      await createDepartment({
+        name: form.name.trim(),
+        description: form.description.trim() || undefined,
+      });
+      closeModal();
+      fetchDepartments();
+    } catch (err: any) {
+      setFormError(err?.response?.data?.message || "Failed to create department.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -134,6 +95,10 @@ export default function DepartmentsPage() {
         </button>
       </div>
 
+      {error && (
+        <div className="mb-4 rounded-md bg-red-50 px-4 py-2.5 text-sm text-red-600">{error}</div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
           <thead className="border-b border-slate-100 text-slate-500">
@@ -145,31 +110,33 @@ export default function DepartmentsPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((dept) => (
-              <tr key={dept.id} className="border-b border-slate-50">
-                <td className="px-4 py-3 font-medium text-slate-800">
-                  {dept.name}
-                </td>
-                <td className="px-4 py-3 text-slate-600">
-                  {dept.headOfDepartment}
-                </td>
-                <td className="px-4 py-3">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-50 text-xs font-semibold text-sky-600">
-                    {dept.employees}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-slate-500">
-                  {dept.dateCreated}
+            {loading && (
+              <tr>
+                <td colSpan={4} className="px-4 py-8 text-center text-sm text-slate-400">
+                  Loading departments...
                 </td>
               </tr>
-            ))}
+            )}
 
-            {filtered.length === 0 && (
+            {!loading &&
+              departments.map((dept) => (
+                <tr key={dept.id} className="border-b border-slate-50">
+                  <td className="px-4 py-3 font-medium text-slate-800">{dept.departmentName}</td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {dept.headOfDepartment ?? "Unassigned"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-50 text-xs font-semibold text-sky-600">
+                      {dept.employeeCount}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-slate-500">{formatDate(dept.dateCreated)}</td>
+                </tr>
+              ))}
+
+            {!loading && departments.length === 0 && (
               <tr>
-                <td
-                  colSpan={4}
-                  className="px-4 py-8 text-center text-sm text-slate-400"
-                >
+                <td colSpan={4} className="px-4 py-8 text-center text-sm text-slate-400">
                   No departments match your search.
                 </td>
               </tr>
@@ -178,7 +145,6 @@ export default function DepartmentsPage() {
         </table>
       </div>
 
-      {/* Add Department modal */}
       {modalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
@@ -189,9 +155,7 @@ export default function DepartmentsPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-800">
-                Add Department
-              </h2>
+              <h2 className="text-lg font-semibold text-slate-800">Add Department</h2>
               <button
                 type="button"
                 onClick={closeModal}
@@ -209,9 +173,7 @@ export default function DepartmentsPage() {
                 <input
                   type="text"
                   value={form.name}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, name: e.target.value }))
-                  }
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="e.g. Product Design"
                   className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-sky-400 focus:ring-1 focus:ring-sky-400"
                 />
@@ -219,50 +181,34 @@ export default function DepartmentsPage() {
 
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                  Head of Department
+                  Description
                 </label>
                 <input
                   type="text"
-                  value={form.headOfDepartment}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, headOfDepartment: e.target.value }))
-                  }
-                  placeholder="e.g. Femi Adebayo"
+                  value={form.description}
+                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                  placeholder="Optional"
                   className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-sky-400 focus:ring-1 focus:ring-sky-400"
                 />
               </div>
 
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                  Employees
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.employees}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, employees: e.target.value }))
-                  }
-                  placeholder="0"
-                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-sky-400 focus:ring-1 focus:ring-sky-400"
-                />
-              </div>
-
-              {error && <p className="text-sm text-red-500">{error}</p>}
+              {formError && <p className="text-sm text-red-500">{formError}</p>}
 
               <div className="mt-2 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+                  disabled={submitting}
+                  className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-60"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
+                  disabled={submitting}
+                  className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-60"
                 >
-                  Add Department
+                  {submitting ? "Adding..." : "Add Department"}
                 </button>
               </div>
             </form>

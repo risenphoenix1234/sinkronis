@@ -64,7 +64,7 @@ const sidebarItems: SidebarItem[] = [
   },
   {
     label: "Notifications",
-    href: "/tenant-admin/notifications",
+    href: "/tenant-admin/notifications-alerts",
     icon: "notifications",
   },
   // {

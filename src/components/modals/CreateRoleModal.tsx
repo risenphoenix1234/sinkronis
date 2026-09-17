@@ -1,51 +1,51 @@
-// src/components/modal/CreateRoleModal.tsx
+// src/components/modals/CreateRoleModal.tsx
 "use client";
 
 import { useState } from "react";
+import { RoleDetail, RoleTemplate } from "@/lib/api/types/admin.types";
 
 interface CreateRoleModalProps {
   open: boolean;
+  existingRoles: RoleDetail[];
+  templates: RoleTemplate[];
   onClose: () => void;
-  onCreate: (role: {
-    name: string;
-    description: string;
-    cloneFrom: string;
-  }) => void;
-  cloneOptions: string[];
+  onCreate: (role: { name: string; description: string; cloneFromRoleId?: string; templateKey?: string }) => void;
 }
 
 export default function CreateRoleModal({
   open,
+  existingRoles,
+  templates,
   onClose,
   onCreate,
-  cloneOptions,
 }: CreateRoleModalProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [cloneFrom, setCloneFrom] = useState(cloneOptions[0] ?? "");
+  const [source, setSource] = useState(""); // format: "role:<id>" or "template:<key>"
 
   if (!open) return null;
 
   const handleCreate = () => {
     if (!name.trim()) return;
-    onCreate({ name: name.trim(), description: description.trim(), cloneFrom });
+
+    const [type, value] = source.split(":");
+    onCreate({
+      name: name.trim(),
+      description: description.trim(),
+      cloneFromRoleId: type === "role" ? value : undefined,
+      templateKey: type === "template" ? value : undefined,
+    });
     setName("");
     setDescription("");
-    setCloneFrom(cloneOptions[0] ?? "");
+    setSource("");
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
       <div className="w-full max-w-sm rounded-lg bg-white p-5 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-slate-900">
-            Create Role
-          </h2>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            className="text-slate-400 hover:text-slate-600"
-          >
+          <h2 className="text-base font-semibold text-slate-900">Create Role</h2>
+          <button onClick={onClose} aria-label="Close" className="text-slate-400 hover:text-slate-600">
             ✕
           </button>
         </div>
@@ -79,18 +79,32 @@ export default function CreateRoleModal({
 
           <div>
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Clone Permissions From
+              Start From
             </label>
             <select
-              value={cloneFrom}
-              onChange={(e) => setCloneFrom(e.target.value)}
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
               className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400"
             >
-              {cloneOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
+              <option value="">Blank (no permissions)</option>
+              {templates.length > 0 && (
+                <optgroup label="Templates">
+                  {templates.map((t) => (
+                    <option key={t.key} value={`template:${t.key}`}>
+                      {t.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {existingRoles.length > 0 && (
+                <optgroup label="Existing Roles">
+                  {existingRoles.map((r) => (
+                    <option key={r.id} value={`role:${r.id}`}>
+                      {r.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </select>
           </div>
         </div>

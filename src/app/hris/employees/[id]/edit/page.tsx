@@ -122,11 +122,19 @@ export default function EditEmployeePage({
   }
 
   return (
-    <section className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-8">
-      <div className="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+    <section className="space-y-6 p-6">
+      <button onClick={() => router.back()} className="text-sm text-slate-500 hover:text-sky-600">
+        ← Back
+      </button>
+
+      <div className="flex items-start gap-4">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-sky-100 text-xl font-bold text-sky-600">
+          {employee.header.name.charAt(0)}
+        </div>
         <div>
           <h1 className="text-4xl mb-8 font-bold text-slate-900">Edit Profile</h1>
         </div>
+      </div>
 
         <div className="mb-8 flex justify-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-sky-100 text-xl font-bold text-sky-600 overflow-hidden">
@@ -208,8 +216,7 @@ export default function EditEmployeePage({
               </button>
             </div>
           </div>
-        </form>
-      </div>
+      </form>
     </section>
   );
 }

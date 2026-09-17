@@ -1,60 +1,32 @@
 // src/app/platform-admin/tenants/[id]/page.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { ArrowLeft, Users, Boxes, Clock } from "lucide-react";
 import {
-  ArrowLeft,
-  Users,
-  Boxes,
-  Clock,
-  KeyRound,
-  UserX,
-  UserCheck,
-} from "lucide-react";
+  getTenantById,
+  getTenantUsers,
+  getTenantModules,
+  getTenantBilling,
+  getTenantActivity,
+  getTenantSupportTickets,
+  suspendTenant,
+  activateTenant,
+  impersonateTenant,
+  enableTenantModule,
+  disableTenantModule,
+} from "@/lib/api/platform-admin";
 import {
-  getTenant,
-  planStyles,
-  statusStyles,
-  naira,
-  ModuleName,
-  Plan,
-} from "@/lib/pa-tenants-data";
-import OverridePlanModal from "@/components/modals/OverridePlanModal";
+  TenantDetailResponse,
+  TenantUsersResponse,
+  TenantModulesResponse,
+  TenantBillingResponse,
+  TenantActivityResponse,
+  TenantSupportResponse,
+} from "@/lib/api/types/platform-admin.types";
 
 type Tab = "overview" | "users" | "modules" | "billing" | "activity" | "support";
-
-const moduleInfo: Record<ModuleName, { label: string; description: string }> = {
-  HRIS: {
-    label: "HRIS",
-    description: "Employee records, leave management, onboarding workflows",
-  },
-  Accounting: {
-    label: "Accounting",
-    description: "Invoicing, chart of accounts, financial reporting",
-  },
-  Payroll: {
-    label: "Payroll",
-    description: "Salary processing, PAYE calculations, payslip generation",
-  },
-};
-
-const invoiceStatusStyles: Record<string, string> = {
-  Paid: "bg-green-50 text-green-700",
-  Pending: "bg-amber-50 text-amber-700",
-  Failed: "bg-red-50 text-red-700",
-};
-
-const priorityStyles: Record<string, string> = {
-  Low: "bg-slate-100 text-slate-600",
-  Medium: "bg-amber-50 text-amber-700",
-  High: "bg-red-50 text-red-700",
-};
-
-const ticketStatusStyles: Record<string, string> = {
-  Open: "bg-amber-50 text-amber-700",
-  Closed: "bg-green-50 text-green-700",
-};
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "overview", label: "Overview" },
@@ -65,121 +37,194 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "support", label: "Support" },
 ];
 
-export default function TenantDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const seed = getTenant(params.id) ?? getTenant("zenith-ventures")!;
+const statusStyles: Record<string, string> = {
+  ACTIVE: "bg-green-50 text-green-700",
+  TRIAL: "bg-amber-50 text-amber-700",
+  SUSPENDED: "bg-red-50 text-red-700",
+};
 
-  const [tenant, setTenant] = useState(seed);
+function formatDate(value: string | null) {
+  if (!value) return "—";
+  return new Date(value).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+export default function TenantDetailPage({ params }: { params: { id: string } }) {
+  const tenantId = params.id;
+
   const [activeTab, setActiveTab] = useState<Tab>("overview");
-  const [showOverrideModal, setShowOverrideModal] = useState(false);
 
-  const activeModuleCount = useMemo(
-    () => Object.values(tenant.activeModules).filter(Boolean).length,
-    [tenant.activeModules]
-  );
+  const [overview, setOverview] = useState<TenantDetailResponse["data"] | null>(null);
+  const [users, setUsers] = useState<TenantUsersResponse["data"] | null>(null);
+  const [modules, setModules] = useState<TenantModulesResponse["data"] | null>(null);
+  const [billing, setBilling] = useState<TenantBillingResponse["data"] | null>(null);
+  const [activity, setActivity] = useState<TenantActivityResponse["data"]>([]);
+  const [support, setSupport] = useState<TenantSupportResponse["data"]>([]);
 
-  const toggleSuspend = () => {
-    setTenant((prev) => ({
-      ...prev,
-      status: prev.status === "Suspended" ? "Active" : "Suspended",
-    }));
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const fetchAll = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [ov, us, mo, bi, ac, su] = await Promise.all([
+        getTenantById(tenantId),
+        getTenantUsers(tenantId),
+        getTenantModules(tenantId),
+        getTenantBilling(tenantId),
+        getTenantActivity(tenantId),
+        getTenantSupportTickets(tenantId),
+      ]);
+      setOverview(ov.data);
+      setUsers(us.data);
+      setModules(mo.data);
+      setBilling(bi.data);
+      setActivity(ac.data);
+      setSupport(su.data);
+    } catch (err) {
+      setError("Failed to load tenant details.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const toggleModule = (mod: ModuleName) => {
-    setTenant((prev) => ({
-      ...prev,
-      activeModules: {
-        ...prev.activeModules,
-        [mod]: !prev.activeModules[mod],
-      },
-    }));
+  useEffect(() => {
+    fetchAll();
+  }, [tenantId]);
+
+  const handleSuspendToggle = async () => {
+    if (!overview) return;
+    setActionLoading(true);
+    try {
+      if (overview.organization.subscriptionStatus === "SUSPENDED") {
+        await activateTenant(tenantId);
+      } else {
+        await suspendTenant(tenantId);
+      }
+      await fetchAll();
+    } catch (err) {
+      alert("Action failed.");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
-  const toggleUserStatus = (email: string) => {
-    setTenant((prev) => ({
-      ...prev,
-      users: prev.users.map((u) =>
-        u.email === email
-          ? { ...u, status: u.status === "Active" ? "Inactive" : "Active" }
-          : u
-      ),
-    }));
+  const handleEnableModule = async (moduleKey: string) => {
+  setActionLoading(true);
+  try {
+    await enableTenantModule(tenantId, moduleKey);
+    await fetchAll();
+  } catch (err: any) {
+    alert(err?.response?.data?.message || "Failed to enable module.");
+  } finally {
+    setActionLoading(false);
+  }
+};
+
+const handleDisableModule = async (moduleKey: string, moduleName: string) => {
+  const reason = window.prompt(`Reason for disabling ${moduleName}:`);
+  if (!reason) return;
+
+  setActionLoading(true);
+  try {
+    await disableTenantModule(tenantId, moduleKey, reason);
+    await fetchAll();
+  } catch (err: any) {
+    alert(err?.response?.data?.message || "Failed to disable module — it may conflict with the current plan or have active dependencies.");
+  } finally {
+    setActionLoading(false);
+  }
+};
+
+  const handleImpersonate = async () => {
+    setActionLoading(true);
+    try {
+      await impersonateTenant(tenantId);
+      alert("Impersonation started.");
+    } catch (err) {
+      alert("Failed to start impersonation.");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
-  const applyOverride = (newPlan: string) => {
-    setTenant((prev) => ({ ...prev, plan: newPlan as Plan }));
-  };
+  if (loading) {
+    return (
+      <section className="p-6">
+        <p className="text-sm text-slate-400">Loading tenant...</p>
+      </section>
+    );
+  }
+
+  if (error || !overview) {
+    return (
+      <section className="p-6">
+        <p className="text-sm text-red-500">{error ?? "Tenant not found."}</p>
+      </section>
+    );
+  }
+
+  const { organization, summary } = overview;
 
   return (
     <section className="space-y-4 bg-slate-50 p-6">
       <Link
         href="/platform-admin/tenants"
-        className="inline-flex items-center gap-1 text-sm text-brand-600 hover:underline"
+        className="inline-flex items-center gap-1 text-sm text-sky-600 hover:underline"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Tenants
       </Link>
 
-      {/* Tenant header */}
       <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold text-slate-900">
-                {tenant.company}
-              </h1>
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs font-medium ${planStyles[tenant.plan]}`}
-              >
-                {tenant.plan}
+              <h1 className="text-xl font-semibold text-slate-900">{organization.organizationName}</h1>
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                {organization.currentPlan.name}
               </span>
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusStyles[tenant.status]}`}
-              >
-                {tenant.status}
+              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusStyles[organization.subscriptionStatus]}`}>
+                {organization.subscriptionStatus}
               </span>
             </div>
 
             <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-500">
-              <span>
-                Industry: <span className="text-slate-700">{tenant.industry}</span>
-              </span>
-              <span>
-                Admin: <span className="text-slate-700">{tenant.adminEmail}</span>
-              </span>
-              <span>
-                MRR: <span className="text-slate-700">{naira(tenant.mrr)}</span>
-              </span>
-              <span>
-                Country: <span className="text-slate-700">{tenant.country}</span>
-              </span>
-              <span>
-                Created: <span className="text-slate-700">{tenant.createdDate}</span>
-              </span>
+              <span>Industry: <span className="text-slate-700">{organization.industry ?? "—"}</span></span>
+              <span>Admin: <span className="text-slate-700">{organization.companyEmail}</span></span>
+              <span>MRR: <span className="text-slate-700">₦{organization.monthlyRecurringRevenue.toLocaleString()}</span></span>
+              <span>Country: <span className="text-slate-700">{organization.country}</span></span>
+              <span>Created: <span className="text-slate-700">{formatDate(organization.createdAt)}</span></span>
             </div>
           </div>
 
           <div className="flex gap-2">
-            <button className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
+            <button
+              onClick={handleImpersonate}
+              disabled={actionLoading}
+              className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+            >
               Impersonate Admin
             </button>
             <button
-              onClick={toggleSuspend}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium text-white ${
-                tenant.status === "Suspended"
+              onClick={handleSuspendToggle}
+              disabled={actionLoading}
+              className={`rounded-md px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60 ${
+                organization.subscriptionStatus === "SUSPENDED"
                   ? "bg-green-600 hover:bg-green-700"
                   : "bg-red-600 hover:bg-red-700"
               }`}
             >
-              {tenant.status === "Suspended" ? "Activate Tenant" : "Suspend Tenant"}
+              {organization.subscriptionStatus === "SUSPENDED" ? "Activate Tenant" : "Suspend Tenant"}
             </button>
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="mt-5 flex gap-6 border-b border-slate-100 text-sm">
           {TABS.map((tab) => (
             <button
@@ -187,7 +232,7 @@ export default function TenantDetailPage({
               onClick={() => setActiveTab(tab.key)}
               className={`-mb-px border-b-2 pb-2 font-medium transition-colors ${
                 activeTab === tab.key
-                  ? "border-brand-600 text-brand-600"
+                  ? "border-sky-600 text-sky-600"
                   : "border-transparent text-slate-500 hover:text-slate-700"
               }`}
             >
@@ -197,66 +242,47 @@ export default function TenantDetailPage({
         </div>
       </div>
 
-      {/* Overview */}
       {activeTab === "overview" && (
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="rounded-lg border border-slate-100 p-4">
               <div className="flex items-center gap-2 text-xs text-slate-500">
-                <Users className="h-4 w-4 text-brand-600" />
+                <Users className="h-4 w-4 text-sky-600" />
                 Total Users
               </div>
-              <p className="mt-2 text-2xl font-bold text-brand-600">
-                {tenant.users.length}
-              </p>
+              <p className="mt-2 text-2xl font-bold text-sky-600">{summary.totalUsers}</p>
             </div>
             <div className="rounded-lg border border-slate-100 p-4">
               <div className="flex items-center gap-2 text-xs text-slate-500">
                 <Boxes className="h-4 w-4 text-purple-600" />
                 Active Modules
               </div>
-              <p className="mt-2 text-2xl font-bold text-purple-600">
-                {activeModuleCount}
-              </p>
+              <p className="mt-2 text-2xl font-bold text-purple-600">{summary.activeModules.length}</p>
             </div>
             <div className="rounded-lg border border-slate-100 p-4">
               <div className="flex items-center gap-2 text-xs text-slate-500">
                 <Clock className="h-4 w-4 text-amber-600" />
                 Days Since Last Login
               </div>
-              <p className="mt-2 text-2xl font-bold text-amber-600">2</p>
+              <p className="mt-2 text-2xl font-bold text-amber-600">{summary.daysSinceLastLogin}</p>
             </div>
           </div>
 
-          <div className="mt-6">
-            <h3 className="text-sm font-semibold text-slate-900">
-              About {tenant.company}
-            </h3>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              {tenant.about}
-            </p>
-          </div>
-
           <div className="mt-6 rounded-lg bg-slate-50 p-4">
-            <h4 className="text-xs font-semibold text-slate-700">
-              Primary Admin Contact
-            </h4>
+            <h4 className="text-xs font-semibold text-slate-700">Primary Admin Contact</h4>
             <p className="mt-1 text-sm text-slate-600">
-              Email:{" "}
-              <span className="font-medium text-slate-800">
-                {tenant.adminEmail}
-              </span>
+              Email: <span className="font-medium text-slate-800">{organization.companyEmail}</span>
+            </p>
+            <p className="mt-1 text-sm text-slate-600">
+              Last login: <span className="font-medium text-slate-800">{formatDate(summary.lastLoginDate)}</span>
             </p>
           </div>
         </div>
       )}
 
-      {/* Users */}
-      {activeTab === "users" && (
+      {activeTab === "users" && users && (
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="text-sm font-semibold text-slate-900">
-            Users ({tenant.users.length})
-          </h3>
+          <h3 className="text-sm font-semibold text-slate-900">Users ({users.totalUsers})</h3>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead>
@@ -266,50 +292,19 @@ export default function TenantDetailPage({
                   <th className="py-2 font-medium">Role</th>
                   <th className="py-2 font-medium">Last Active</th>
                   <th className="py-2 font-medium">Status</th>
-                  <th className="py-2 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {tenant.users.map((user) => (
-                  <tr key={user.email} className="border-b border-slate-50 last:border-0">
-                    <td className="py-3 font-medium text-slate-800">{user.name}</td>
+                {users.users.map((user) => (
+                  <tr key={user.userId} className="border-b border-slate-50 last:border-0">
+                    <td className="py-3 font-medium text-slate-800">{user.fullName}</td>
                     <td className="py-3 text-slate-600">{user.email}</td>
                     <td className="py-3 text-slate-600">{user.role}</td>
-                    <td className="py-3 text-slate-500">{user.lastActive}</td>
+                    <td className="py-3 text-slate-500">{formatDate(user.lastActive)}</td>
                     <td className="py-3">
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                          user.status === "Active"
-                            ? "bg-green-50 text-green-700"
-                            : "bg-slate-100 text-slate-500"
-                        }`}
-                      >
-                        {user.status}
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${user.accountStatus === "ACTIVE" ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-500"}`}>
+                        {user.accountStatus}
                       </span>
-                    </td>
-                    <td className="py-3">
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => toggleUserStatus(user.email)}
-                          className="flex items-center gap-1 text-xs font-medium text-amber-600 hover:underline"
-                        >
-                          {user.status === "Active" ? (
-                            <>
-                              <UserX className="h-3.5 w-3.5" />
-                              Deactivate
-                            </>
-                          ) : (
-                            <>
-                              <UserCheck className="h-3.5 w-3.5" />
-                              Activate
-                            </>
-                          )}
-                        </button>
-                        <button className="flex items-center gap-1 text-xs font-medium text-brand-600 hover:underline">
-                          <KeyRound className="h-3.5 w-3.5" />
-                          Reset PW
-                        </button>
-                      </div>
                     </td>
                   </tr>
                 ))}
@@ -319,203 +314,165 @@ export default function TenantDetailPage({
         </div>
       )}
 
-      {/* Modules */}
-      {activeTab === "modules" && (
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="text-sm font-semibold text-slate-900">Module Access</h3>
-          <p className="text-xs text-slate-500">
-            Toggle modules on or off for this tenant. Changes apply immediately.
-          </p>
-
-          <div className="mt-4 grid gap-4 sm:grid-cols-3">
-            {(Object.keys(moduleInfo) as ModuleName[]).map((mod) => {
-              const enabled = tenant.activeModules[mod];
-              return (
-                <div key={mod} className="rounded-lg border border-slate-100 p-4">
-                  <div className="flex items-start justify-between">
-                    <h4 className="text-sm font-medium text-slate-800">
-                      {moduleInfo[mod].label}
-                    </h4>
-                    <button
-                      onClick={() => toggleModule(mod)}
-                      className={`relative h-5 w-9 rounded-full transition-colors ${
-                        enabled ? "bg-brand-600" : "bg-slate-200"
-                      }`}
-                      aria-pressed={enabled}
-                      aria-label={`Toggle ${mod}`}
-                    >
-                      <span
-                        className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                          enabled ? "translate-x-4" : "translate-x-0.5"
-                        }`}
-                      />
-                    </button>
-                  </div>
-                  <p className="mt-2 text-xs text-slate-500">
-                    {moduleInfo[mod].description}
-                  </p>
-                  <span
-                    className={`mt-3 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                      enabled
-                        ? "bg-green-50 text-green-700"
-                        : "bg-slate-100 text-slate-500"
-                    }`}
-                  >
-                    {enabled ? "Enabled" : "Disabled"}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+<div className="mt-4  grid gap-4 sm:grid-cols-3">
+  {modules.modules.map((mod) => {
+    const isOn = mod.status === "ACTIVE";
+    return (
+      <div key={mod.moduleId} className="rounded-lg border border-slate-100 bg-white p-4">
+        <div className="flex items-start justify-between">
+          <h4 className="text-sm font-medium text-slate-800">{mod.moduleName}</h4>
+          <button
+            onClick={() =>
+              isOn
+                ? handleDisableModule(mod.moduleId, mod.moduleName)
+                : handleEnableModule(mod.moduleId)
+            }
+            disabled={actionLoading}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-60 ${
+              isOn ? "bg-sky-600" : "bg-slate-200"
+            }`}
+            aria-pressed={isOn}
+            aria-label={`Toggle ${mod.moduleName}`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                isOn ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
         </div>
-      )}
-
-      {/* Billing */}
-      {activeTab === "billing" && (
+        <p className="mt-2 text-xs text-slate-500">
+          {mod.includedInPlan ? "Included in current plan" : "Add-on module"}
+        </p>
+        <span
+          className={`mt-3 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+            isOn ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-500"
+          }`}
+        >
+          {mod.status}
+        </span>
+      </div>
+    );
+  })}
+</div>
+      {activeTab === "billing" && billing && (
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-start justify-between">
-            <div>
-              <h3 className="text-sm font-semibold text-slate-900">Billing History</h3>
-              <p className="text-xs text-slate-500">
-                Current plan: {tenant.plan} — {naira(tenant.mrr)}/month
-              </p>
-            </div>
-            <button
-              onClick={() => setShowOverrideModal(true)}
-              className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Override Plan
-            </button>
-          </div>
+          <h3 className="text-sm font-semibold text-slate-900">Billing</h3>
+          <p className="text-xs text-slate-500">
+            Current plan: {billing.currentSubscription.currentPlan.name} — ₦{billing.currentSubscription.monthlyCost.toLocaleString()}/month ({billing.currentSubscription.billingCycle})
+          </p>
+          <p className="mt-1 text-xs text-slate-500">Renews: {formatDate(billing.currentSubscription.renewalDate)}</p>
 
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[560px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 text-xs text-slate-500">
-                  <th className="py-2 font-medium">Invoice ID</th>
-                  <th className="py-2 font-medium">Period</th>
-                  <th className="py-2 font-medium">Amount ₦</th>
-                  <th className="py-2 font-medium">Status</th>
-                  <th className="py-2 font-medium">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tenant.invoices.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="py-6 text-center text-sm text-slate-400">
-                      No invoices yet.
-                    </td>
-                  </tr>
-                ) : (
-                  tenant.invoices.map((invoice) => (
-                    <tr key={invoice.id} className="border-b border-slate-50 last:border-0">
-                      <td className="py-3 font-medium text-brand-600">{invoice.id}</td>
-                      <td className="py-3 text-slate-600">{invoice.period}</td>
-                      <td className="py-3 text-slate-700">{naira(invoice.amount)}</td>
-                      <td className="py-3">
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${invoiceStatusStyles[invoice.status]}`}
-                        >
-                          {invoice.status}
-                        </span>
-                      </td>
-                      <td className="py-3 text-slate-500">{invoice.date}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+          <table className="w-full min-w-[560px] text-left text-sm">
+  <thead>
+    <tr className="border-b border-slate-100 text-xs text-slate-500">
+      <th className="py-2 font-medium">Invoice</th>
+      <th className="py-2 font-medium">Period</th>
+      <th className="py-2 font-medium">Amount</th>
+      <th className="py-2 font-medium">Status</th>
+      <th className="py-2 font-medium">Date</th>
+    </tr>
+  </thead>
+  <tbody>
+    {billing.invoices.length === 0 ? (
+      <tr>
+        <td colSpan={5} className="py-6 text-center text-sm text-slate-400">No invoices yet.</td>
+      </tr>
+    ) : (
+      billing.invoices.map((invoice) => (
+        <tr key={invoice.invoiceId} className="border-b border-slate-50 last:border-0">
+          <td className="py-3 font-medium text-sky-600">{invoice.invoiceIdentifier}</td>
+          <td className="py-3 text-slate-600">{invoice.billingPeriod}</td>
+          <td className="py-3 text-slate-700">₦{invoice.amount.toLocaleString()}</td>
+          <td className="py-3">
+            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+              invoice.paymentStatus === "PAID" ? "bg-green-50 text-green-700" :
+              invoice.paymentStatus === "PENDING" ? "bg-amber-50 text-amber-700" :
+              "bg-red-50 text-red-700"
+            }`}>
+              {invoice.paymentStatus}
+            </span>
+          </td>
+          <td className="py-3 text-slate-500">{formatDate(invoice.invoiceDate)}</td>
+        </tr>
+      ))
+    )}
+  </tbody>
+</table>
           </div>
         </div>
       )}
 
-      {/* Activity Log */}
       {activeTab === "activity" && (
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <h3 className="text-sm font-semibold text-slate-900">Activity Log</h3>
           <ul className="mt-4 space-y-4">
-            {tenant.activity.map((event, i) => (
-              <li
-                key={i}
-                className="flex items-start justify-between gap-4 border-b border-slate-50 pb-4 last:border-0 last:pb-0"
-              >
+            {activity.length === 0 && <li className="text-sm text-slate-400">No activity yet.</li>}
+            {activity.map((event) => (
+              <li key={event.activityId} className="flex items-start justify-between gap-4 border-b border-slate-50 pb-4 last:border-0 last:pb-0">
                 <div className="flex items-start gap-2">
-                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-600" />
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-600" />
                   <div>
-                    <p className="text-sm text-slate-700">{event.text}</p>
-                    <p className="text-xs italic text-slate-400">by {event.by}</p>
+                    <p className="text-sm text-slate-700">{event.description}</p>
+                    <p className="text-xs italic text-slate-400">by {event.performedBy.name}</p>
                   </div>
                 </div>
-                <span className="whitespace-nowrap text-xs text-slate-400">{event.at}</span>
+                <span className="whitespace-nowrap text-xs text-slate-400">{formatDate(event.timestamp)}</span>
               </li>
             ))}
           </ul>
         </div>
       )}
-
-      {/* Support */}
-      {activeTab === "support" && (
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="text-sm font-semibold text-slate-900">
-            Support Tickets ({tenant.tickets.length})
-          </h3>
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 text-xs text-slate-500">
-                  <th className="py-2 font-medium">Ticket ID</th>
-                  <th className="py-2 font-medium">Subject</th>
-                  <th className="py-2 font-medium">Priority</th>
-                  <th className="py-2 font-medium">Status</th>
-                  <th className="py-2 font-medium">Assigned To</th>
-                  <th className="py-2 font-medium">Updated</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tenant.tickets.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-6 text-center text-sm text-slate-400">
-                      No support tickets.
-                    </td>
-                  </tr>
-                ) : (
-                  tenant.tickets.map((ticket) => (
-                    <tr key={ticket.id} className="border-b border-slate-50 last:border-0">
-                      <td className="py-3 font-medium text-brand-600">{ticket.id}</td>
-                      <td className="py-3 text-slate-700">{ticket.subject}</td>
-                      <td className="py-3">
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${priorityStyles[ticket.priority]}`}
-                        >
-                          {ticket.priority}
-                        </span>
-                      </td>
-                      <td className="py-3">
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${ticketStatusStyles[ticket.status]}`}
-                        >
-                          {ticket.status}
-                        </span>
-                      </td>
-                      <td className="py-3 text-slate-500">{ticket.assignedTo}</td>
-                      <td className="py-3 text-slate-500">{ticket.updated}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {showOverrideModal && (
-       <OverridePlanModal
-  open={showOverrideModal}
-  currentPlanLabel={`${tenant.plan} — ${naira(tenant.mrr)}/month`}
-  onClose={() => setShowOverrideModal(false)}
-  onApply={applyOverride}
-/>
-      )}
+{activeTab === "support" && (
+  <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 className="text-sm font-semibold text-slate-900">Support Tickets ({support.length})</h3>
+    <div className="mt-4 overflow-x-auto">
+      <table className="w-full min-w-[640px] text-left text-sm">
+        <thead>
+          <tr className="border-b border-slate-100 text-xs text-slate-500">
+            <th className="py-2 font-medium">Ticket</th>
+            <th className="py-2 font-medium">Subject</th>
+            <th className="py-2 font-medium">Priority</th>
+            <th className="py-2 font-medium">Status</th>
+            <th className="py-2 font-medium">Assigned To</th>
+            <th className="py-2 font-medium">Updated</th>
+          </tr>
+        </thead>
+        <tbody>
+          {support.length === 0 ? (
+            <tr>
+              <td colSpan={6} className="py-6 text-center text-sm text-slate-400">No support tickets.</td>
+            </tr>
+          ) : (
+            support.map((ticket) => (
+              <tr key={ticket.ticketId} className="border-b border-slate-50 last:border-0">
+                <td className="py-3 font-medium text-sky-600">{ticket.ticketNumber}</td>
+                <td className="py-3 text-slate-700">{ticket.subject}</td>
+                <td className="py-3">
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                    ticket.priority === "HIGH" ? "bg-red-50 text-red-700" :
+                    ticket.priority === "MEDIUM" ? "bg-amber-50 text-amber-700" :
+                    "bg-slate-100 text-slate-600"
+                  }`}>
+                    {ticket.priority}
+                  </span>
+                </td>
+                <td className="py-3">
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${ticket.status === "OPEN" ? "bg-amber-50 text-amber-700" : "bg-green-50 text-green-700"}`}>
+                    {ticket.status}
+                  </span>
+                </td>
+                <td className="py-3 text-slate-500">{ticket.assignedTo.name}</td>
+                <td className="py-3 text-slate-500">{formatDate(ticket.updatedAt)}</td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
     </section>
   );
 }

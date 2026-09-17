@@ -1,20 +1,18 @@
-import AttendanceCalendar from "@/components/employee/attendance/AttendanceCalender";
-import AttendanceHeader from "@/components/employee/attendance/AttendanceHeader";
-import AttendanceLogTable from "@/components/employee/attendance/AttendanceLogTable";
-import AttendanceSummary from "@/components/employee/attendance/AttendanceSummary";
-
-export default function AttendancePage() {
+// src/app/employee/attendance/page.tsx
+export default function EmployeeAttendancePage() {
   return (
-    <main className="min-h-screen bg-slate-100">
-      <div className="mx-auto space-y-6 p-6">
-        <AttendanceHeader />
+    <section className="space-y-3">
+      <h1 className="text-2xl font-semibold">My Attendance</h1>
+      <p className="text-sm text-slate-500">
+        Static placeholder for your personal attendance history.
+      </p>
 
-        <AttendanceCalendar />
-
-        <AttendanceSummary />
-
-        <AttendanceLogTable />
+      <div className="rounded-lg bg-white p-4 shadow-sm text-sm">
+        <p className="text-slate-500">
+          Later, show check-in/check-out times, days present, absences and
+          overtime here.
+        </p>
       </div>
-    </main>
+    </section>
   );
 }

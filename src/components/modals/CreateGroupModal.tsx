@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 
-type GroupType = "Department" | "Function";
+type GroupType = "DEPARTMENT" | "FUNCTION";
 
 interface CreateGroupModalProps {
   open: boolean;
@@ -11,13 +11,18 @@ interface CreateGroupModalProps {
   onCreate: (group: { name: string; type: GroupType }) => void;
 }
 
+const typeLabels: Record<GroupType, string> = {
+  DEPARTMENT: "Department",
+  FUNCTION: "Function",
+};
+
 export default function CreateGroupModal({
   open,
   onClose,
   onCreate,
 }: CreateGroupModalProps) {
   const [groupName, setGroupName] = useState("");
-  const [type, setType] = useState<GroupType>("Department");
+  const [type, setType] = useState<GroupType>("DEPARTMENT");
 
   if (!open) return null;
 
@@ -25,30 +30,22 @@ export default function CreateGroupModal({
     if (!groupName.trim()) return;
     onCreate({ name: groupName.trim(), type });
     setGroupName("");
-    setType("Department");
+    setType("DEPARTMENT");
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
       <div className="w-full max-w-sm rounded-lg bg-white p-5 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-slate-900">
-            Create Group
-          </h2>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            className="text-slate-400 hover:text-slate-600"
-          >
+          <h2 className="text-base font-semibold text-slate-900">Create Group</h2>
+          <button onClick={onClose} aria-label="Close" className="text-slate-400 hover:text-slate-600">
             ✕
           </button>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm text-slate-500">
-              Group Name
-            </label>
+            <label className="mb-1.5 block text-sm text-slate-500">Group Name</label>
             <input
               type="text"
               placeholder="e.g. Engineering"
@@ -59,11 +56,9 @@ export default function CreateGroupModal({
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm text-slate-500">
-              Type
-            </label>
+            <label className="mb-1.5 block text-sm text-slate-500">Type</label>
             <div className="grid grid-cols-2 gap-2">
-              {(["Department", "Function"] as GroupType[]).map((opt) => (
+              {(["DEPARTMENT", "FUNCTION"] as GroupType[]).map((opt) => (
                 <button
                   key={opt}
                   onClick={() => setType(opt)}
@@ -73,7 +68,7 @@ export default function CreateGroupModal({
                       : "border-slate-200 text-slate-600 hover:bg-slate-50"
                   }`}
                 >
-                  {opt}
+                  {typeLabels[opt]}
                 </button>
               ))}
             </div>

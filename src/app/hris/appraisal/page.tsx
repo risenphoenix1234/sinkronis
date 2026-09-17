@@ -74,16 +74,11 @@ export default function AppraisalPage() {
   }, [fetchOverviewAndCycle]);
 
   return (
-    <>
-      <div className="min-h-screen bg-[#f8f9fb] space-y-6 p-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-slate-800">Appraisal</h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Manage performance review cycles, templates and employee
-              appraisals.
-            </p>
-          </div>
+    <section className="space-y-3">
+      <h1 className="text-2xl font-semibold">Appraisal</h1>
+      <p className="text-sm text-slate-500">
+        Static placeholder for performance reviews and appraisal cycles.
+      </p>
 
           <button
             onClick={(e) => {
@@ -100,7 +95,6 @@ export default function AppraisalPage() {
             onClose={() => setOpen(false)}
             onSuccess={fetchOverviewAndCycle}
           />
-        </div>
 
         {/* Tabs */}
         <div className="mt-8 flex gap-8 border-b">
@@ -228,7 +222,6 @@ export default function AppraisalPage() {
             <AppraisalSettingPage />
           </div>
         )}
-      </div>
-    </>
+    </section>
   );
 }

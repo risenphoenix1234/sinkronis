@@ -3,35 +3,39 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import { allTenants } from "@/lib/pa-tenants-data";
-// Note: allTenants still comes from your existing tenants file — untouched.
-// Invoice-related data (used on the billing page) lives in @/lib/platform-billing-data.
 
 export interface NewInvoiceInput {
-  tenant: string;
+  tenantId: string;
   period: string;
   amount: number;
 }
 
+interface TenantOption {
+  id: string;
+  name: string;
+}
+
 interface GenerateInvoiceModalProps {
   open: boolean;
+  tenants: TenantOption[];
   onClose: () => void;
   onGenerate: (input: NewInvoiceInput) => void;
 }
 
 export default function GenerateInvoiceModal({
   open,
+  tenants,
   onClose,
   onGenerate,
 }: GenerateInvoiceModalProps) {
-  const [tenant, setTenant] = useState("");
+  const [tenantId, setTenantId] = useState("");
   const [period, setPeriod] = useState("");
   const [amount, setAmount] = useState("");
 
   if (!open) return null;
 
   const resetForm = () => {
-    setTenant("");
+    setTenantId("");
     setPeriod("");
     setAmount("");
   };
@@ -42,16 +46,15 @@ export default function GenerateInvoiceModal({
   };
 
   const handleGenerate = () => {
-    if (!tenant.trim() || !period.trim()) return;
+    if (!tenantId || !period || !amount) return;
 
     onGenerate({
-      tenant: tenant.trim(),
-      period: period.trim(),
-      amount: Number(amount) || 0,
+      tenantId,
+      period,
+      amount: Number(amount),
     });
 
     resetForm();
-    onClose();
   };
 
   return (
@@ -77,14 +80,14 @@ export default function GenerateInvoiceModal({
               Tenant <span className="text-red-500">*</span>
             </label>
             <select
-              value={tenant}
-              onChange={(e) => setTenant(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              value={tenantId}
+              onChange={(e) => setTenantId(e.target.value)}
+              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
             >
               <option value="">Select a tenant</option>
-              {allTenants.map((t) => (
-                <option key={t.id} value={t.company}>
-                  {t.company}
+              {tenants.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
                 </option>
               ))}
             </select>
@@ -95,23 +98,25 @@ export default function GenerateInvoiceModal({
               Period <span className="text-red-500">*</span>
             </label>
             <input
-              type="text"
+              type="month"
               value={period}
               onChange={(e) => setPeriod(e.target.value)}
-              placeholder="e.g. Aug 2026"
-              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
             />
           </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-700">Amount (₦)</label>
+            <label className="text-xs font-medium text-slate-700">
+              Amount (₦) <span className="text-red-500">*</span>
+            </label>
             <input
               type="number"
               min="0"
+              step="0.01"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0"
-              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
             />
           </div>
         </div>
@@ -119,7 +124,7 @@ export default function GenerateInvoiceModal({
         <div className="mt-6 flex gap-3">
           <button
             onClick={handleGenerate}
-            className="flex-1 rounded-md bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="flex-1 rounded-md bg-sky-600 py-2 text-sm font-medium text-white hover:bg-sky-700"
           >
             Generate
           </button>

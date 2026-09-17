@@ -88,7 +88,7 @@ const [error, setError] = useState<string | null>(null)
           {/* Attendance */}
           <div className="col-span-8 bg-white rounded-lg p-6 border border-gray-100">
             <h3 className="text-sm font-semibold text-gray-800 mb-8">
-              Today's Attendance
+              Today&apos;s Attendance
             </h3>
 
            <div className="grid grid-cols-3 gap-y-10">

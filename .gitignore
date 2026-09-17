@@ -31,7 +31,3 @@ Thumbs.db
 
 # optional
 coverage/
-
-.env
-.env.local
-.env*.local

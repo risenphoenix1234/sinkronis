@@ -1,17 +1,22 @@
 // src/app/platform-admin/settings/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  initialPlatformConfig,
-  initialComplexityRules,
-  initialFeatureFlags,
-  initialEmailTemplates,
-  PlatformConfig,
-  PasswordComplexityRule,
+  getPlatformSettings,
+  updatePlatformConfiguration,
+  updatePasswordPolicy,
+  updateFeatureFlag,
+  updateEmailTemplate,
+  updateMaintenanceMode,
+} from "@/lib/api/platform-admin";
+import {
+  PlatformConfiguration,
+  PasswordPolicy,
   FeatureFlag,
   EmailTemplate,
-} from "@/lib/platform-settings-data";
+  MaintenanceMode,
+} from "@/lib/api/types/platform-admin.types";
 import EditEmailTemplateModal from "@/components/modals/EditEmailTemplateModal";
 
 function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
@@ -20,13 +25,13 @@ function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
       onClick={onClick}
       role="switch"
       aria-checked={on}
-      className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
+      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
         on ? "bg-sky-600" : "bg-slate-200"
       }`}
     >
       <span
-        className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-          on ? "translate-x-4" : "translate-x-0.5"
+        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+          on ? "translate-x-6" : "translate-x-1"
         }`}
       />
     </button>
@@ -34,34 +39,130 @@ function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
 }
 
 export default function SettingsPage() {
-  const [config, setConfig] = useState<PlatformConfig>(initialPlatformConfig);
-  const [minLength, setMinLength] = useState("8 characters");
-  const [passwordExpiry, setPasswordExpiry] = useState("90 days");
-  const [lockoutAfter, setLockoutAfter] = useState("5 failed attempts");
-  const [complexityRules, setComplexityRules] = useState<PasswordComplexityRule[]>(
-    initialComplexityRules
-  );
-  const [featureFlags, setFeatureFlags] = useState<FeatureFlag[]>(initialFeatureFlags);
-  const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>(initialEmailTemplates);
-  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+  const [config, setConfig] = useState<PlatformConfiguration | null>(null);
+  const [policy, setPolicy] = useState<PasswordPolicy | null>(null);
+  const [flags, setFlags] = useState<FeatureFlag[]>([]);
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [maintenance, setMaintenance] = useState<MaintenanceMode | null>(null);
 
-  const editingTemplate = emailTemplates.find((t) => t.id === editingTemplateId) ?? null;
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [savingConfig, setSavingConfig] = useState(false);
+  const [savingPolicy, setSavingPolicy] = useState(false);
+  const [togglingMaintenance, setTogglingMaintenance] = useState(false);
 
-  const toggleComplexityRule = (id: string) => {
-    setComplexityRules((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r))
+  const [editingTemplateKey, setEditingTemplateKey] = useState<string | null>(null);
+  const editingTemplate = templates.find((t) => t.key === editingTemplateKey) ?? null;
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await getPlatformSettings();
+        setConfig(res.data.configuration);
+        setPolicy(res.data.passwordPolicy);
+        setFlags(res.data.featureFlags);
+        setTemplates(res.data.emailTemplates);
+        setMaintenance(res.data.maintenance);
+      } catch (err) {
+        setError("Failed to load settings.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSettings();
+  }, []);
+
+  const handleSaveConfig = async () => {
+    if (!config) return;
+    setSavingConfig(true);
+    try {
+      const res = await updatePlatformConfiguration({
+        defaultCurrency: config.defaultCurrency,
+        vatRate: config.vatRate,
+        defaultTimezone: config.defaultTimezone,
+        supportEmail: config.supportEmail,
+      });
+      setConfig(res.data);
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Failed to save configuration.");
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+
+  const handleSavePolicy = async () => {
+    if (!policy) return;
+    setSavingPolicy(true);
+    try {
+      const res = await updatePasswordPolicy({
+        minimumLength: policy.minimumLength,
+        passwordExpiryDays: policy.passwordExpiryDays,
+        accountLockoutAttempts: policy.accountLockoutAttempts,
+        requireUppercase: policy.requireUppercase,
+        requireLowercase: policy.requireLowercase,
+        requireNumber: policy.requireNumber,
+        requireSpecialCharacter: policy.requireSpecialCharacter,
+      });
+      setPolicy(res.data);
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Failed to save password policy.");
+    } finally {
+      setSavingPolicy(false);
+    }
+  };
+
+  const handleToggleFlag = async (key: string, currentValue: boolean) => {
+    try {
+      const res = await updateFeatureFlag(key, !currentValue);
+      setFlags((prev) => prev.map((f) => (f.key === key ? res.data : f)));
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Failed to update feature flag.");
+    }
+  };
+
+  const handleSaveTemplate = async (key: string, subject: string, body: string) => {
+    try {
+      const res = await updateEmailTemplate(key, { subject, body });
+      setTemplates((prev) => prev.map((t) => (t.key === key ? res.data : t)));
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Failed to save template.");
+    }
+  };
+
+  const handleToggleMaintenance = async () => {
+    if (!maintenance) return;
+    setTogglingMaintenance(true);
+    try {
+      const res = await updateMaintenanceMode({
+        enabled: !maintenance.enabled,
+        message: maintenance.message,
+      });
+      setMaintenance(res.data);
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Failed to update maintenance mode.");
+    } finally {
+      setTogglingMaintenance(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <section className="p-6">
+        <p className="text-sm text-slate-400">Loading settings...</p>
+      </section>
     );
-  };
+  }
 
-  const toggleFeatureFlag = (id: string) => {
-    setFeatureFlags((prev) => prev.map((f) => (f.id === id ? { ...f, enabled: !f.enabled } : f)));
-  };
-
-  const handleSaveTemplate = (id: string, subject: string, body: string) => {
-    setEmailTemplates((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, subject, body, description: subject } : t))
+  if (error || !config || !policy) {
+    return (
+      <section className="p-6">
+        <p className="text-sm text-red-500">{error ?? "No data available."}</p>
+      </section>
     );
-  };
+  }
 
   return (
     <section className="space-y-5 bg-slate-50 p-6">
@@ -88,9 +189,9 @@ export default function SettingsPage() {
           <div>
             <label className="text-xs font-medium text-slate-700">VAT Rate (%)</label>
             <input
-              type="text"
+              type="number"
               value={config.vatRate}
-              onChange={(e) => setConfig({ ...config, vatRate: e.target.value })}
+              onChange={(e) => setConfig({ ...config, vatRate: Number(e.target.value) })}
               className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
             />
           </div>
@@ -115,8 +216,12 @@ export default function SettingsPage() {
           </div>
         </div>
         <div className="mt-4 flex justify-end">
-          <button className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">
-            Save Changes
+          <button
+            onClick={handleSaveConfig}
+            disabled={savingConfig}
+            className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-60"
+          >
+            {savingConfig ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </div>
@@ -124,50 +229,39 @@ export default function SettingsPage() {
       {/* Password Requirements */}
       <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-slate-800">Password Requirements</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
           <div>
             <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
               Minimum Length
             </label>
-            <select
-              value={minLength}
-              onChange={(e) => setMinLength(e.target.value)}
+            <input
+              type="number"
+              value={policy.minimumLength}
+              onChange={(e) => setPolicy({ ...policy, minimumLength: Number(e.target.value) })}
               className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
-            >
-              <option>6 characters</option>
-              <option>8 characters</option>
-              <option>10 characters</option>
-              <option>12 characters</option>
-            </select>
+            />
           </div>
           <div>
             <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              Password Expiry
+              Password Expiry (days)
             </label>
-            <select
-              value={passwordExpiry}
-              onChange={(e) => setPasswordExpiry(e.target.value)}
+            <input
+              type="number"
+              value={policy.passwordExpiryDays}
+              onChange={(e) => setPolicy({ ...policy, passwordExpiryDays: Number(e.target.value) })}
               className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
-            >
-              <option>30 days</option>
-              <option>60 days</option>
-              <option>90 days</option>
-              <option>Never</option>
-            </select>
+            />
           </div>
           <div>
             <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              Account Lockout After
+              Lockout After (attempts)
             </label>
-            <select
-              value={lockoutAfter}
-              onChange={(e) => setLockoutAfter(e.target.value)}
+            <input
+              type="number"
+              value={policy.accountLockoutAttempts}
+              onChange={(e) => setPolicy({ ...policy, accountLockoutAttempts: Number(e.target.value) })}
               className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
-            >
-              <option>3 failed attempts</option>
-              <option>5 failed attempts</option>
-              <option>10 failed attempts</option>
-            </select>
+            />
           </div>
         </div>
 
@@ -176,18 +270,44 @@ export default function SettingsPage() {
             Complexity Requirements
           </p>
           <div className="mt-2 divide-y divide-slate-100">
-            {complexityRules.map((rule) => (
-              <div key={rule.id} className="flex items-center justify-between py-2.5">
-                <span className="text-sm text-slate-700">{rule.label}</span>
-                <Toggle on={rule.enabled} onClick={() => toggleComplexityRule(rule.id)} />
-              </div>
-            ))}
+            <div className="flex items-center justify-between py-2.5">
+              <span className="text-sm text-slate-700">Require uppercase letter</span>
+              <Toggle
+                on={policy.requireUppercase}
+                onClick={() => setPolicy({ ...policy, requireUppercase: !policy.requireUppercase })}
+              />
+            </div>
+            <div className="flex items-center justify-between py-2.5">
+              <span className="text-sm text-slate-700">Require lowercase letter</span>
+              <Toggle
+                on={policy.requireLowercase}
+                onClick={() => setPolicy({ ...policy, requireLowercase: !policy.requireLowercase })}
+              />
+            </div>
+            <div className="flex items-center justify-between py-2.5">
+              <span className="text-sm text-slate-700">Require number</span>
+              <Toggle
+                on={policy.requireNumber}
+                onClick={() => setPolicy({ ...policy, requireNumber: !policy.requireNumber })}
+              />
+            </div>
+            <div className="flex items-center justify-between py-2.5">
+              <span className="text-sm text-slate-700">Require special character</span>
+              <Toggle
+                on={policy.requireSpecialCharacter}
+                onClick={() => setPolicy({ ...policy, requireSpecialCharacter: !policy.requireSpecialCharacter })}
+              />
+            </div>
           </div>
         </div>
 
         <div className="mt-4">
-          <button className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">
-            Save Policy
+          <button
+            onClick={handleSavePolicy}
+            disabled={savingPolicy}
+            className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-60"
+          >
+            {savingPolicy ? "Saving..." : "Save Policy"}
           </button>
         </div>
       </div>
@@ -197,13 +317,13 @@ export default function SettingsPage() {
         <h2 className="text-sm font-semibold text-slate-800">Feature Flags</h2>
         <p className="text-xs text-slate-500">Toggle experimental features globally across all tenants.</p>
         <div className="mt-3 divide-y divide-slate-100">
-          {featureFlags.map((flag) => (
-            <div key={flag.id} className="flex items-center justify-between py-3">
+          {flags.map((flag) => (
+            <div key={flag.key} className="flex items-center justify-between py-3">
               <div>
                 <p className="text-sm font-medium text-slate-800">{flag.name}</p>
                 <p className="text-xs text-slate-500">{flag.description}</p>
               </div>
-              <Toggle on={flag.enabled} onClick={() => toggleFeatureFlag(flag.id)} />
+              <Toggle on={flag.enabled} onClick={() => handleToggleFlag(flag.key, flag.enabled)} />
             </div>
           ))}
         </div>
@@ -213,17 +333,17 @@ export default function SettingsPage() {
       <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-slate-800">Email Templates</h2>
         <p className="text-xs text-slate-500">
-          Customize notification emails sent to tenants. Use {"{{variable}}"} placeholders.
+          Customise notification emails sent to tenants. Use {"{{variable}}"} placeholders.
         </p>
         <div className="mt-3 divide-y divide-slate-100">
-          {emailTemplates.map((template) => (
-            <div key={template.id} className="flex items-center justify-between py-3">
+          {templates.map((template) => (
+            <div key={template.key} className="flex items-center justify-between py-3">
               <div>
                 <p className="text-sm font-medium text-slate-800">{template.name}</p>
-                <p className="text-xs text-slate-500">{template.description}</p>
+                <p className="text-xs text-slate-500">{template.subject}</p>
               </div>
               <button
-                onClick={() => setEditingTemplateId(template.id)}
+                onClick={() => setEditingTemplateKey(template.key)}
                 className="rounded-md border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
               >
                 Edit
@@ -233,9 +353,36 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      {/* Maintenance Mode */}
+      {maintenance && (
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-800">Maintenance Mode</h2>
+              <p className="text-xs text-slate-500">
+                When enabled, all tenants will see a maintenance banner and cannot access the platform.
+              </p>
+            </div>
+            <button
+              onClick={handleToggleMaintenance}
+              disabled={togglingMaintenance}
+              className={`rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-60 ${
+                maintenance.enabled ? "bg-slate-600 hover:bg-slate-700" : "bg-red-600 hover:bg-red-700"
+              }`}
+            >
+              {togglingMaintenance
+                ? "Updating..."
+                : maintenance.enabled
+                ? "Disable Maintenance"
+                : "Enable Maintenance"}
+            </button>
+          </div>
+        </div>
+      )}
+
       <EditEmailTemplateModal
         template={editingTemplate}
-        onClose={() => setEditingTemplateId(null)}
+        onClose={() => setEditingTemplateKey(null)}
         onSave={handleSaveTemplate}
       />
     </section>

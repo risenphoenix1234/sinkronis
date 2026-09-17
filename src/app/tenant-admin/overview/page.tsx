@@ -1,162 +1,109 @@
-// src/app/tenant-admin/dashboard/page.tsx
 "use client";
 
-type ActivityItem = {
-  id: string;
-  initials: string;
-  initialsColor: string;
-  text: string;
-  actor: string;
-  tag: string;
-  time: string;
+import { useEffect, useState } from "react";
+import { getTenantDashboard } from "@/lib/api/admin";
+import { TenantDashboardResponse } from "@/lib/api/types/admin.types";
+
+const moduleIconStyles: Record<string, { bg: string; color: string; icon: string }> = {
+  admin: { bg: "bg-slate-100", color: "text-slate-600", icon: "⚙" },
+  hris: { bg: "bg-sky-50", color: "text-sky-600", icon: "👥" },
+  accounting: { bg: "bg-emerald-50", color: "text-emerald-600", icon: "📈" },
+  payroll: { bg: "bg-violet-50", color: "text-violet-600", icon: "📄" },
 };
 
-type ActiveModule = {
-  id: string;
-  icon: string;
-  iconBg: string;
-  iconColor: string;
-  name: string;
-  status: "Active" | "Coming Soon";
-  description: string;
+const quickActionStyles: Record<string, { border: string; bg: string; hover: string; iconColor: string; icon: string }> = {
+  "invite-user": { border: "border-sky-100", bg: "bg-sky-50", hover: "hover:bg-sky-100", iconColor: "text-sky-600", icon: "✉" },
+  "manage-modules": { border: "border-violet-100", bg: "bg-violet-50", hover: "hover:bg-violet-100", iconColor: "text-violet-600", icon: "▦" },
+  "view-audit-log": { border: "border-emerald-100", bg: "bg-emerald-50", hover: "hover:bg-emerald-100", iconColor: "text-emerald-600", icon: "📄" },
+  "security-settings": { border: "border-amber-100", bg: "bg-amber-50", hover: "hover:bg-amber-100", iconColor: "text-amber-600", icon: "🛡" },
 };
 
-type SystemAlert = {
-  id: string;
-  icon: string;
-  iconBg: string;
-  iconColor: string;
-  title: string;
-  subtitle: string;
-};
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
 
-const recentActivity: ActivityItem[] = [
-  {
-    id: "act-1",
-    initials: "AO",
-    initialsColor: "bg-sky-100 text-sky-700",
-    text: "Approved leave request for Emeka Nwosu",
-    actor: "Amara Okafor",
-    tag: "HRIS",
-    time: "2 min ago",
-  },
-  {
-    id: "act-2",
-    initials: "AD",
-    initialsColor: "bg-emerald-100 text-emerald-700",
-    text: "Invited chukwudi@novapay.ng to platform",
-    actor: "Admin",
-    tag: "Admin",
-    time: "18 min ago",
-  },
-  {
-    id: "act-3",
-    initials: "JM",
-    initialsColor: "bg-amber-100 text-amber-700",
-    text: "Raised payment request — ₦420,000",
-    actor: "Jide Mensah",
-    tag: "Accounting",
-    time: "1 hr ago",
-  },
-  {
-    id: "act-4",
-    initials: "CO",
-    initialsColor: "bg-violet-100 text-violet-700",
-    text: "Updated department: Finance",
-    actor: "Chiamaka Obi",
-    tag: "Admin",
-    time: "3 hrs ago",
-  },
-  {
-    id: "act-5",
-    initials: "BL",
-    initialsColor: "bg-rose-100 text-rose-700",
-    text: "Submitted conduct report for CS-004",
-    actor: "Babajide Lawson",
-    tag: "HRIS",
-    time: "Yesterday",
-  },
-];
-
-const activeModules: ActiveModule[] = [
-  {
-    id: "mod-hris",
-    icon: "👥",
-    iconBg: "bg-sky-50",
-    iconColor: "text-sky-600",
-    name: "HRIS",
-    status: "Active",
-    description: "Employee management, attendance, leave, appraisals",
-  },
-  {
-    id: "mod-accounting",
-    icon: "📈",
-    iconBg: "bg-emerald-50",
-    iconColor: "text-emerald-600",
-    name: "Accounting",
-    status: "Active",
-    description: "Invoicing, expenses, payments, tax, reports",
-  },
-  {
-    id: "mod-payroll",
-    icon: "📄",
-    iconBg: "bg-slate-100",
-    iconColor: "text-slate-500",
-    name: "Payroll",
-    status: "Coming Soon",
-    description: "Salary processing, deductions, payslips",
-  },
-];
-
-const systemAlerts: SystemAlert[] = [
-  {
-    id: "alert-1",
-    icon: "⚠️",
-    iconBg: "bg-amber-50",
-    iconColor: "text-amber-600",
-    title: "2 pending user invitations",
-    subtitle: "Sent over 48 hours ago and not yet accepted.",
-  },
-  {
-    id: "alert-2",
-    icon: "🔔",
-    iconBg: "bg-sky-50",
-    iconColor: "text-sky-600",
-    title: "Sinkronis v2.4 released",
-    subtitle: "New features: Payroll module preview, audit log improvements.",
-  },
-  {
-    id: "alert-3",
-    icon: "✅",
-    iconBg: "bg-emerald-50",
-    iconColor: "text-emerald-600",
-    title: "Subscription active",
-    subtitle: "Business plan · Renews 1 January 2027.",
-  },
-];
+function timeAgo(timestamp: string) {
+  const diffMs = Date.now() - new Date(timestamp).getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins} min ago`;
+  const diffHrs = Math.floor(diffMins / 60);
+  if (diffHrs < 24) return `${diffHrs} hr${diffHrs > 1 ? "s" : ""} ago`;
+  const diffDays = Math.floor(diffHrs / 24);
+  if (diffDays === 1) return "Yesterday";
+  return `${diffDays} days ago`;
+}
 
 export default function TenantAdminDashboardPage() {
+  const [data, setData] = useState<TenantDashboardResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await getTenantDashboard();
+        setData(res);
+      } catch (err) {
+        setError("Failed to load dashboard.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboard();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="p-6">
+        <p className="text-sm text-slate-400">Loading dashboard...</p>
+      </section>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <section className="p-6">
+        <p className="text-sm text-red-500">{error ?? "No data available."}</p>
+      </section>
+    );
+  }
+
+  const { welcome, analytics, quickActions, activeModules, recentActivities, systemAlerts } = data;
+
   return (
     <section className="space-y-6">
-      {/* Welcome banner */}
       <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-5">
         <div className="flex items-center gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-sky-600">
-            <span className="text-base font-semibold text-white">B</span>
+            <span className="text-base font-semibold text-white">{getInitials(welcome.tenantAdminName)}</span>
           </div>
           <div>
             <p className="text-sm text-slate-500">Welcome back</p>
-            <h1 className="text-xl font-semibold text-slate-900">
-              Bravo Admin
-            </h1>
+            <h1 className="text-xl font-semibold text-slate-900">{welcome.tenantAdminName}</h1>
             <p className="mt-0.5 text-sm text-slate-500">
-              Sinkronis Tenant Admin · Last login: today at 08:47 AM
+              Sinkronis Tenant Admin · Last login: {new Date(welcome.lastLoginAt).toLocaleString("en-GB", {
+                day: "numeric",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
             </p>
           </div>
         </div>
 
         <div className="text-right">
-          <p className="text-sm text-slate-500">Monday, 8 June 2026</p>
+          <p className="text-sm text-slate-500">
+            {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+          </p>
           <p className="mt-1 flex items-center justify-end gap-1.5 text-sm text-emerald-600">
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
             System operational
@@ -164,108 +111,84 @@ export default function TenantAdminDashboardPage() {
         </div>
       </div>
 
-      {/* Metric cards */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between text-sm text-slate-500">
             <span>Total Users</span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-50 text-sky-600">
-              👤
-            </span>
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-50 text-sky-600">👤</span>
           </div>
-          <p className="mt-3 text-2xl font-semibold text-slate-900">48</p>
+          <p className="mt-3 text-2xl font-semibold text-slate-900">{analytics.totalUsers}</p>
         </div>
 
         <div className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between text-sm text-slate-500">
             <span>Active Users</span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-              ✓
-            </span>
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">✓</span>
           </div>
-          <p className="mt-3 text-2xl font-semibold text-slate-900">44</p>
+          <p className="mt-3 text-2xl font-semibold text-slate-900">{analytics.activeUsers}</p>
         </div>
 
         <div className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between text-sm text-slate-500">
             <span>Active Modules</span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-50 text-violet-600">
-              ▦
-            </span>
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-50 text-violet-600">▦</span>
           </div>
-          <p className="mt-3 text-2xl font-semibold text-slate-900">2</p>
+          <p className="mt-3 text-2xl font-semibold text-slate-900">{analytics.activeModules}</p>
         </div>
 
         <div className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between text-sm text-slate-500">
             <span>Pending Invitations</span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-50 text-amber-600">
-              ✉
-            </span>
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-50 text-amber-600">✉</span>
           </div>
-          <p className="mt-3 text-2xl font-semibold text-slate-900">2</p>
+          <p className="mt-3 text-2xl font-semibold text-slate-900">{analytics.pendingInvitations}</p>
         </div>
       </div>
 
-      {/* Quick Actions */}
       <div>
-        <h2 className="mb-3 text-sm font-semibold text-slate-800">
-          Quick Actions
-        </h2>
+        <h2 className="mb-3 text-sm font-semibold text-slate-800">Quick Actions</h2>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <button className="flex flex-col items-center justify-center gap-2 rounded-lg border border-sky-100 bg-sky-50 py-6 text-sm font-medium text-slate-700 hover:bg-sky-100">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-sky-600 shadow-sm">
-              ✉
-            </span>
-            Invite User
-          </button>
-          <button className="flex flex-col items-center justify-center gap-2 rounded-lg border border-violet-100 bg-violet-50 py-6 text-sm font-medium text-slate-700 hover:bg-violet-100">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-violet-600 shadow-sm">
-              ▦
-            </span>
-            Manage Modules
-          </button>
-          <button className="flex flex-col items-center justify-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50 py-6 text-sm font-medium text-slate-700 hover:bg-emerald-100">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-emerald-600 shadow-sm">
-              📄
-            </span>
-            View Audit Log
-          </button>
-          <button className="flex flex-col items-center justify-center gap-2 rounded-lg border border-amber-100 bg-amber-50 py-6 text-sm font-medium text-slate-700 hover:bg-amber-100">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-amber-600 shadow-sm">
-              🛡
-            </span>
-            Security Settings
-          </button>
+          {quickActions
+            .filter((action) => action.allowed)
+            .map((action) => {
+              const style = quickActionStyles[action.key] ?? quickActionStyles["invite-user"];
+              return (
+                <button
+                  key={action.key}
+                  className={`flex flex-col items-center justify-center gap-2 rounded-lg border ${style.border} ${style.bg} py-6 text-sm font-medium text-slate-700 ${style.hover}`}
+                >
+                  <span className={`flex h-9 w-9 items-center justify-center rounded-full bg-white ${style.iconColor} shadow-sm`}>
+                    {style.icon}
+                  </span>
+                  {action.title}
+                </button>
+              );
+            })}
         </div>
       </div>
 
-      {/* Recent Activity + right rail */}
       <div className="grid gap-4 xl:grid-cols-3">
-        {/* Recent Activity */}
         <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm xl:col-span-2">
           <div className="mb-3 flex items-center justify-between">
-            <span className="font-semibold text-slate-800">
-              Recent Activity
-            </span>
+            <span className="font-semibold text-slate-800">Recent Activity</span>
             <button className="text-sm text-sky-600">View Audit Log &gt;</button>
           </div>
 
           <div className="divide-y divide-slate-100">
-            {recentActivity.map((item) => (
+            {recentActivities.length === 0 && (
+              <p className="py-4 text-sm text-slate-400">No recent activity.</p>
+            )}
+            {recentActivities.map((item) => (
               <div key={item.id} className="flex items-start gap-3 py-3">
-                <span
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${item.initialsColor}`}
-                >
-                  {item.initials}
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-100 text-xs font-semibold text-sky-700">
+                  {getInitials(item.actorName)}
                 </span>
                 <div className="min-w-0">
                   <p className="text-sm text-slate-800">
-                    <span className="font-medium">{item.actor}</span>{" "}
-                    {item.text}
+                    <span className="font-medium">{item.actorName}</span> {item.summary}
                   </p>
                   <p className="mt-0.5 text-xs text-slate-400">
-                    {item.tag} · {item.time}
+                    {item.resource} · {timeAgo(item.createdAt)}
                   </p>
                 </div>
               </div>
@@ -273,76 +196,53 @@ export default function TenantAdminDashboardPage() {
           </div>
         </div>
 
-        {/* Right rail */}
         <div className="space-y-4">
-          {/* Active Modules */}
           <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm">
             <div className="mb-3 flex items-center justify-between">
-              <span className="font-semibold text-slate-800">
-                Active Modules
-              </span>
+              <span className="font-semibold text-slate-800">Active Modules</span>
             </div>
             <div className="space-y-2">
-              {activeModules.map((mod) => (
-                <div
-                  key={mod.id}
-                  className="flex items-center justify-between rounded-md border border-slate-100 px-3 py-2.5"
-                >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`flex h-8 w-8 items-center justify-center rounded-full ${mod.iconBg} ${mod.iconColor}`}
-                    >
-                      {mod.icon}
-                    </span>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-slate-800">
-                          {mod.name}
-                        </span>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                            mod.status === "Active"
-                              ? "bg-emerald-50 text-emerald-600"
-                              : "bg-slate-100 text-slate-500"
-                          }`}
-                        >
-                          {mod.status}
-                        </span>
+              {activeModules.map((mod) => {
+                const style = moduleIconStyles[mod.key] ?? { bg: "bg-slate-100", color: "text-slate-500", icon: "▦" };
+                return (
+                  <div key={mod.key} className="flex items-center justify-between rounded-md border border-slate-100 px-3 py-2.5">
+                    <div className="flex items-center gap-3">
+                      <span className={`flex h-8 w-8 items-center justify-center rounded-full ${style.bg} ${style.color}`}>
+                        {style.icon}
+                      </span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-slate-800">{mod.name}</span>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                              mod.enabled ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"
+                            }`}
+                          >
+                            {mod.enabled ? "Active" : "Inactive"}
+                          </span>
+                        </div>
                       </div>
-                      <p className="text-xs text-slate-400">
-                        {mod.description}
-                      </p>
                     </div>
+                    <span className="text-slate-300">&gt;</span>
                   </div>
-                  <span className="text-slate-300">&gt;</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
-          {/* System Alerts */}
           <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm">
             <div className="mb-3 flex items-center justify-between">
-              <span className="font-semibold text-slate-800">
-                System Alerts
-              </span>
+              <span className="font-semibold text-slate-800">System Alerts</span>
             </div>
             <div className="space-y-2">
+              {systemAlerts.length === 0 && (
+                <p className="text-sm text-slate-400">No alerts right now.</p>
+              )}
               {systemAlerts.map((alert) => (
-                <div
-                  key={alert.id}
-                  className="flex items-start gap-3 rounded-md border border-slate-100 px-3 py-2.5"
-                >
-                  <span
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${alert.iconBg} ${alert.iconColor} text-xs`}
-                  >
-                    {alert.icon}
-                  </span>
+                <div key={alert.id} className="flex items-start gap-3 rounded-md border border-slate-100 px-3 py-2.5">
                   <div>
-                    <p className="font-medium text-slate-800">
-                      {alert.title}
-                    </p>
-                    <p className="text-xs text-slate-500">{alert.subtitle}</p>
+                    <p className="font-medium text-slate-800">{alert.title}</p>
+                    <p className="text-xs text-slate-500">{alert.message}</p>
                   </div>
                 </div>
               ))}

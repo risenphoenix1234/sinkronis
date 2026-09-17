@@ -1,48 +1,80 @@
-// app/tenant-admin/my-plan/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FiZap, FiPlus, FiDownload, FiX, FiUsers, FiDollarSign, FiBookOpen } from "react-icons/fi";
-import {
-  currentPlan,
-  moduleCatalog,
-  initialActiveModuleIds,
-  savedCard,
-  naira,
-} from "@/lib/plan-data";
+import { getMyPlanOverview, cancelSubscription } from "@/lib/api/admin";
+import { MyPlanOverviewData } from "@/lib/api/types/admin.types";
 import CancelSubscriptionModal from "@/components/modals/CancelSubscriptionModal";
 
-const moduleIcons = {
+const moduleIcons: Record<string, typeof FiUsers> = {
   hris: FiUsers,
   payroll: FiDollarSign,
   accounting: FiBookOpen,
-} as const;
+};
+
+function naira(n: number) {
+  return `₦${n.toLocaleString()}`;
+}
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 export default function MyPlanOverviewPage() {
+  const [data, setData] = useState<MyPlanOverviewData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
-  const isAllInOne = initialActiveModuleIds.includes("all-in-one");
-  const individualModules = moduleCatalog.filter((m) => !m.isBundle);
-
-  // Cost breakdown: whatever is actually active today, priced individually,
-  // or the single bundle line if the tenant is on All-in-One.
-  const activeLineItems = isAllInOne
-    ? moduleCatalog.filter((m) => m.isBundle)
-    : moduleCatalog.filter((m) => initialActiveModuleIds.includes(m.id));
-  const totalPerMonth = activeLineItems.reduce((sum, m) => sum + m.price, 0);
-
-  const handleConfirmCancel = () => {
-    // Hook up to API call to cancel the subscription here.
-    console.log("Subscription cancelled");
-    setCancelModalOpen(false);
+  const fetchOverview = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await getMyPlanOverview();
+      setData(res.data);
+    } catch (err) {
+      setError("Failed to load plan overview.");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    fetchOverview();
+  }, []);
+
+  const handleConfirmCancel = async () => {
+    setCancelling(true);
+    try {
+      await cancelSubscription({ confirmCancel: true, keepPlan: false, confirmationText: "cancel" });
+      setCancelModalOpen(false);
+      fetchOverview();
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Failed to cancel subscription.");
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  if (loading) {
+    return <p className="p-6 text-sm text-slate-400">Loading your plan...</p>;
+  }
+
+  if (error || !data) {
+    return <p className="p-6 text-sm text-red-500">{error || "Something went wrong."}</p>;
+  }
+
+  const { currentPlan, renewal, activeModules, costBreakdown, paymentMethod } = data;
 
   return (
     <div className="grid grid-cols-3 gap-5">
-      {/* Left column — Current Plan + Cost Breakdown + Active Modules */}
       <div className="col-span-2 space-y-5">
-        {/* Current Plan card */}
         <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-sky-600 to-sky-700 p-6 text-white">
           <div
             aria-hidden
@@ -50,17 +82,14 @@ export default function MyPlanOverviewPage() {
           />
           <div className="relative flex items-start justify-between">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-sky-100">
-                Current Plan
-              </p>
-              <h2 className="mt-1 text-2xl font-semibold">{currentPlan.name}</h2>
-              <p className="mt-1 text-sm text-sky-100">{currentPlan.description}</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-sky-100">Current Plan</p>
+              <h2 className="mt-1 text-2xl font-semibold">{currentPlan.planName}</h2>
             </div>
             <div className="flex flex-col items-end gap-1.5 text-right">
               <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-medium">
                 {currentPlan.status}
               </span>
-              <span className="text-xs text-sky-100">Renews {currentPlan.renewalDate}</span>
+              <span className="text-xs text-sky-100">Renews {formatDate(currentPlan.renewalDate)}</span>
             </div>
           </div>
 
@@ -71,33 +100,31 @@ export default function MyPlanOverviewPage() {
             </div>
             <div>
               <p className="text-xs uppercase tracking-wide text-sky-100">Employees</p>
-              <p className="mt-0.5 text-base font-semibold">{currentPlan.seatsUsed}</p>
+              <p className="mt-0.5 text-base font-semibold">{currentPlan.employeeCount}</p>
             </div>
             <div>
               <p className="text-xs uppercase tracking-wide text-sky-100">Active Modules</p>
-              <p className="mt-0.5 text-base font-semibold">{currentPlan.activeModulesCount}</p>
+              <p className="mt-0.5 text-base font-semibold">{currentPlan.activeModuleCount}</p>
             </div>
           </div>
         </div>
 
-        {/* Cost Breakdown */}
         <div className="rounded-xl border border-slate-200 bg-white p-5">
           <h3 className="text-sm font-semibold text-slate-800">Cost Breakdown</h3>
           <div className="mt-3 divide-y divide-slate-100">
-            {activeLineItems.map((item) => (
-              <div key={item.id} className="flex items-center justify-between py-3 text-sm">
-                <span className="text-slate-600">{item.name}</span>
-                <span className="text-slate-800">{naira(item.price)}</span>
+            {costBreakdown.items.map((item) => (
+              <div key={item.code} className="flex items-center justify-between py-3 text-sm">
+                <span className="text-slate-600">{item.description}</span>
+                <span className="text-slate-800">{naira(item.amount)}</span>
               </div>
             ))}
             <div className="flex items-center justify-between py-3 text-sm font-semibold">
               <span className="text-slate-800">Total per month</span>
-              <span className="text-sky-600">{naira(totalPerMonth)}</span>
+              <span className="text-sky-600">{naira(costBreakdown.totalMonthlyCost)}</span>
             </div>
           </div>
         </div>
 
-        {/* Active Modules */}
         <div className="rounded-xl border border-slate-200 bg-white p-5">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-slate-800">Active Modules</h3>
@@ -109,11 +136,11 @@ export default function MyPlanOverviewPage() {
             </Link>
           </div>
           <div className="mt-3 divide-y divide-slate-100">
-            {individualModules.map((m) => {
-              const active = isAllInOne || initialActiveModuleIds.includes(m.id);
-              const Icon = moduleIcons[m.id as keyof typeof moduleIcons];
+            {activeModules.map((m) => {
+              const Icon = moduleIcons[m.key] ?? FiUsers;
+              const active = m.status === "ACTIVE";
               return (
-                <div key={m.id} className="flex items-center justify-between py-3">
+                <div key={m.key} className="flex items-center justify-between py-3">
                   <div className="flex items-center gap-3">
                     <span
                       className={`flex h-9 w-9 items-center justify-center rounded-md ${
@@ -126,7 +153,7 @@ export default function MyPlanOverviewPage() {
                       <p className={`text-sm font-medium ${active ? "text-slate-800" : "text-slate-400"}`}>
                         {m.name}
                       </p>
-                      <p className="text-xs text-slate-400">{m.subtitle}</p>
+                      <p className="text-xs text-slate-400">{m.description}</p>
                     </div>
                   </div>
                   {active ? (
@@ -143,9 +170,7 @@ export default function MyPlanOverviewPage() {
         </div>
       </div>
 
-      {/* Right column — Renewal + Payment Method + Quick Actions */}
       <div className="space-y-5">
-        {/* Renewal */}
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
           <div className="flex items-start gap-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-500">
@@ -153,16 +178,15 @@ export default function MyPlanOverviewPage() {
             </span>
             <div>
               <p className="text-sm font-semibold text-slate-800">
-                Renewal in {currentPlan.renewalDaysAway} days
+                Renewal in {renewal.daysUntilRenewal} days
               </p>
               <p className="mt-0.5 text-xs text-slate-500">
-                Your plan renews on {currentPlan.renewalDate}.
+                Your plan renews on {formatDate(renewal.renewalDate)}.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Payment Method */}
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-slate-800">Payment Method</p>
@@ -173,18 +197,23 @@ export default function MyPlanOverviewPage() {
               Edit
             </Link>
           </div>
-          <div className="mt-3 flex items-center gap-3">
-            <span className="flex h-8 w-11 items-center justify-center rounded-md bg-slate-900 text-[10px] font-bold tracking-wide text-white">
-              {savedCard.brand.toUpperCase()}
-            </span>
-            <div>
-              <p className="text-sm text-slate-700">•••• •••• •••• {savedCard.last4}</p>
-              <p className="text-xs text-slate-400">Expires {savedCard.expiry}</p>
+          {paymentMethod.currentCard ? (
+            <div className="mt-3 flex items-center gap-3">
+              <span className="flex h-8 w-11 items-center justify-center rounded-md bg-slate-900 text-[10px] font-bold tracking-wide text-white">
+                {paymentMethod.currentCard.brand.toUpperCase()}
+              </span>
+              <div>
+                <p className="text-sm text-slate-700">
+                  •••• •••• •••• {paymentMethod.currentCard.last4}
+                </p>
+                <p className="text-xs text-slate-400">Expires {paymentMethod.currentCard.expiry}</p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <p className="mt-3 text-sm text-slate-400">No card added yet.</p>
+          )}
         </div>
 
-        {/* Quick Actions */}
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <p className="text-sm font-semibold text-slate-800">Quick Actions</p>
           <div className="mt-3 space-y-1">
@@ -225,7 +254,6 @@ export default function MyPlanOverviewPage() {
         </div>
       </div>
 
-      {/* Modals */}
       <CancelSubscriptionModal
         open={cancelModalOpen}
         onClose={() => setCancelModalOpen(false)}

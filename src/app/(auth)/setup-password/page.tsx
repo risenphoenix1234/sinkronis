@@ -29,10 +29,6 @@ export default function SetupPasswordPage() {
       setError("Passwords do not match.");
       return;
     }
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
-      return;
-    }
 
     setLoading(true);
     try {
@@ -40,9 +36,14 @@ export default function SetupPasswordPage() {
       setSuccess(true);
       setTimeout(() => router.push("/login"), 2000);
     } catch (err: any) {
-      setError(
-        err?.response?.data?.message || "This link may be invalid or expired."
-      );
+      const validationErrors = err?.response?.data?.validationErrors;
+      if (validationErrors && validationErrors.length > 0) {
+        setError(validationErrors.map((v: any) => v.message).join(" "));
+      } else {
+        setError(
+          err?.response?.data?.message || "This link may be invalid or expired."
+        );
+      }
     } finally {
       setLoading(false);
     }

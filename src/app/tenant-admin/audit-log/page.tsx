@@ -1,79 +1,151 @@
 // app/tenant-admin/audit-log/page.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { FiDownload, FiChevronLeft, FiChevronRight } from "react-icons/fi";
-import {
-  auditLogEntries,
-  actionStyles,
-  moduleStyles,
-  avatarColors,
-  uniqueUsers,
-  uniqueActions,
-  uniqueModules,
-} from "@/lib/audit-log-data";
+import { getAuditLog, exportAuditLogCsv } from "@/lib/api/admin";
+import { AuditLogRecord, AuditLogFilters } from "@/lib/api/types/admin.types";
 
-const PAGE_SIZE = 10;
+const badgePalette = [
+  "bg-sky-50 text-sky-700",
+  "bg-violet-50 text-violet-700",
+  "bg-emerald-50 text-emerald-700",
+  "bg-amber-50 text-amber-700",
+  "bg-rose-50 text-rose-700",
+  "bg-indigo-50 text-indigo-700",
+];
+
+function colorFor(value: string) {
+  let hash = 0;
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash << 5) - hash + value.charCodeAt(i);
+    hash |= 0;
+  }
+  return badgePalette[Math.abs(hash) % badgePalette.length];
+}
+
+function initialsFor(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+}
+
+function formatTimestamp(dateStr: string) {
+  return new Date(dateStr).toLocaleString("en-GB", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
 
 export default function AuditLogPage() {
+  const [records, setRecords] = useState<AuditLogRecord[]>([]);
+  const [filters, setFilters] = useState<AuditLogFilters | null>(null);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalRecords: 0,
+    pageSize: 10,
+  });
+
   const [search, setSearch] = useState("");
-  const [userFilter, setUserFilter] = useState("All");
-  const [actionFilter, setActionFilter] = useState("All");
-  const [moduleFilter, setModuleFilter] = useState("All");
+  const [userFilter, setUserFilter] = useState("ALL");
+  const [actionFilter, setActionFilter] = useState("ALL");
+  const [moduleFilter, setModuleFilter] = useState("ALL");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
 
-  const filtered = useMemo(() => {
-    return auditLogEntries.filter((entry) => {
-      if (userFilter !== "All" && entry.userName !== userFilter) return false;
-      if (actionFilter !== "All" && entry.action !== actionFilter) return false;
-      if (moduleFilter !== "All" && entry.module !== moduleFilter) return false;
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
-      if (dateFrom && entry.timestamp < dateFrom) return false;
-      if (dateTo && entry.timestamp > `${dateTo}T23:59:59`) return false;
+  const fetchLog = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await getAuditLog({
+        page,
+        limit: 10,
+        search: search || undefined,
+        userId: userFilter !== "ALL" ? userFilter : undefined,
+        action: actionFilter !== "ALL" ? actionFilter : undefined,
+        module: moduleFilter !== "ALL" ? moduleFilter : undefined,
+        from: dateFrom || undefined,
+        to: dateTo || undefined,
+      });
+      setRecords(res.records);
+      setFilters(res.filters);
+      setPagination({
+        currentPage: res.pagination.currentPage,
+        totalPages: res.pagination.totalPages,
+        totalRecords: res.pagination.totalRecords,
+        pageSize: res.pagination.pageSize,
+      });
+    } catch (err) {
+      setError("Failed to load audit log.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      if (search.trim()) {
-        const q = search.trim().toLowerCase();
-        const haystack = `${entry.userName} ${entry.details}`.toLowerCase();
-        if (!haystack.includes(q)) return false;
-      }
-
-      return true;
-    });
-  }, [search, userFilter, actionFilter, moduleFilter, dateFrom, dateTo]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const currentPage = Math.min(page, totalPages);
-  const pageEntries = filtered.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
-  );
-  const rangeStart = filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
-  const rangeEnd = Math.min(currentPage * PAGE_SIZE, filtered.length);
+  useEffect(() => {
+    const debounce = setTimeout(fetchLog, 400);
+    return () => clearTimeout(debounce);
+  }, [search, userFilter, actionFilter, moduleFilter, dateFrom, dateTo, page]);
 
   const handleReset = () => {
     setSearch("");
-    setUserFilter("All");
-    setActionFilter("All");
-    setModuleFilter("All");
+    setUserFilter("ALL");
+    setActionFilter("ALL");
+    setModuleFilter("ALL");
     setDateFrom("");
     setDateTo("");
     setPage(1);
   };
 
-  const handleExport = () => {
-    // Hook up to actual CSV generation / download here.
-    console.log("Exporting audit log as CSV:", filtered);
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const blob = await exportAuditLogCsv({
+        search: search || undefined,
+        userId: userFilter !== "ALL" ? userFilter : undefined,
+        action: actionFilter !== "ALL" ? actionFilter : undefined,
+        module: moduleFilter !== "ALL" ? moduleFilter : undefined,
+        from: dateFrom || undefined,
+        to: dateTo || undefined,
+      });
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `audit-log-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError("Failed to export CSV.");
+    } finally {
+      setExporting(false);
+    }
   };
 
+  const rangeStart =
+    pagination.totalRecords === 0 ? 0 : (pagination.currentPage - 1) * pagination.pageSize + 1;
+  const rangeEnd = Math.min(pagination.currentPage * pagination.pageSize, pagination.totalRecords);
+
   const goToPage = (p: number) => {
-    setPage(Math.min(Math.max(1, p), totalPages));
+    setPage(Math.min(Math.max(1, p), pagination.totalPages));
   };
 
   return (
     <section className="space-y-5 p-6">
-      {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Audit Log</h1>
@@ -83,13 +155,17 @@ export default function AuditLogPage() {
         </div>
         <button
           onClick={handleExport}
-          className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 whitespace-nowrap"
+          disabled={exporting}
+          className="flex items-center gap-2 whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-60"
         >
-          <FiDownload size={14} /> Export CSV
+          <FiDownload size={14} /> {exporting ? "Exporting..." : "Export CSV"}
         </button>
       </div>
 
-      {/* Filter bar */}
+      {error && (
+        <div className="rounded-md bg-red-50 px-4 py-2.5 text-sm text-red-600">{error}</div>
+      )}
+
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-4">
         <div className="relative min-w-[220px] flex-1">
           <input
@@ -112,10 +188,9 @@ export default function AuditLogPage() {
           }}
           className="rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-600 outline-none"
         >
-          <option value="All">User: All</option>
-          {uniqueUsers.map((u) => (
-            <option key={u} value={u}>
-              {u}
+          {(filters?.users ?? [{ value: "ALL", label: "All Users" }]).map((u) => (
+            <option key={u.value} value={u.value}>
+              {u.value === "ALL" ? "User: All" : u.label}
             </option>
           ))}
         </select>
@@ -128,10 +203,9 @@ export default function AuditLogPage() {
           }}
           className="rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-600 outline-none"
         >
-          <option value="All">Action: All</option>
-          {uniqueActions.map((a) => (
-            <option key={a} value={a}>
-              {a}
+          {(filters?.actions ?? [{ value: "ALL", label: "All Actions" }]).map((a) => (
+            <option key={a.value} value={a.value}>
+              {a.value === "ALL" ? "Action: All" : a.label}
             </option>
           ))}
         </select>
@@ -144,10 +218,9 @@ export default function AuditLogPage() {
           }}
           className="rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-600 outline-none"
         >
-          <option value="All">Module: All</option>
-          {uniqueModules.map((m) => (
-            <option key={m} value={m}>
-              {m}
+          {(filters?.modules ?? [{ value: "ALL", label: "All Modules" }]).map((m) => (
+            <option key={m.value} value={m.value}>
+              {m.value === "ALL" ? "Module: All" : m.label}
             </option>
           ))}
         </select>
@@ -179,7 +252,6 @@ export default function AuditLogPage() {
         </button>
       </div>
 
-      {/* Table */}
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="min-w-full text-left">
           <thead className="text-xs uppercase tracking-wider text-slate-500">
@@ -193,44 +265,54 @@ export default function AuditLogPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {pageEntries.map((entry) => (
-              <tr key={entry.id} className="hover:bg-slate-50">
-                <td className="px-6 py-3 font-mono text-xs text-slate-500 whitespace-nowrap">
-                  {entry.displayTimestamp}
-                </td>
-                <td className="px-6 py-3 whitespace-nowrap">
-                  <div className="flex items-center gap-2.5">
-                    <span
-                      className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
-                        avatarColors[entry.userInitials] ?? "bg-slate-100 text-slate-500"
-                      }`}
-                    >
-                      {entry.userInitials}
-                    </span>
-                    <span className="text-sm font-medium text-slate-800">{entry.userName}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-3 whitespace-nowrap">
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${actionStyles[entry.action]}`}
-                  >
-                    {entry.action}
-                  </span>
-                </td>
-                <td className="px-6 py-3 whitespace-nowrap">
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${moduleStyles[entry.module]}`}
-                  >
-                    {entry.module}
-                  </span>
-                </td>
-                <td className="px-6 py-3 text-sm text-slate-600">{entry.details}</td>
-                <td className="px-6 py-3 font-mono text-xs text-slate-400 whitespace-nowrap">
-                  {entry.ipAddress}
+            {loading && (
+              <tr>
+                <td colSpan={6} className="px-6 py-10 text-center text-sm text-slate-400">
+                  Loading audit log...
                 </td>
               </tr>
-            ))}
-            {pageEntries.length === 0 && (
+            )}
+
+            {!loading &&
+              records.map((entry) => (
+                <tr key={entry.id} className="hover:bg-slate-50">
+                  <td className="whitespace-nowrap px-6 py-3 font-mono text-xs text-slate-500">
+                    {formatTimestamp(entry.timestamp)}
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-3">
+                    <div className="flex items-center gap-2.5">
+                      <span
+                        className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${colorFor(entry.user.name)}`}
+                      >
+                        {initialsFor(entry.user.name)}
+                      </span>
+                      <span className="text-sm font-medium text-slate-800">
+                        {entry.user.name}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-3">
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${colorFor(entry.action)}`}
+                    >
+                      {entry.action}
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-3">
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${colorFor(entry.module)}`}
+                    >
+                      {entry.module}
+                    </span>
+                  </td>
+                  <td className="px-6 py-3 text-sm text-slate-600">{entry.details}</td>
+                  <td className="whitespace-nowrap px-6 py-3 font-mono text-xs text-slate-400">
+                    {entry.ipAddress}
+                  </td>
+                </tr>
+              ))}
+
+            {!loading && records.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-6 py-10 text-center text-sm text-slate-400">
                   No entries match your filters.
@@ -241,25 +323,24 @@ export default function AuditLogPage() {
         </table>
       </div>
 
-      {/* Pagination */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-slate-500">
-          Showing {rangeStart}–{rangeEnd} of {filtered.length} entries
+          Showing {rangeStart}–{rangeEnd} of {pagination.totalRecords} entries
         </p>
         <div className="flex items-center gap-1.5">
           <button
-            onClick={() => goToPage(currentPage - 1)}
-            disabled={currentPage === 1}
+            onClick={() => goToPage(pagination.currentPage - 1)}
+            disabled={pagination.currentPage === 1}
             className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <FiChevronLeft size={14} />
           </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+          {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((p) => (
             <button
               key={p}
               onClick={() => goToPage(p)}
               className={`flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium ${
-                p === currentPage
+                p === pagination.currentPage
                   ? "bg-sky-600 text-white"
                   : "border border-slate-200 text-slate-600 hover:bg-slate-50"
               }`}
@@ -268,8 +349,8 @@ export default function AuditLogPage() {
             </button>
           ))}
           <button
-            onClick={() => goToPage(currentPage + 1)}
-            disabled={currentPage === totalPages}
+            onClick={() => goToPage(pagination.currentPage + 1)}
+            disabled={pagination.currentPage === pagination.totalPages}
             className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <FiChevronRight size={14} />

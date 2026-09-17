@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2021",
-    "lib": ["ES2021", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2021",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "resolveJsonModule": true,
@@ -27,8 +31,9 @@
     "next-env.d.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
-    ".next/types/**/*.ts",
-    "src/components/payroll/overview"
+    ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules"
+  ]
 }

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+<<<<<<< HEAD
 import {
   FiBell,
   FiBriefcase,
@@ -12,13 +13,53 @@ import {
   FiLogOut,
   FiSliders,
 } from "react-icons/fi";
+=======
+import { FiBell, FiChevronDown, FiChevronRight, FiLogOut, FiSliders } from "react-icons/fi";
+>>>>>>> origin/platform-admin
 
 interface NavbarProps {
   notificationCount?: number;
-  tenantAdminHref?: string;
   onSignOut?: () => void;
 }
 
+<<<<<<< HEAD
+=======
+const SEGMENT_LABEL_OVERRIDES: Record<string, string> = {
+  hris: "HRIS",
+  "general-settings": "Settings",
+  "locale-region": "Locale & Region",
+  "roles-permissions": "Roles & Permissions",
+  "branches-locations": "Branches & Locations",
+  "my-plan": "My Plan",
+  "module-addons": "Active Modules",
+  "plans-upgrade": "Plans & Modules",
+  "billing-history": "Billing History",
+  "payment-method": "Payment Method",
+  "user-management": "User Management",
+  "audit-log": "Audit Log",
+  "data-privacy": "Data & Privacy",
+  "company-profile": "Company",
+  "work-schedule": "Work Schedule",
+};
+
+function humanizeSegment(segment: string): string {
+  if (SEGMENT_LABEL_OVERRIDES[segment]) return SEGMENT_LABEL_OVERRIDES[segment];
+  return segment
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function useBreadcrumb(pathname: string) {
+  const segments = pathname.split("/").filter(Boolean);
+  let hrefSoFar = "";
+  return segments.map((segment) => {
+    hrefSoFar += `/${segment}`;
+    return { label: humanizeSegment(segment), href: hrefSoFar };
+  });
+}
+
+>>>>>>> origin/platform-admin
 const MODULE_SETTINGS_SEGMENT: Record<string, string> = {
   "tenant-admin": "general-settings",
 };
@@ -37,7 +78,6 @@ function useSettingsHref(pathname: string): string {
 
 export default function Navbar({
   notificationCount = 2,
-  tenantAdminHref = "/tenant-admin/overview",
   onSignOut,
 }: NavbarProps) {
   const pathname = usePathname();
@@ -64,7 +104,10 @@ export default function Navbar({
     };
   }, [menuOpen]);
 
+<<<<<<< HEAD
   // Close dropdown when route changes
+=======
+>>>>>>> origin/platform-admin
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
@@ -126,7 +169,10 @@ export default function Navbar({
           )}
         </Link>
 
+<<<<<<< HEAD
         {/* Profile */}
+=======
+>>>>>>> origin/platform-admin
         <div className="relative" ref={menuRef}>
           <button
             type="button"
@@ -161,14 +207,6 @@ export default function Navbar({
           {/* Dropdown */}
           {menuOpen && (
             <div className="absolute right-0 top-[calc(100%+10px)] z-50 w-52 origin-top-right animate-[dropdown_0.12s_ease-out] overflow-hidden rounded-lg border border-slate-200 bg-white py-1.5 shadow-xl ring-1 ring-black/5">
-              <Link
-                href={tenantAdminHref}
-                className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
-              >
-                <FiBriefcase size={16} className="text-slate-500" />
-                Tenant Admin
-              </Link>
-
               <Link
                 href={settingsHref}
                 className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100"

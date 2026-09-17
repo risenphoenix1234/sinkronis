@@ -1,117 +1,165 @@
 // src/app/tenant-admin/security/active-sessions/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  getActiveSessions,
+  revokeSession,
+  revokeAllOtherSessions,
+} from "@/lib/api/admin";
+import { SecuritySession } from "@/lib/api/types/admin.types";
 
-type Session = {
-  id: string;
-  user: string;
-  deviceLine: string;
-  locationLine: string;
-  isCurrent: boolean;
-};
+function formatRelative(dateStr: string) {
+  const date = new Date(dateStr);
+  const diffMs = Date.now() - date.getTime();
+  const diffMins = Math.round(diffMs / 60000);
 
-const initialSessions: Session[] = [
-  {
-    id: "sess-1",
-    user: "Chukwuemeka Obi",
-    deviceLine: "Chrome / Windows 11 · 197.210.45.12 · Lagos, Nigeria",
-    locationLine: "Last seen: Now",
-    isCurrent: true,
-  },
-  {
-    id: "sess-2",
-    user: "Chukwuemeka Obi",
-    deviceLine: "Safari / iPhone 15 · 197.210.45.12 · Lagos, Nigeria",
-    locationLine: "Last seen: 2 hours ago",
-    isCurrent: false,
-  },
-  {
-    id: "sess-3",
-    user: "Amara Nwosu",
-    deviceLine: "Chrome / macOS · 105.112.85.34 · Abuja, Nigeria",
-    locationLine: "Last seen: Today, 8:23 AM",
-    isCurrent: false,
-  },
-  {
-    id: "sess-4",
-    user: "Tunde Adeyemi",
-    deviceLine: "Edge / Windows 10 · 41.184.07.123 · Ibadan, Nigeria",
-    locationLine: "Last seen: Yesterday",
-    isCurrent: false,
-  },
-];
+  if (diffMins < 1) return "Now";
+  if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? "" : "s"} ago`;
+
+  const diffHours = Math.round(diffMins / 60);
+  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? "" : "s"} ago`;
+
+  const diffDays = Math.round(diffHours / 24);
+  return `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
+}
 
 export default function ActiveSessionsPage() {
-  const [sessions, setSessions] = useState<Session[]>(initialSessions);
+  const [sessions, setSessions] = useState<SecuritySession[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [revokingAll, setRevokingAll] = useState(false);
 
-  const handleRevoke = (id: string) => {
-    setSessions((prev) => prev.filter((s) => s.id !== id));
+  const fetchSessions = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await getActiveSessions({ status: "ACTIVE", limit: 100 });
+      setSessions(res.data);
+    } catch (err) {
+      setError("Failed to load active sessions.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRevokeAllOthers = () => {
-    setSessions((prev) => prev.filter((s) => s.isCurrent));
+  useEffect(() => {
+    fetchSessions();
+  }, []);
+
+  const handleRevoke = async (id: string) => {
+    setActionError(null);
+    setRevokingId(id);
+    try {
+      await revokeSession(id);
+      setSessions((prev) => prev.filter((s) => s.id !== id));
+    } catch (err: any) {
+      setActionError(err?.response?.data?.message || "Failed to revoke session.");
+    } finally {
+      setRevokingId(null);
+    }
   };
 
-  const otherSessionsCount = sessions.filter((s) => !s.isCurrent).length;
+  const handleRevokeAllOthers = async () => {
+    setActionError(null);
+    setRevokingAll(true);
+    try {
+      await revokeAllOtherSessions();
+      setSessions((prev) => prev.filter((s) => s.status === "CURRENT"));
+    } catch (err: any) {
+      setActionError(err?.response?.data?.message || "Failed to revoke other sessions.");
+    } finally {
+      setRevokingAll(false);
+    }
+  };
+
+  const otherSessionsCount = sessions.filter((s) => s.status !== "CURRENT").length;
+
+  if (loading) {
+    return (
+      <div className="rounded-lg border border-slate-200 bg-white p-4">
+        <p className="py-8 text-center text-sm text-slate-400">Loading sessions...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4">
+      {error && (
+        <div className="mb-4 rounded-md bg-red-50 px-4 py-2.5 text-sm text-red-600">
+          {error}
+        </div>
+      )}
+      {actionError && (
+        <div className="mb-4 rounded-md bg-red-50 px-4 py-2.5 text-sm text-red-600">
+          {actionError}
+        </div>
+      )}
+
       <div className="mb-4 flex items-center justify-between">
         <p className="text-sm text-slate-500">
-          {sessions.length} active session{sessions.length === 1 ? "" : "s"}{" "}
-          across all devices.
+          {sessions.length} active session{sessions.length === 1 ? "" : "s"} across all
+          devices.
         </p>
         {otherSessionsCount > 0 && (
           <button
             onClick={handleRevokeAllOthers}
-            className="text-sm font-medium text-rose-600 hover:underline"
+            disabled={revokingAll}
+            className="text-sm font-medium text-rose-600 hover:underline disabled:opacity-60"
           >
-            Revoke All Others
+            {revokingAll ? "Revoking..." : "Revoke All Others"}
           </button>
         )}
       </div>
 
       <div className="space-y-2">
-        {sessions.map((session) => (
-          <div
-            key={session.id}
-            className={`flex items-center justify-between rounded-md border px-4 py-3 ${
-              session.isCurrent
-                ? "border-sky-200 bg-sky-50/50"
-                : "border-slate-100"
-            }`}
-          >
-            <div>
-              <div className="flex items-center gap-2">
-                <p className="font-medium text-slate-800">{session.user}</p>
-                {session.isCurrent && (
-                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-                    Current
-                  </span>
-                )}
-              </div>
-              <p className="mt-0.5 text-sm text-slate-500">
-                {session.deviceLine}
-              </p>
-              <p className="text-xs text-slate-400">{session.locationLine}</p>
-            </div>
+        {sessions.map((session) => {
+          const isCurrent = session.status === "CURRENT";
+          const locationLabel =
+            [session.location.state, session.location.country].filter(Boolean).join(", ") ||
+            "Unknown location";
 
-            {!session.isCurrent && (
-              <button
-                onClick={() => handleRevoke(session.id)}
-                className="rounded-md border border-rose-200 px-3 py-1.5 text-sm font-medium text-rose-600 hover:bg-rose-50"
-              >
-                Revoke
-              </button>
-            )}
-          </div>
-        ))}
+          return (
+            <div
+              key={session.id}
+              className={`flex items-center justify-between rounded-md border px-4 py-3 ${
+                isCurrent ? "border-sky-200 bg-sky-50/50" : "border-slate-100"
+              }`}
+            >
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-slate-800">{session.userName}</p>
+                  {isCurrent && (
+                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                      Current
+                    </span>
+                  )}
+                </div>
+                <p className="mt-0.5 text-sm text-slate-500">
+                  {session.device} · {session.ipAddress} · {locationLabel}
+                </p>
+                <p className="text-xs text-slate-400">
+                  Last seen: {formatRelative(session.lastSeenAt)}
+                </p>
+              </div>
+
+              {!isCurrent && (
+                <button
+                  onClick={() => handleRevoke(session.id)}
+                  disabled={revokingId === session.id}
+                  className="rounded-md border border-rose-200 px-3 py-1.5 text-sm font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-60"
+                >
+                  {revokingId === session.id ? "Revoking..." : "Revoke"}
+                </button>
+              )}
+            </div>
+          );
+        })}
 
         {sessions.length === 0 && (
-          <p className="py-8 text-center text-sm text-slate-400">
-            No active sessions.
-          </p>
+          <p className="py-8 text-center text-sm text-slate-400">No active sessions.</p>
         )}
       </div>
     </div>

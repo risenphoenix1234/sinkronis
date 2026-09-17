@@ -121,7 +121,6 @@ export default function EmployeeProfilePage({
                     header.name.charAt(0)
                   )}
                 </div>
-                <p className="border-l border-0.5 h-8 border-slate-500"></p>
                 <div>
                   <h1 className="text-xl font-semibold text-slate-900">
                     {header.name}

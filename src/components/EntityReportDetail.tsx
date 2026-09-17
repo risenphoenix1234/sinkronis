@@ -17,11 +17,7 @@ const typeLabel: Record<EntityDetail["type"], string> = {
   project: "Projects",
 };
 
-export default function EntityReportDetail({
-  detail,
-}: {
-  detail: EntityDetail;
-}) {
+export default function EntityReportDetail({ detail }: { detail: EntityDetail }) {
   const invoices = getInvoicesForEntity(detail);
 
   const totalInvoices = invoices.length;
@@ -41,7 +37,7 @@ export default function EntityReportDetail({
     <section className="space-y-6 p-6">
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-sm text-slate-400">
-        <Link href="/accounting/reports" className="hover:text-slate-600">
+        <Link href="/reports" className="hover:text-slate-600">
           Reports
         </Link>
         <span>/</span>
@@ -55,16 +51,14 @@ export default function EntityReportDetail({
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <Link
-              href="/accounting/reports"
+              href="/reports"
               className="flex items-center gap-1.5 rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
             >
               <FiArrowLeft size={14} /> Back
             </Link>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-semibold text-slate-900">
-                  {detail.name}
-                </h1>
+                <h1 className="text-lg font-semibold text-slate-900">{detail.name}</h1>
                 <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
                   {detail.status}
                 </span>
@@ -88,15 +82,11 @@ export default function EntityReportDetail({
         <div className="mt-5 grid grid-cols-4 gap-4 border-t border-slate-100 pt-5">
           <div>
             <p className="text-xs text-slate-400">Total Invoices</p>
-            <p className="mt-1 text-xl font-semibold text-slate-900">
-              {totalInvoices}
-            </p>
+            <p className="mt-1 text-xl font-semibold text-slate-900">{totalInvoices}</p>
           </div>
           <div>
             <p className="text-xs text-slate-400">Revenue Paid</p>
-            <p className="mt-1 text-xl font-semibold text-emerald-600">
-              {naira(revenuePaid)}
-            </p>
+            <p className="mt-1 text-xl font-semibold text-emerald-600">{naira(revenuePaid)}</p>
           </div>
           <div>
             <p className="text-xs text-slate-400">Outstanding</p>
@@ -106,9 +96,7 @@ export default function EntityReportDetail({
           </div>
           <div>
             <p className="text-xs text-slate-400">VAT Charged</p>
-            <p className="mt-1 text-xl font-semibold text-slate-900">
-              {naira(vatCharged)}
-            </p>
+            <p className="mt-1 text-xl font-semibold text-slate-900">{naira(vatCharged)}</p>
           </div>
         </div>
       </div>
@@ -136,15 +124,9 @@ export default function EntityReportDetail({
                 <td className="px-6 py-3 text-sm font-medium text-sky-600 whitespace-nowrap">
                   {inv.id}
                 </td>
-                <td className="px-6 py-3 text-sm text-slate-600 whitespace-nowrap">
-                  {inv.client}
-                </td>
-                <td className="px-6 py-3 text-sm text-slate-600 whitespace-nowrap">
-                  {inv.agent}
-                </td>
-                <td className="px-6 py-3 text-sm text-slate-600 whitespace-nowrap">
-                  {inv.project}
-                </td>
+                <td className="px-6 py-3 text-sm text-slate-600 whitespace-nowrap">{inv.client}</td>
+                <td className="px-6 py-3 text-sm text-slate-600 whitespace-nowrap">{inv.agent}</td>
+                <td className="px-6 py-3 text-sm text-slate-600 whitespace-nowrap">{inv.project}</td>
                 <td className="px-6 py-3 text-sm text-slate-600 whitespace-nowrap">
                   {inv.itemsServices}
                 </td>
@@ -158,24 +140,17 @@ export default function EntityReportDetail({
                   {naira(inv.total)}
                 </td>
                 <td className="px-6 py-3 whitespace-nowrap">
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusStyles[inv.status]}`}
-                  >
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusStyles[inv.status]}`}>
                     {inv.status}
                   </span>
                 </td>
-                <td className="px-6 py-3 text-sm text-slate-500 whitespace-nowrap">
-                  {inv.issueDate}
-                </td>
+                <td className="px-6 py-3 text-sm text-slate-500 whitespace-nowrap">{inv.issueDate}</td>
               </tr>
             ))}
           </tbody>
           <tfoot>
             <tr className="border-t border-slate-200 bg-slate-50">
-              <td
-                colSpan={5}
-                className="px-6 py-3 text-sm font-medium text-slate-700"
-              >
+              <td colSpan={5} className="px-6 py-3 text-sm font-medium text-slate-700">
                 Totals — {totalInvoices} invoices
               </td>
               <td className="px-6 py-3 text-sm tabular-nums font-semibold text-slate-900">
@@ -195,9 +170,7 @@ export default function EntityReportDetail({
 
       {/* Export bar */}
       <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4">
-        <p className="text-sm text-slate-500">
-          Export {totalInvoices} invoices as:
-        </p>
+        <p className="text-sm text-slate-500">Export {totalInvoices} invoices as:</p>
         <div className="flex items-center gap-3">
           <button className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50">
             <FiDownload size={14} /> Download CSV
