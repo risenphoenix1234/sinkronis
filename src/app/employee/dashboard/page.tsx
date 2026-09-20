@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
+import { toast } from "react-toastify";
 import ActionList from "@/components/employee/dashboard/ActionList";
 import ClockBanner from "@/components/employee/dashboard/ClockBanner";
 import DashboardHeader from "@/components/employee/dashboard/DashboardHeader";
@@ -16,38 +17,59 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const loadDashboard = async () => {
+    try {
+      const data = await getEmployeeDashboard();
+      setDashboard(data);
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        if (status === 401)
+          setError("Session expired. Please log in again.");
+        else if (status === 403)
+          setError("Your plan doesn't include HRIS access.");
+        else if (status === 404)
+          setError("No employee profile is linked to this account.");
+        else setError("Couldn't load your dashboard. Please try again.");
+      } else {
+        setError("Couldn't load your dashboard. Please try again.");
+      }
+      console.error("Dashboard fetch failed:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     setLoading(true);
     setError(null);
-
-    getEmployeeDashboard()
-      .then(setDashboard)
-      .catch((err) => {
-        if (axios.isAxiosError(err)) {
-          const status = err.response?.status;
-          if (status === 401)
-            setError("Your session has expired. Please log in again.");
-          else if (status === 403)
-            setError("Your plan doesn't include HRIS access.");
-          else if (status === 404)
-            setError("No employee profile is linked to this account.");
-          else setError("Couldn't load your dashboard. Please try again.");
-        } else {
-          setError("Couldn't load your dashboard. Please try again.");
-        }
-        console.error("Dashboard fetch failed:", err);
-      })
-      .finally(() => setLoading(false));
+    loadDashboard();
   }, []);
 
-  function handleClockIn() {
-    // TODO: call POST /api/v1/employee/attendance/clock-in, then refetch
-    clockIn();
+  async function handleClockIn() {
+    try {
+      const res = await clockIn();
+      toast.success(res?.message || "Clocked in successfully");
+      await loadDashboard();
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to clock in";
+      toast.error(msg);
+    }
   }
 
-  function handleClockOut() {
-    // TODO: call POST /api/v1/employee/attendance/clock-out, then refetch
-    clockOut();
+  async function handleClockOut() {
+    try {
+      const res = await clockOut();
+      toast.success(res?.message || "Clocked out successfully");
+      await loadDashboard();
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to clock out";
+      toast.error(msg);
+    }
   }
 
   if (loading) {

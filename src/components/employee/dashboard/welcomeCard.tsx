@@ -24,7 +24,7 @@ export default function WelcomeCard({ employee, currentDate }: Props) {
           </h2>
 
           <p className="mt-4 text-sm text-blue-100">
-            {employee.role.name} • {employee.department.name}
+            {employee.role?.name} • {employee.department?.name}
           </p>
 
           <p className="mt-1 text-sm text-blue-100">{formattedDate}</p>
@@ -33,7 +33,7 @@ export default function WelcomeCard({ employee, currentDate }: Props) {
         <div className="text-left md:text-right">
           <p className="text-sm text-blue-100">Employee ID</p>
           <h3 className="mt-1 text-3xl font-bold">{employee.employeeId}</h3>
-          <p className="mt-2 text-sm text-blue-100">{employee.branch.name}</p>
+          <p className="mt-2 text-sm text-blue-100">{employee.branch?.name}</p>
         </div>
       </div>
     </div>

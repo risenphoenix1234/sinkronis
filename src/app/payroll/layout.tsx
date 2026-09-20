@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 
-<<<<<<< HEAD
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { SidebarItem } from "@/components/layout/Sidebar";
 import { DeductionProvider } from "@/context/payroll/DeductionContext";
@@ -58,15 +57,6 @@ const sidebarItems: SidebarItem[] = [
     href: "/payroll/reports",
     icon: "payroll-reports",
   },
-=======
-const sidebarItems = [
-  { label: "Overview", href: "/payroll/overview" },
-  { label: "Payees", href: "/payroll/payees" },
-  { label: "Payroll", href: "/payroll/payroll" },
-  { label: "Pension", href: "/payroll/pension" },
-  { label: "Tax", href: "/payroll/tax" },
-  { label: "Settings", href: "/payroll/settings" },
->>>>>>> origin/platform-admin
 ];
 
 interface PayrollLayoutProps {

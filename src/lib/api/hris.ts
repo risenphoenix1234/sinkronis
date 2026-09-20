@@ -21,7 +21,7 @@ import { ActiveAppraisalCycle, ApplyForLeavePayload, ApplyForLeaveResponse, Appr
     GetEmployeeAttendanceParams, GetEmployeeAttendanceResponse,
      GetEmployeeDetail, GetEmployeeDetailResponse, GetEmployeesParams,
       GetEmployeesResponse, GetLeaveRequestsParams, GetLeaveRequestsResponse, GetMonthlyAttendanceParams, GetMonthlyAttendanceResponse, GetMyTodayAttendanceResponse, HrisDashboardResponse,
-       InviteEmployeePayload, InviteEmployeeResponse, LeaveOverviewResponse, ListAppraisalCyclesResponse, MyTodayAttendance, OverrideAttendancePayload, OverrideAttendanceResponse, RaiseDisputePayload, RaiseDisputeResponse, RejectLeaveRequestPayload, RejectLeaveRequestResponse, ResolveDisputePayload, ResolveDisputeResponse, Role, 
+       InviteEmployeePayload, InviteEmployeeResponse, ImportEmployeesResponse, LeaveOverviewResponse, ListAppraisalCyclesResponse, MyTodayAttendance, OverrideAttendancePayload, OverrideAttendanceResponse, RaiseDisputePayload, RaiseDisputeResponse, RejectLeaveRequestPayload, RejectLeaveRequestResponse, ResolveDisputePayload, ResolveDisputeResponse, Role, 
        UpdateAppraisalSettingsPayload, 
        UpdateAppraisalSettingsResponse, 
        UpdateEmployeePayload,
@@ -73,14 +73,20 @@ export const inviteEmployee = async (
   return response.data.data;
 };
 
-export const importEmployees = async (file: File) => {
+export const importEmployees = async (
+  file: File | Blob
+): Promise<ImportEmployeesResponse> => {
   const formData = new FormData();
-
   formData.append("file", file);
 
-  const response = await api.post(
+  const response = await api.post<ImportEmployeesResponse>(
     "/hris/employees/import",
-    formData
+    formData,
+    {
+      // Unset instance default JSON header so axios sets the multipart boundary dynamically
+      headers: { "Content-Type": undefined },
+      timeout: 60000,
+    }
   );
 
   return response.data;
@@ -91,7 +97,7 @@ export const getRoles = async (): Promise<Role[]> => {
   return response.data; // bare array — no envelope on this endpoint
 };
 
-export const downloadEmployeeTemplate = async () => {
+export const downloadEmployeeTemplate = async (): Promise<Blob> => {
   const response = await api.get(
     "/hris/employees/import/template",
     {
@@ -102,36 +108,6 @@ export const downloadEmployeeTemplate = async () => {
   return response.data;
 };
 
-// export const createEmployee = async (
-//   data: CreateEmployeePayload,
-//   files?: CreateEmployeeFiles,
-// ): Promise<CreateEmployeeResponse["data"]> => {
-//   const hasFiles =
-//     !!files &&
-//     (!!files.profileImage || !!files.appointmentLetter || (files.documents?.length ?? 0) > 0);
-
-//   if (!hasFiles) {
-//     const response = await api.post<CreateEmployeeResponse>("/hris/employees", data);
-//     return response.data.data;
-//   }
-
-//   const formData = new FormData();
-//   const documentTypes = files?.documents?.map((d) => d.documentType) ?? [];
-
-//   formData.append("data", JSON.stringify(data));
-
-//   if (files?.profileImage) formData.append("profileImage", files.profileImage);
-//   if (files?.appointmentLetter) formData.append("appointmentLetter", files.appointmentLetter);
-//   files?.documents?.forEach(({ file }) => formData.append("documents", file));
-
-//   const response = await api.post<CreateEmployeeResponse>("/hris/employees", formData, {
-//     // Unset the instance's default JSON header so axios can set the multipart
-//     // boundary itself. Do NOT hardcode "multipart/form-data" here — no boundary.
-//     headers: { "Content-Type": undefined },
-//   });
-
-//   return response.data.data;
-// };
 
 export const createEmployee = async (
   data: CreateEmployeePayload,

@@ -76,7 +76,7 @@ export default function HRISConductPage() {
         <div className="mx-auto">
           {/* Page Title */}
           <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-slate-800">Conduct &amp; Queries</h1>
+            <h1 className="text-2xl font-semibold text-slate-800">Conduct</h1>
           </div>
 
           {/* Header */}

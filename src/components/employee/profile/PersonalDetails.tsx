@@ -54,7 +54,7 @@ import { useState } from "react";
 import { Pencil, X, Loader2 } from "lucide-react";
 import { formatDate } from "@/lib/format";
 import ProfileCard from "./ProfileCard";
-import { PersonalDetailsData } from "@/lib/api/employee";
+import { PersonalDetailsData, updatePersonalDetails } from "@/lib/api/employee";
 
 interface PersonalDetailsProps {
   data: PersonalDetailsData;
@@ -95,15 +95,17 @@ export default function PersonalDetails({
   onSave,
 }: PersonalDetailsProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [form, setForm] = useState<Pick<PersonalDetailsData, EditableKey>>(
+  const [form, setForm] = useState<Record<EditableKey, string>>(
     pickEditable(data),
   );
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function pickEditable(source: PersonalDetailsData) {
-    const result = {} as Pick<PersonalDetailsData, EditableKey>;
-    for (const key of EDITABLE_KEYS) result[key] = source[key];
+  function pickEditable(source: PersonalDetailsData): Record<EditableKey, string> {
+    const result = {} as Record<EditableKey, string>;
+    for (const key of EDITABLE_KEYS) {
+      result[key] = (source[key] as string) || "";
+    }
     return result;
   }
 
@@ -126,27 +128,7 @@ export default function PersonalDetails({
     setIsSaving(true);
     setError(null);
     try {
-      // Send ONLY whitelisted fields — the API rejects unsupported/organization-controlled
-      // fields outright, so no fullName/dateOfBirth/gender here.
-      const res = await fetch("/api/v1/employee/profile/personal-details", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-
-      if (res.status === 400) {
-        throw new Error(
-          "One of the submitted fields isn't valid or isn't editable.",
-        );
-      }
-      if (res.status === 401)
-        throw new Error("Your session has expired. Please sign in again.");
-      if (res.status === 403)
-        throw new Error("You don't have access to update this record.");
-      if (res.status === 404) throw new Error("Employee record not found.");
-      if (!res.ok) throw new Error("Failed to save changes.");
-
-      // API returns {} on success — apply the submitted values ourselves.
+      await updatePersonalDetails(form);
       onSave({ ...data, ...form });
       setIsEditing(false);
     } catch (err) {

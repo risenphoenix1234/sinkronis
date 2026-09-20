@@ -5,61 +5,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-<<<<<<< HEAD
 import {
   FiBell,
-  FiBriefcase,
   FiChevronDown,
   FiLogOut,
   FiSliders,
 } from "react-icons/fi";
-=======
-import { FiBell, FiChevronDown, FiChevronRight, FiLogOut, FiSliders } from "react-icons/fi";
->>>>>>> origin/platform-admin
+import { logoutAndRedirectToLogin } from "@/utils/authSession";
 
 interface NavbarProps {
   notificationCount?: number;
   onSignOut?: () => void;
 }
 
-<<<<<<< HEAD
-=======
-const SEGMENT_LABEL_OVERRIDES: Record<string, string> = {
-  hris: "HRIS",
-  "general-settings": "Settings",
-  "locale-region": "Locale & Region",
-  "roles-permissions": "Roles & Permissions",
-  "branches-locations": "Branches & Locations",
-  "my-plan": "My Plan",
-  "module-addons": "Active Modules",
-  "plans-upgrade": "Plans & Modules",
-  "billing-history": "Billing History",
-  "payment-method": "Payment Method",
-  "user-management": "User Management",
-  "audit-log": "Audit Log",
-  "data-privacy": "Data & Privacy",
-  "company-profile": "Company",
-  "work-schedule": "Work Schedule",
-};
-
-function humanizeSegment(segment: string): string {
-  if (SEGMENT_LABEL_OVERRIDES[segment]) return SEGMENT_LABEL_OVERRIDES[segment];
-  return segment
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
-
-function useBreadcrumb(pathname: string) {
-  const segments = pathname.split("/").filter(Boolean);
-  let hrefSoFar = "";
-  return segments.map((segment) => {
-    hrefSoFar += `/${segment}`;
-    return { label: humanizeSegment(segment), href: hrefSoFar };
-  });
-}
-
->>>>>>> origin/platform-admin
 const MODULE_SETTINGS_SEGMENT: Record<string, string> = {
   "tenant-admin": "general-settings",
 };
@@ -104,10 +62,7 @@ export default function Navbar({
     };
   }, [menuOpen]);
 
-<<<<<<< HEAD
   // Close dropdown when route changes
-=======
->>>>>>> origin/platform-admin
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
@@ -169,10 +124,7 @@ export default function Navbar({
           )}
         </Link>
 
-<<<<<<< HEAD
         {/* Profile */}
-=======
->>>>>>> origin/platform-admin
         <div className="relative" ref={menuRef}>
           <button
             type="button"
@@ -215,20 +167,16 @@ export default function Navbar({
                 Settings
               </Link>
 
-              {onSignOut && (
-                <>
-                  <div className="my-1 h-px bg-slate-100" />
+              <div className="my-1 h-px bg-slate-100" />
 
-                  <button
-                    type="button"
-                    onClick={onSignOut}
-                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-red-600 hover:bg-red-50"
-                  >
-                    <FiLogOut size={16} />
-                    Sign out
-                  </button>
-                </>
-              )}
+              <button
+                type="button"
+                onClick={onSignOut || (() => logoutAndRedirectToLogin("manual_signout"))}
+                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-red-600 hover:bg-red-50"
+              >
+                <FiLogOut size={16} />
+                Sign out
+              </button>
             </div>
           )}
 

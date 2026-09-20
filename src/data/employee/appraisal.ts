@@ -1,4 +1,12 @@
-import { Goal, PastAppraisal } from "@/types/employee/appraisal";
+import {
+  BehaviourObjective,
+  Employee,
+  Goal,
+  Objective,
+  PastAppraisal,
+  ReflectionQuestion,
+  Section,
+} from "@/types/employee/appraisal";
 
 export const goals: Goal[] = [
   {
@@ -31,8 +39,6 @@ export const pastAppraisals: PastAppraisal[] = [
     dateCompleted: "20 Jan 2026",
   },
 ];
-
-import { Section } from "@/types/employee/appraisal";
 
 export const appraisalSections: Section[] = [
   {
@@ -108,6 +114,134 @@ export const appraisalSections: Section[] = [
         comment: "",
       },
     ],
+  },
+];
+
+export interface AppraisalItem {
+  objective: string;
+  kpis: string[];
+  employeeRating: number;
+  employeeComment: string;
+  managerRating: number;
+  managerComment: string;
+}
+
+export const employee: Employee = {
+  id: "EMP-001",
+  name: "Amara Nwosu",
+  department: "Product Engineering",
+  supervisor: "Tunde Bakare",
+  jobTitle: "Senior Frontend Engineer",
+  employmentDate: "15 Jan 2023",
+  reviewPeriod: "Q2 2026 (Apr – Jun)",
+  businessUnit: "Technology",
+  employeeId: "SNK-2023-014",
+  location: "Lagos, Nigeria",
+};
+
+export const objectives: Objective[] = [
+  {
+    id: 1,
+    objective: "Revenue & Business Growth",
+    wt: "20%",
+    weight: 20,
+    keyResult: "Deliver high-conversion checkout flows",
+    kpis: 95,
+    target: 100,
+    achieved: 92,
+    selfRating: 4,
+    initiatives: 3,
+    q1Ach: 90,
+    q1Percent: 90,
+    q2Acgh: 94,
+    q2Percent: 94,
+    comment: "Delivered on schedule with positive feedback.",
+  },
+  {
+    id: 2,
+    objective: "Operational Excellence",
+    wt: "20%",
+    weight: 20,
+    keyResult: "Reduce build & load times by 25%",
+    kpis: 85,
+    target: 100,
+    achieved: 88,
+    selfRating: 4,
+    initiatives: 2,
+    q1Ach: 80,
+    q1Percent: 80,
+    q2Acgh: 96,
+    q2Percent: 96,
+    comment: "Optimized bundle sizes and caching.",
+  },
+  {
+    id: 3,
+    objective: "Employee Experience",
+    wt: "20%",
+    weight: 20,
+    keyResult: "Mentor junior frontend engineers",
+    kpis: 90,
+    target: 100,
+    achieved: 95,
+    selfRating: 5,
+    initiatives: 4,
+    q1Ach: 90,
+    q1Percent: 90,
+    q2Acgh: 100,
+    q2Percent: 100,
+    comment: "Conducted weekly pair programming sessions.",
+  },
+];
+
+export const behaviourObjectives: BehaviourObjective[] = [
+  {
+    id: 1,
+    objective: "Leadership & Initiative",
+    wt: 10,
+    keyResult: "Proactive problem solving and team alignment",
+    kpis: 90,
+    target: 100,
+    initiatives: "Led sprint design review",
+    q1Ach: 85,
+    q1Percent: 85,
+    q2Ach: 95,
+    q2Percent: 95,
+    comment: "Consistently demonstrates strong ownership.",
+  },
+  {
+    id: 2,
+    objective: "Collaboration & Teamwork",
+    wt: 10,
+    keyResult: "Cross-functional cooperation with product & QA",
+    kpis: 95,
+    target: 100,
+    initiatives: "Streamlined QA handoff process",
+    q1Ach: 90,
+    q1Percent: 90,
+    q2Ach: 100,
+    q2Percent: 100,
+    comment: "Excellent communication across teams.",
+  },
+];
+
+export const reflectionQuestions: ReflectionQuestion[] = [
+  {
+    id: 1,
+    title: "What were your most significant accomplishments this cycle?",
+    description: "Highlight key milestones and impact delivered.",
+    answer: "Successfully led the frontend migration to App Router and optimized load speeds.",
+  },
+  {
+    id: 2,
+    title: "What challenges did you encounter and how did you overcome them?",
+    description: "Describe obstacles and resolution strategies.",
+    answer: "Cross-team API delays were mitigated by creating strict mock contracts and parallelizing work.",
+  },
+  {
+    id: 3,
+    title: "What are your primary growth goals for the next quarter?",
+    description: "Outline technical and leadership areas you wish to develop.",
+    answer: "Deepen expertise in cloud architectures and mentor upcoming associate developers.",
   },
 ];
 

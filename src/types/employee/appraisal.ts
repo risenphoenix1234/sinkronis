@@ -69,3 +69,39 @@ export interface Signatory {
   signedDate?: string;
   comment?: string;
 }
+
+export interface Goal {
+  id: number;
+  title: string;
+  target: string;
+  status: string;
+}
+
+export interface PastAppraisal {
+  cycle: string;
+  period: string;
+  finalScore: number;
+  rating: string;
+  dateCompleted: string;
+}
+
+export interface SectionObjective {
+  id: number;
+  title: string;
+  description: string;
+  weight: number;
+  target: number;
+  achievement: string;
+  managerScore: number;
+  hrScore: number;
+  comment: string;
+}
+
+export interface Section {
+  id: number;
+  title: string;
+  subtitle: string;
+  color: string;
+  weight: number;
+  objectives: SectionObjective[];
+}

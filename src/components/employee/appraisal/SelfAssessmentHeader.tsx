@@ -1,12 +1,16 @@
+import Link from "next/link";
 import SectionHeader from "./SectionHeader";
 
 export default function SelfAssessmentHeader() {
   return (
     <>
       <div>
-        <a href="#" className="text-black hover:text-blue-700 ">
-          &larr; Back to approval overview
-        </a>
+        <Link
+          href="/employee/appraisal"
+          className="text-sm font-medium text-slate-600 hover:text-blue-700 transition"
+        >
+          &larr; Back to appraisal overview
+        </Link>
       </div>
       <SectionHeader
         title="Self-Assessment Form"

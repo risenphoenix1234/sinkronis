@@ -74,20 +74,24 @@ export default function AppraisalPage() {
   }, [fetchOverviewAndCycle]);
 
   return (
-    <section className="space-y-3">
-      <h1 className="text-2xl font-semibold">Appraisal</h1>
-      <p className="text-sm text-slate-500">
-        Static placeholder for performance reviews and appraisal cycles.
-      </p>
-
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setOpen(true);
-            }}
-            className="rounded-md  bg-[#2388D0]  px-4 py-2 text-white"
-          >
-            New Cycle
+    <section className="space-y-6 p-6">
+      <div className="flex justify-between items-center">
+         <div>
+          <h1 className="text-2xl font-semibold">Appraisal</h1>
+          <p className="text-sm text-slate-500">
+             Manage performance reviews Cycles, template and employee appraisals.
+          </p>
+         </div>
+          
+          <div> 
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen(true);
+              }}
+              className="rounded-md  bg-[#2388D0] flex px-4 py-2 text-white"
+            >
+              New Cycle
           </button>
 
           <AppraisalModal
@@ -95,6 +99,10 @@ export default function AppraisalPage() {
             onClose={() => setOpen(false)}
             onSuccess={fetchOverviewAndCycle}
           />
+        </div>
+
+         
+      </div>
 
         {/* Tabs */}
         <div className="mt-8 flex gap-8 border-b">

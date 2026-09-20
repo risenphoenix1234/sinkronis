@@ -23,19 +23,19 @@ export default function BankDetails({
       <div className="grid gap-6 md:grid-cols-2">
         <div>
           <p className="text-xs text-gray-400">Bank Name</p>
-          <p className="mt-2 font-medium">{data.bank.name}</p>
+          <p className="mt-2 font-medium">{data.bank?.name || "—"}</p>
         </div>
         <div>
           <p className="text-xs text-gray-400">Account Number</p>
-          <p className="mt-2 font-medium">{data.accountNumberMasked}</p>
+          <p className="mt-2 font-medium">{data.accountNumberMasked || "—"}</p>
         </div>
         <div>
           <p className="text-xs text-gray-400">Account Name</p>
-          <p className="mt-2 font-medium">{data.accountName}</p>
+          <p className="mt-2 font-medium">{data.accountName || "—"}</p>
         </div>
         <div>
           <p className="text-xs text-gray-400">Account Type</p>
-          <p className="mt-2 font-medium">{data.accountType}</p>
+          <p className="mt-2 font-medium">{data.accountType || "—"}</p>
         </div>
       </div>
 
@@ -49,7 +49,7 @@ export default function BankDetails({
         >
           An update request submitted on{" "}
           {formatDate(data.pendingUpdateRequest.submittedAt)} is{" "}
-          {data.pendingUpdateRequest.status.toLowerCase()}.
+          {(data.pendingUpdateRequest.status || "").toLowerCase()}.
         </div>
       )}
 

@@ -198,63 +198,67 @@ export interface Role {
   permissionGroups: RolePermissionGroup[];
 }
 
-export type Gender = "MALE" | "FEMALE";
-export type MaritalStatus = "SINGLE" | "MARRIED" | "DIVORCED";
+export type Gender = "MALE" | "FEMALE" | "OTHER" | "PREFER_NOT_TO_SAY";
+export type MaritalStatus = "SINGLE" | "MARRIED" | "DIVORCED" | "WIDOWED" | "OTHER";
 export type EmploymentType = "FULL_TIME" | "PART_TIME" | "CONTRACT" | "INTERN";
-export type WorkMode = "REMOTE" | "HYBRID" | "ONSITE";
-export type AccountType = "SAVINGS"; // extend when more types are confirmed
+export type WorkMode = "ONSITE" | "REMOTE" | "HYBRID";
+export type AccountType = "SAVINGS" | "CURRENT";
 
-// Matches the API's employeeStatus values directly — no local remapping.
-export type EmployeeStatus = "ACTIVE" | "INACTIVE" | "ON_LEAVE" | "SUSPENDED" | "TERMINATED";
+// Matches CreateEmployeeRequest inline employeeStatus enum directly
+export type CreateEmployeeStatus = "ACTIVE" | "INACTIVE" | "ON_LEAVE" | "SUSPENDED" | "TERMINATED";
 
-// The exact JSON body from the spec — flat, no nested nextOfKin/guarantor objects.
+// Swagger CreateEmployeeRequest source of truth:
 export interface CreateEmployeePayload {
   employeeId: string;
   firstName: string;
   lastName: string;
   personalEmail: string;
-  phoneNumber: string;
-  gender: Gender;
-  dateOfBirth: string;
-  nationality: string;
-  maritalStatus: MaritalStatus;
-  address: string;
+  phoneNumber?: string;
+  gender?: Gender;
+  dateOfBirth?: string;
+  nationality?: string;
+  maritalStatus?: MaritalStatus;
+  address?: string;
 
-  nextOfKinFirstName: string;
-  nextOfKinLastName: string;
-  nextOfKinContact: string;
-  nextOfKinAddress: string;
+  nextOfKinFirstName?: string;
+  nextOfKinLastName?: string;
+  nextOfKinContact?: string;
+  nextOfKinAddress?: string;
 
-  bankName: string;
-  bankCode: string;
-  accountNumber: string;
-  accountName: string;         // ⚠️ see note below — example shows a number, but a person's account name being numeric seems wrong
-  accountType: AccountType;
+  bankName?: string;
+  bankCode?: string;
+  accountNumber?: string;
+  accountName?: string;
+  accountType?: AccountType;
 
-  employeeStatus: EmployeeStatus;
-  taxId: string;
-  pensionId: string;
-  departmentId: string;
-  position: string;
-  workMode: WorkMode;
-  dateJoined: string;
-  earnings: number;
-  employmentType: EmploymentType;
+  employeeStatus?: CreateEmployeeStatus | EmployeeStatus;
+  taxId?: string;
+  pensionId?: string;
+  departmentId?: string;
+  position?: string;
+  workMode?: WorkMode;
+  dateJoined?: string;
+  earnings?: number;
+  employmentType?: EmploymentType;
 
-  guarantorFirstName: string;
-  guarantorLastName: string;
-  guarantorRelationship: string;
-  guarantorPhone: string;
-  guarantorAddress: string;
+  guarantorFirstName?: string;
+  guarantorLastName?: string;
+  guarantorRelationship?: string;
+  guarantorPhone?: string;
+  guarantorAddress?: string;
 
-  documentType: DocumentType;  // ⚠️ NEW — currently missing entirely from your payload
+  documentType?: DocumentType;
 }
 
-// Placeholder — replace with the real enum from the Schema tab
-export type DocumentType = "IDENTIFICATION" | string;
+export type DocumentType =
+  | "IDENTIFICATION"
+  | "CERTIFICATE"
+  | "CONTRACT"
+  | "TAX_DOCUMENT"
+  | "PENSION_DOCUMENT"
+  | "OTHER";
 
-// Sent as the "data" field when files are attached. documentTypes is positional —
-// index 0 matches the first "documents" file appended, etc. UNCONFIRMED SHAPE.
+// Sent as the "data" field when files are attached.
 export interface CreateEmployeeMultipartData extends CreateEmployeePayload {
   documentTypes?: string[];
 }
@@ -262,7 +266,7 @@ export interface CreateEmployeeMultipartData extends CreateEmployeePayload {
 export interface CreateEmployeeFiles {
   profileImage?: File | null;
   appointmentLetter?: File | null;
-  documents?: { file: File; documentType: string }[]; // max 9, enforced client-side
+  documents?: { file: File; documentType?: string }[]; // max 9, enforced client-side
 }
 
 export interface CreateEmployeeResponse {
@@ -275,20 +279,20 @@ export interface CreateEmployeeResponse {
     firstName: string;
     lastName: string;
     email: string;
-    phone: string;
-    jobTitle: string;
-    departmentId: {
+    phone?: string | null;
+    jobTitle?: string | null;
+    departmentId?: string | {
       id: string;
       name: string;
-    };    
-    hireDate: string;
+    } | null;    
+    hireDate?: string | null;
     status: string;
-    lifecycleStatus: string;
-    employmentType: EmploymentType;
-    workMode: WorkMode;
-    profileImageUrl: string | null;
-    createdAt: string;
-    updatedAt: string;
+    lifecycleStatus?: string | null;
+    employmentType?: EmploymentType | null;
+    workMode?: WorkMode | null;
+    profileImageUrl?: string | null;
+    createdAt?: string;
+    updatedAt?: string;
     documents?: { originalName: string; mimeType: string; size: number }[];
   };
 }
@@ -371,38 +375,109 @@ export interface GetEmployeeResponse {
   data: EmployeeDetail;
 }
 
+export interface EmployeeProfileDocument {
+  id: string;
+  type?: string;
+  fileName?: string;
+  originalName?: string;
+  mimeType?: string;
+  size?: number;
+  uploadedAt?: string;
+  downloadPath?: string;
+}
+
+export interface EmployeeProfileBankDetails {
+  bankName?: string | null;
+  accountNumber?: string | null;
+  accountName?: string | null;
+  bankCode?: string | null;
+  accountType?: string | null;
+  monthlySalary?: string | number | null;
+  masked?: boolean;
+}
+
+export interface EmployeeProfileNextOfKin {
+  name?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  phoneNumber?: string | null;
+  contact?: string | null;
+  address?: string | null;
+  relationship?: string | null;
+}
+
+export interface EmployeeProfileGuarantor {
+  name?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  phoneNumber?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  relationship?: string | null;
+}
+
+export interface EmployeeProfileAttendanceOverview {
+  presentDays?: number | null;
+  lateArrivals?: number | null;
+  absentDays?: number | null;
+  overtimeHours?: number | null;
+  availability?: Record<string, unknown>;
+}
+
+export interface EmployeeProfileLeaveOverview {
+  usedApprovedDays?: number | null;
+  balances?: unknown[];
+  availability?: string;
+}
+
+export interface EmployeeProfilePayrollOverview {
+  available?: boolean;
+  salaryStructure?: unknown;
+}
+
 export interface GetEmployeeDetail {
   header: {
     id: string;
     employeeId: string;
     name: string;
-    role: string;
-    department: {
+    role?: string | null;
+    department?: {
       id: string;
       name: string;
-    };
+    } | null;
     status: string;
-    operationalStatus: string;
-    lifecycleStatus: string;
-    joinedDate: string;
-    phoneNumber: string;
-    profileImage: string | null;
+    operationalStatus?: string;
+    lifecycleStatus?: string;
+    joinedDate?: string | null;
+    phoneNumber?: string | null;
+    profileImage?: string | null;
   };
-  personalInformation: Record<string, unknown>;
-  bankDetails: Record<string, unknown>;
-  attendanceOverview: Record<string, unknown>;
-  leaveOverview: Record<string, unknown>;
-  payrollOverview: Record<string, unknown>;
-  nextOfKin: Record<string, unknown>;
-  guarantor: Record<string, unknown>;
-  documents: {
-    id: string;
-    type: string;
-    fileName: string;
-    mimeType: string;
-    size: number;
-    uploadedAt: string;
-  }[]; // fixed: was a 1-item tuple, now a proper array
+  personalInformation: {
+    fullName?: string | null;
+    gender?: Gender | string | null;
+    employmentType?: EmploymentType | string | null;
+    emailAddress?: string | null;
+    personalEmail?: string | null;
+    dateOfBirth?: string | null;
+    department?: { id: string; name: string } | string | null;
+    phoneNumber?: string | null;
+    address?: string | null;
+    role?: string | null;
+    position?: string | null;
+    city?: string | null;
+    nationality?: string | null;
+    state?: string | null;
+    workMode?: WorkMode | string | null;
+    maritalStatus?: MaritalStatus | string | null;
+    earnings?: string | number | null;
+  } | Record<string, unknown>;
+  bankDetails?: EmployeeProfileBankDetails | Record<string, unknown> | null;
+  attendanceOverview?: EmployeeProfileAttendanceOverview | Record<string, unknown> | null;
+  leaveOverview?: EmployeeProfileLeaveOverview | Record<string, unknown> | null;
+  payrollOverview?: EmployeeProfilePayrollOverview | Record<string, unknown> | null;
+  nextOfKin?: EmployeeProfileNextOfKin | Record<string, unknown> | null;
+  guarantor?: EmployeeProfileGuarantor | Record<string, unknown> | null;
+  documents: EmployeeProfileDocument[];
 }
 
 export interface GetEmployeeDetailResponse {
@@ -419,30 +494,56 @@ export interface UpdateEmployeeResponse {
   data: unknown; // shape not shown in Swagger for this endpoint yet
 }
 
-// PATCH /hris/employees/{employeeId}/status — accepts values from both the
-// operational vocabulary (ACTIVE/INACTIVE/ON_LEAVE/SUSPENDED/TERMINATED)
-// and the lifecycle vocabulary (CONFIRMED/PROBATION/EXITED) — confirmed by
-// the endpoint description explicitly calling out EXITED and INACTIVE
-// together as both revoking account access.
-export type EmployeeStatusChangeValue =
+export type EmployeeStatus =
   | "ACTIVE"
   | "INACTIVE"
   | "ON_LEAVE"
   | "SUSPENDED"
-  | "TERMINATED"
   | "CONFIRMED"
   | "PROBATION"
   | "EXITED";
 
+export type EmployeeStatusChangeValue = EmployeeStatus;
+
 export interface UpdateEmployeeStatusPayload {
-  status: EmployeeStatusChangeValue;
-  effectiveDate: string; // "YYYY-MM-DD"
+  status: EmployeeStatus;
+  effectiveDate: string; // format: "YYYY-MM-DD"
+}
+
+export interface UpdatedEmployeeStatusRecord {
+  id: string;
+  organizationId: string;
+  departmentId: string | null;
+  teamId?: string | null;
+  employeeNo: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  jobTitle: string;
+  hireDate: string;
+  status: EmployeeStatus;
+  lifecycleStatus?: string;
+  lifecycleEffectiveAt?: string | null;
+  [key: string]: unknown;
 }
 
 export interface UpdateEmployeeStatusResponse {
   success: boolean;
   message: string;
-  data: unknown; // shape not shown in Swagger yet
+  data: UpdatedEmployeeStatusRecord;
+}
+
+// POST /hris/employees/import — Bulk-import employees from CSV
+export interface ImportEmployeesData {
+  imported: number;
+  failed: number;
+}
+
+export interface ImportEmployeesResponse {
+  success: boolean;
+  message: string;
+  data: ImportEmployeesData;
 }
 
 export interface AttendanceRecord {
@@ -892,8 +993,6 @@ export interface LeaveRequest {
   status: Status;
 }
 
-// PATCH /hris/leave-requests/{id}/reject
-// reason is optional, recorded in audit metadata only — not tenant authority.
 export interface RejectLeaveRequestPayload {
   reason?: string;
 }
@@ -1072,8 +1171,6 @@ export interface GetAppraisalReviewsResponse {
     hasPreviousPage: boolean;
   };
 }
-
-// AppraisalSettings — full version below (see line ~1310)
 
 export interface GetAppraisalTemplatesParams {
   page?: number;
@@ -1413,14 +1510,6 @@ export interface ArchiveAppraisalTemplateResponse {
   message: string;
   data: AppraisalTemplate;
 }
-
-
-
-
-
-
-
-// lib/types/appraisal.ts
 
 export type AppraisalStatus =
   | "GOAL_SETTING"

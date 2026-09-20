@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { formatDate } from "@/lib/format";
-import { DocumentItem } from "@/lib/api/employee";
+import { DocumentItem, downloadEmployeeDocument } from "@/lib/api/employee";
 
 interface DocumentsTableProps {
   documents: DocumentItem[];
@@ -19,26 +19,12 @@ export default function DocumentsTable({ documents }: DocumentsTableProps) {
     setDownloadingId(doc.id);
 
     try {
-      const res = await fetch(
-        `/api/v1/employee/profile/documents/${doc.id}/download`,
-      );
-
-      if (res.status === 401)
-        throw new Error("Your session has expired. Please sign in again.");
-      if (res.status === 403)
-        throw new Error("You don't have access to this document.");
-      if (res.status === 404)
-        throw new Error("This document could not be found.");
-      if (res.status === 500)
-        throw new Error("Download failed on our end — try again shortly.");
-      if (!res.ok) throw new Error("Download failed.");
-
-      const blob = await res.blob();
+      const blob = await downloadEmployeeDocument(doc.id);
       const url = URL.createObjectURL(blob);
 
       const link = document.createElement("a");
       link.href = url;
-      link.download = doc.originalFileName || doc.documentName;
+      link.download = doc.originalFileName || doc.documentName || "document";
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -97,7 +83,7 @@ export default function DocumentsTable({ documents }: DocumentsTableProps) {
                       </button>
                       {hasError && (
                         <p className="mt-1 text-xs text-red-600">
-                          Couldn't download this file.
+                          Couldn&apos;t download this file.
                         </p>
                       )}
                     </>

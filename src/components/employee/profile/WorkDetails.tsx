@@ -20,7 +20,10 @@ export default function WorkDetails({ data }: { data: WorkDetailsData }) {
     { label: "Work Mode", value: data.workMode },
     {
       label: "Earnings",
-      value: formatMoney(data.earnings.amount, data.earnings.currency),
+      value:
+        data.earnings?.amount != null
+          ? formatMoney(data.earnings.amount, data.earnings.currency || "NGN")
+          : "—",
     },
   ];
 

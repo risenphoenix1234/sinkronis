@@ -1,4 +1,7 @@
 // src/app/employee/layout.tsx
+"use client";
+
+import { usePathname } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { SidebarItem } from "@/components/layout/Sidebar";
 
@@ -21,7 +24,6 @@ const sidebarItems: SidebarItem[] = [
     icon: "employee-appraisal",
   },
   { label: "My Payslip", href: "/employee/payslip", icon: "payslips" },
-
   { label: "My Inbox", href: "/employee/inbox", icon: "inbox" },
 ];
 
@@ -30,6 +32,12 @@ export default function EmployeeLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+
+  if (pathname === "/employee/login") {
+    return <>{children}</>;
+  }
+
   return (
     <DashboardLayout sidebarTitle="Employee" sidebarItems={sidebarItems}>
       {children}

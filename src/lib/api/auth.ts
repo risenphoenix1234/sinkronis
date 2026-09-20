@@ -1,10 +1,22 @@
 import api from "../axios";
-import { LoginPayload, LoginResponse, MeResponse } from "./types/auth.types";
+import {
+  EmployeeLoginPayload,
+  LoginPayload,
+  LoginResponse,
+  MeResponse,
+} from "./types/auth.types";
 
 // Re-export so consumers can import from "@/lib/api/auth" directly
-export type { LoginPayload, LoginResponse };
+export type { EmployeeLoginPayload, LoginPayload, LoginResponse };
 
 export const login = async (payload: LoginPayload) => {
+  const { data } = await api.post<LoginResponse>("/auth/login", payload);
+  return data;
+};
+
+export const employeeLogin = async (
+  payload: EmployeeLoginPayload,
+): Promise<LoginResponse> => {
   const { data } = await api.post<LoginResponse>("/auth/login", payload);
   return data;
 };
@@ -36,9 +48,6 @@ export const getMe = async () => {
   const { data } = await api.get<MeResponse>("/auth/me");
   return data;
 };
-<<<<<<< HEAD
-=======
-
 export interface RefreshTokenResponse {
   accessToken: string;
   refreshToken: string;
@@ -50,4 +59,3 @@ export const refreshToken = async (currentRefreshToken: string) => {
   });
   return data;
 };
->>>>>>> origin/platform-admin

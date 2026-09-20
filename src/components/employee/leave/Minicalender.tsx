@@ -1,28 +1,99 @@
-import { approvedDays, pendingDays } from "@/data/employee/leave";
+import { EmployeeLeaveCalendarData } from "@/lib/api/types/employeeTypes";
 
-export function MiniCalendar() {
+interface MiniCalendarProps {
+  calendar?: EmployeeLeaveCalendarData | null;
+  selectedMonth?: string;
+  onMonthChange?: (month: string) => void;
+}
+
+export function MiniCalendar({
+  calendar,
+  selectedMonth,
+  onMonthChange,
+}: MiniCalendarProps) {
   const weekdays = ["M", "T", "W", "T", "F", "S", "S"];
 
-  // July 2026 starts on Wednesday (index 2 in Mon-first grid)
-  // Fill leading empty slots
-  const leadingBlanks = 2; // Mon, Tue before Wed 1 Jul
-  const daysInMonth = 31;
+  // Use provided selectedMonth, or calendar.month, or default to current date
+  const activeMonthStr =
+    selectedMonth || calendar?.month || new Date().toISOString().slice(0, 7);
+
+  const [yearStr, monthStr] = activeMonthStr.split("-");
+  const year = parseInt(yearStr, 10) || new Date().getFullYear();
+  const month = parseInt(monthStr, 10) || new Date().getMonth() + 1; // 1-indexed
+
+  // Month name display (e.g., "September 2026")
+  const monthDate = new Date(year, month - 1, 1);
+  const monthLabel = monthDate.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+
+  // Days count and offset for Monday-start grid
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const firstDayWeekday = (new Date(year, month - 1, 1).getDay() + 6) % 7; // Mon=0, Sun=6
 
   const cells: (number | null)[] = [
-    ...Array(leadingBlanks).fill(null),
+    ...Array(firstDayWeekday).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
 
-  // Pad to complete last row
-  while (cells.length % 7 !== 0) cells.push(null);
+  while (cells.length % 7 !== 0) {
+    cells.push(null);
+  }
 
   const weeks: (number | null)[][] = [];
-  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+  for (let i = 0; i < cells.length; i += 7) {
+    weeks.push(cells.slice(i, i + 7));
+  }
+
+  // Pre-index approved and pending days from calendar entries
+  const approvedDays = new Set<number>();
+  const pendingDays = new Set<number>();
+
+  if (calendar?.entries && Array.isArray(calendar.entries)) {
+    calendar.entries.forEach((entry) => {
+      const statusUpper = (entry.status || "").toUpperCase();
+      const datesToInspect: string[] = [];
+
+      if (Array.isArray(entry.dates) && entry.dates.length > 0) {
+        datesToInspect.push(...entry.dates);
+      } else if (entry.startDate) {
+        datesToInspect.push(entry.startDate);
+      }
+
+      datesToInspect.forEach((dStr) => {
+        // dStr can be "YYYY-MM-DD" or ISO string
+        const datePart = dStr.split("T")[0];
+        const [dYear, dMonth, dDay] = datePart.split("-").map(Number);
+        if (dYear === year && dMonth === month && dDay) {
+          if (statusUpper === "APPROVED") {
+            approvedDays.add(dDay);
+          } else if (statusUpper === "PENDING") {
+            pendingDays.add(dDay);
+          }
+        }
+      });
+    });
+  }
+
+  const handlePrevMonth = () => {
+    if (!onMonthChange) return;
+    const prevDate = new Date(year, month - 2, 1);
+    const prevStr = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}`;
+    onMonthChange(prevStr);
+  };
+
+  const handleNextMonth = () => {
+    if (!onMonthChange) return;
+    const nextDate = new Date(year, month, 1);
+    const nextStr = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, "0")}`;
+    onMonthChange(nextStr);
+  };
 
   const getDayClass = (day: number | null) => {
     if (!day) return "";
-    if (pendingDays.has(day)) return "bg-yellow-400 text-white ";
-    if (approvedDays.has(day)) return "bg-blue-500 text-white ";
+    if (pendingDays.has(day)) return "bg-yellow-400 text-white rounded-md font-semibold";
+    if (approvedDays.has(day)) return "bg-blue-500 text-white rounded-md font-semibold";
     return "text-gray-600";
   };
 
@@ -30,7 +101,12 @@ export function MiniCalendar() {
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
       {/* Month nav */}
       <div className="flex items-center justify-between mb-4">
-        <button className="text-gray-400 hover:text-gray-700 p-1 transition-colors">
+        <button
+          type="button"
+          onClick={handlePrevMonth}
+          aria-label="Previous month"
+          className="text-gray-400 hover:text-gray-700 p-1 transition-colors rounded-lg hover:bg-gray-100"
+        >
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -41,8 +117,13 @@ export function MiniCalendar() {
             <path d="m15 18-6-6 6-6" />
           </svg>
         </button>
-        <span className="text-sm font-semibold text-gray-800">July 2026</span>
-        <button className="text-gray-400 hover:text-gray-700 p-1 transition-colors">
+        <span className="text-sm font-semibold text-gray-800">{monthLabel}</span>
+        <button
+          type="button"
+          onClick={handleNextMonth}
+          aria-label="Next month"
+          className="text-gray-400 hover:text-gray-700 p-1 transition-colors rounded-lg hover:bg-gray-100"
+        >
           <svg
             viewBox="0 0 24 24"
             fill="none"

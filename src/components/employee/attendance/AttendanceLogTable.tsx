@@ -1,118 +1,212 @@
 "use client";
 
 import { useState } from "react";
-import { attendanceLog } from "@/data/employee/attendance";
+import { AlertTriangle } from "lucide-react";
+import { attendanceLog as fallbackLogs } from "@/data/employee/attendance";
 import DisputeModal from "./DisputeModal";
+import { AttendanceLogItem } from "@/lib/api/types/employeeTypes";
 
-type AttendanceStatus = "Present" | "Late" | "Absent" | "weekend" | null;
+interface AttendanceLogTableProps {
+  logs?: AttendanceLogItem[];
+  monthLabel?: string;
+  onDisputeSubmitted?: (date: string) => void;
+}
 
-const statusConfig: Record<
-  Exclude<AttendanceStatus, null>,
-  { label: string; color: string }
-> = {
-  Present: {
-    label: "Present",
-    color: "text-green-600",
-  },
-  Late: {
-    label: "Late",
-    color: "text-amber-500",
-  },
-  Absent: {
-    label: "Absent",
-    color: "text-red-500",
-  },
-  weekend: {
-    label: "Weekend",
-    color: "text-gray-400",
-  },
-};
+function formatDateDisplay(dateStr: string): string {
+  if (!dateStr) return "—";
+  try {
+    const d = new Date(dateStr.includes("T") ? dateStr : `${dateStr}T00:00:00`);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString("en-GB", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return dateStr;
+  }
+}
 
-export default function AttendanceLogTable() {
+function formatTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  } catch {
+    return iso;
+  }
+}
+
+function formatHours(minutes: number, active?: boolean): string {
+  if (!minutes || minutes <= 0) return active ? "0m" : "—";
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${h > 0 ? `${h}h ` : ""}${m}m${active ? "+" : ""}`;
+}
+
+function getStatusBadgeStyle(status: string) {
+  const norm = (status || "").toUpperCase();
+  if (norm === "PRESENT") return "bg-[#E8F8F0] text-[#10B981]";
+  if (norm === "LATE") return "bg-[#FEF6E6] text-[#D97706]";
+  if (norm === "ABSENT") return "bg-[#FEECEC] text-[#EF4444]";
+  return "bg-slate-100 text-slate-600";
+}
+
+function formatStatusText(status: string): string {
+  const norm = (status || "").toUpperCase();
+  if (norm === "PRESENT") return "Present";
+  if (norm === "LATE") return "Late";
+  if (norm === "ABSENT") return "Absent";
+  return status;
+}
+
+export default function AttendanceLogTable({
+  logs,
+  monthLabel = "July 2026",
+  onDisputeSubmitted,
+}: AttendanceLogTableProps) {
   const [disputeTarget, setDisputeTarget] = useState<{
+    id?: string;
     date: string;
     status: string;
   } | null>(null);
 
+  const hasExplicitLogs = logs !== undefined;
+  const displayLogs = logs ?? fallbackLogs;
+
   return (
     <>
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-        {/* Header */}
-
-        <div className="border-b border-gray-100 px-6 py-5">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Attendance Log - July 2026
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+        {/* Table Title Header */}
+        <div className="border-b border-slate-100 px-6 py-5">
+          <h2 className="text-base font-semibold text-slate-900">
+            Attendance Log · {monthLabel}
           </h2>
         </div>
 
-        {/* Table */}
-
+        {/* Table View */}
         <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="bg-gray-50">
-              <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                <th className="px-6 py-4">Date</th>
-                <th className="px-6 py-4">Clock In</th>
-                <th className="px-6 py-4">Clock Out</th>
-                <th className="px-6 py-4">Hours</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right">Action</th>
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-slate-100/80 text-xs font-medium text-slate-400">
+                <th className="px-6 py-4 font-normal">Date</th>
+                <th className="px-6 py-4 font-normal">Clock In</th>
+                <th className="px-6 py-4 font-normal">Clock Out</th>
+                <th className="px-6 py-4 font-normal">Hours</th>
+                <th className="px-6 py-4 font-normal">Status</th>
+                <th className="px-6 py-4 font-normal">Action</th>
               </tr>
             </thead>
 
-            <tbody>
-              {attendanceLog.map((entry) => {
-                const status =
-                  entry.status === null
-                    ? {
-                        label: "-",
-                        color: "text-gray-400",
-                      }
-                    : statusConfig[entry.status];
-
-                return (
-                  <tr
-                    key={entry.date}
-                    className="border-b border-gray-100 transition hover:bg-gray-50"
+            <tbody className="divide-y divide-slate-100/80 text-sm">
+              {displayLogs.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="py-12 text-center text-sm text-slate-400"
                   >
-                    <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                      {entry.date}
-                    </td>
+                    No attendance records found for this period.
+                  </td>
+                </tr>
+              ) : (
+                displayLogs.map((log, index) => {
+                  const isFallback = !hasExplicitLogs;
+                  const zebra = index % 2 === 1 ? "bg-[#F8F9FC]" : "bg-white";
 
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                      {entry.clockIn}
-                    </td>
+                  let dateDisplay = "";
+                  let clockInDisplay = "";
+                  let clockOutDisplay = "";
+                  let hoursDisplay = "";
+                  let status = "";
+                  let canDispute = false;
 
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                      {entry.clockOut}
-                    </td>
+                  if ("id" in log && "attendanceLog" in (log as unknown as Record<string, unknown>)) {
+                    // Safety check
+                  }
 
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                      {entry.hoursWorked}
-                    </td>
+                  if ("workedMinutes" in log) {
+                    // Real API AttendanceLogItem
+                    const item = log as AttendanceLogItem;
+                    dateDisplay = formatDateDisplay(item.date);
+                    clockInDisplay = formatTime(item.clockInAt);
+                    clockOutDisplay = formatTime(item.clockOutAt);
+                    hoursDisplay = formatHours(item.workedMinutes, item.active);
+                    status = item.status;
+                    canDispute = item.canRaiseDispute ?? (status === "LATE" || status === "ABSENT");
+                  } else {
+                    // Fallback Mock Log
+                    const fallback = log as typeof fallbackLogs[0];
+                    dateDisplay = fallback.date;
+                    clockInDisplay = fallback.clockIn;
+                    clockOutDisplay = fallback.clockOut;
+                    hoursDisplay = fallback.hoursWorked;
+                    status = fallback.status.toUpperCase();
+                    canDispute = fallback.status === "Late" || fallback.status === "Absent";
+                  }
 
-                    <td className="px-6 py-4">
-                      <span className={`text-sm font-medium ${status.color}`}>
-                        {status.label}
-                      </span>
-                    </td>
+                  const statusText = formatStatusText(status);
 
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() =>
-                          setDisputeTarget({
-                            date: entry.date,
-                            status: status.label,
-                          })
-                        }
-                        className="text-sm font-medium text-orange-500 transition hover:text-orange-600 hover:underline"
-                      >
-                        Raise Dispute
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+                  return (
+                    <tr
+                      key={"id" in log ? (log as AttendanceLogItem).id : index}
+                      className={`transition-colors hover:bg-slate-50/80 ${zebra}`}
+                    >
+                      <td className="whitespace-nowrap px-6 py-4 font-medium text-slate-800">
+                        {dateDisplay}
+                      </td>
+
+                      <td className="whitespace-nowrap px-6 py-4 text-slate-600">
+                        {clockInDisplay}
+                      </td>
+
+                      <td className="whitespace-nowrap px-6 py-4 text-slate-600">
+                        {clockOutDisplay}
+                      </td>
+
+                      <td className="whitespace-nowrap px-6 py-4 text-slate-600">
+                        {hoursDisplay}
+                      </td>
+
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <span
+                          className={`inline-block rounded-full px-3 py-1 font-medium ${getStatusBadgeStyle(
+                            status,
+                          )}`}
+                        >
+                          {statusText}
+                        </span>
+                      </td>
+
+                      <td className="whitespace-nowrap px-6 py-4">
+                        {canDispute ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setDisputeTarget({
+                                id: "id" in log ? (log as AttendanceLogItem).id : undefined,
+                                date: dateDisplay,
+                                status: statusText,
+                              })
+                            }
+                            className="inline-flex items-center gap-1.5 font-medium text-[#F59E0B] transition hover:text-[#D97706] hover:underline"
+                          >
+                            <AlertTriangle size={14} className="shrink-0" />
+                            <span>Raise Dispute</span>
+                          </button>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
@@ -120,9 +214,14 @@ export default function AttendanceLogTable() {
 
       {disputeTarget && (
         <DisputeModal
+          attendanceId={disputeTarget.id}
           date={disputeTarget.date}
           statusLabel={disputeTarget.status}
           onClose={() => setDisputeTarget(null)}
+          onSubmitSuccess={() => {
+            onDisputeSubmitted?.(disputeTarget.date);
+            setDisputeTarget(null);
+          }}
         />
       )}
     </>

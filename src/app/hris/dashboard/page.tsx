@@ -9,9 +9,9 @@ import { departments, requests } from "@/utils/types";
 import { useEffect, useState } from "react";
 
 export default function HRISDashboardPage() {
-const [data, setData] = useState<HrisDashboardData | null>(null)
-const [loading, setLoading] = useState(true)
-const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<HrisDashboardData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     getHrisDashboard()
@@ -23,7 +23,7 @@ const [error, setError] = useState<string | null>(null)
   if (loading) return <p>Loading...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
   if (!data) return null;
-  
+
   return (
     <section className="p-6">
       <div>
@@ -39,49 +39,48 @@ const [error, setError] = useState<string | null>(null)
         </div>
 
         {/* {StatCard} */}
-              <div className="flex items-center justify-between gap-6 mb-4">
-        <div className="bg-white p-4 w-full">
-          <p className="text-xs text-gray-500">Total Employees</p>
-          <h2 className="text-3xl font-bold mt-1">
-            {data.employeeOverview.totalEmployees}
-          </h2>
-          <p className="text-xs text-green-800 mt-1">
-            {data.employeeOverview.activeEmployeePercentage}%
-          </p>
-        </div>
+        <div className="flex items-center justify-between gap-6 mb-4">
+          <div className="bg-white p-4 w-full">
+            <p className="text-xs text-gray-500">Total Employees</p>
+            <h2 className="text-3xl font-bold mt-1">
+              {data.employeeOverview.totalEmployees}
+            </h2>
+            <p className="text-xs text-green-800 mt-1">
+              {data.employeeOverview.activeEmployeePercentage}%
+            </p>
+          </div>
 
-        <div className="bg-white p-4 w-full">
-          <p className="text-xs text-gray-500">Active</p>
-          <h2 className="text-3xl font-bold mt-1">
-            {data.employeeOverview.activeEmployees}
-          </h2>
-          <p className="text-xs text-green-800 mt-1">
-            {data.employeeOverview.activeEmployeePercentage}% of total
-          </p>
-        </div>
+          <div className="bg-white p-4 w-full">
+            <p className="text-xs text-gray-500">Active</p>
+            <h2 className="text-3xl font-bold mt-1">
+              {data.employeeOverview.activeEmployees}
+            </h2>
+            <p className="text-xs text-green-800 mt-1">
+              {data.employeeOverview.activeEmployeePercentage}% of total
+            </p>
+          </div>
 
-        <div className="bg-white p-4 w-full">
-          <p className="text-xs text-gray-500">On Leave Today</p>
-          <h2 className="text-3xl font-bold mt-1">
-            {data.employeeOverview.employeesOnLeave}
-          </h2>
-          <p className="text-xs text-green-800 mt-1">
-            {data.employeeOverview.pendingLeaveApprovals} pending approval
-          </p>
-        </div>
+          <div className="bg-white p-4 w-full">
+            <p className="text-xs text-gray-500">On Leave Today</p>
+            <h2 className="text-3xl font-bold mt-1">
+              {data.employeeOverview.employeesOnLeave}
+            </h2>
+            <p className="text-xs text-green-800 mt-1">
+              {data.employeeOverview.pendingLeaveApprovals} pending approval
+            </p>
+          </div>
 
-        <div className="bg-white p-4 w-full">
-          <p className="text-xs text-gray-500">New Hires (MTD)</p>
-          <h2 className="text-3xl font-bold mt-1">{data.newHires.currentMonth}</h2>
-          <p
-            className={`text-xs mt-1 ${
-              data.newHires.trend === "UP" ? "text-green-800" : "text-red-600"
-            }`}
-          >
-            {data.newHires.trend === "UP" ? "+" : "-"}
-            {Math.abs(data.newHires.difference)} vs last month
-          </p>
-        </div>
+          <div className="bg-white p-4 w-full">
+            <p className="text-xs text-gray-500">New Hires (MTD)</p>
+            <h2 className="text-3xl font-bold mt-1">{data.newHires.currentMonth}</h2>
+            <p
+              className={`text-xs mt-1 ${data.newHires.trend === "UP" ? "text-green-800" : "text-red-600"
+                }`}
+            >
+              {data.newHires.trend === "UP" ? "+" : "-"}
+              {Math.abs(data.newHires.difference)} vs last month
+            </p>
+          </div>
         </div>
         {/* Row 1 */}
         <div className="grid grid-cols-12 gap-4 mb-4">
@@ -91,22 +90,22 @@ const [error, setError] = useState<string | null>(null)
               Today&apos;s Attendance
             </h3>
 
-           <div className="grid grid-cols-3 gap-y-10">
-            <AttendanceMetricCard label="On Time" metric={data.attendanceOverview.onTime} />
-            <AttendanceMetricCard label="Late Clock-in" metric={data.attendanceOverview.lateClockIn} />
-            <AttendanceMetricCard label="Early Clock-in" metric={data.attendanceOverview.earlyClockIn} />
-            <AttendanceMetricCard label="Absent" metric={data.attendanceOverview.absent} />
-            <AttendanceMetricCard label="No Clock-in" metric={data.attendanceOverview.noClockIn} />
-            <AttendanceMetricCard label="No Clock-out" metric={data.attendanceOverview.noClockOut} />
+            <div className="grid grid-cols-3 gap-y-10">
+              <AttendanceMetricCard label="On Time" metric={data.attendanceOverview.onTime} />
+              <AttendanceMetricCard label="Late Clock-in" metric={data.attendanceOverview.lateClockIn} />
+              <AttendanceMetricCard label="Early Clock-in" metric={data.attendanceOverview.earlyClockIn} />
+              <AttendanceMetricCard label="Absent" metric={data.attendanceOverview.absent} />
+              <AttendanceMetricCard label="No Clock-in" metric={data.attendanceOverview.noClockIn} />
+              <AttendanceMetricCard label="No Clock-out" metric={data.attendanceOverview.noClockOut} />
+            </div>
           </div>
-        </div>
           {/* Recent Activity */}
           <div className="col-span-4 bg-white rounded-lg p-6 border border-gray-100">
             <h3 className="text-sm font-semibold text-gray-800 mb-5">
               Recent Activity
             </h3>
 
-            <div className="space-y-5">
+            <div className="space-y-5 h-48 overflow-y-auto">
               {data.recentActivity.map((activity: { id: string; description: string; createdAt: string }) => (
                 <div key={activity.id}>
                   <p className="text-xs text-gray-700">{activity.description}</p>

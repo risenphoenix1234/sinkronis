@@ -215,7 +215,6 @@ export default function TenantsPage() {
                     </span>
                   </td>
                   <td className="px-5 py-3 text-slate-500">
-<<<<<<< HEAD
                     {tenant.lastActiveAt
                       ? new Date(tenant.lastActiveAt).toLocaleDateString("en-GB", {
                           day: "numeric",
@@ -224,16 +223,6 @@ export default function TenantsPage() {
                         })
                       : "—"}
                   </td>
-=======
-  {tenant.lastActiveAt
-    ? new Date(tenant.lastActiveAt).toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-    : "—"}
-</td>
->>>>>>> origin/platform-admin
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
                       <Link

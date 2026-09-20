@@ -1,13 +1,20 @@
 // hooks/useEmployeeProfile.ts
 "use client";
 
-import { EmployeeProfile, EmployeeProfileResponse } from "@/lib/api/employee";
+import {
+  EmployeeProfile,
+  getEmployeeProfile,
+  SWAGGER_SAMPLE_EMPLOYEE_PROFILE,
+} from "@/lib/api/employee";
+import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
 
 interface UseEmployeeProfileResult {
   profile: EmployeeProfile | null;
   isLoading: boolean;
   error: string | null;
+  errorCode: string | null;
+  loadSampleProfile: () => void;
   updateProfile: (patch: Partial<EmployeeProfile>) => void;
   refetch: () => void;
 }
@@ -16,6 +23,7 @@ export function useEmployeeProfile(): UseEmployeeProfileResult {
   const [profile, setProfile] = useState<EmployeeProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
@@ -23,18 +31,51 @@ export function useEmployeeProfile(): UseEmployeeProfileResult {
 
     async function load() {
       setIsLoading(true);
+      setError(null);
+      setErrorCode(null);
+
       try {
-        const res = await fetch("/api/employee/profile");
-        if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-
-        const json: EmployeeProfileResponse = await res.json();
-        if (!json.success) throw new Error(json.message || "Failed to load profile");
-
-        if (!cancelled) setProfile(json.data);
+        const data = await getEmployeeProfile();
+        if (!cancelled) {
+          setProfile(data);
+        }
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Something went wrong");
+        if (!cancelled) {
+          if (axios.isAxiosError(err)) {
+            const status = err.response?.status;
+            const backendMessage =
+              err.response?.data?.message || err.response?.data?.error;
+
+            if (status === 401) {
+              setError("Your session has expired. Please sign in again.");
+              setErrorCode("UNAUTHORIZED");
+            } else if (status === 403) {
+              setError("You do not have access to the Employee Portal.");
+              setErrorCode("FORBIDDEN");
+            } else if (status === 404) {
+              setError(
+                backendMessage ||
+                  "Authenticated user is not linked to an employee record.",
+              );
+              setErrorCode("NOT_LINKED");
+            } else {
+              setError(
+                backendMessage ||
+                  `Failed to load employee profile (${status || "error"}).`,
+              );
+              setErrorCode(`HTTP_${status || "UNKNOWN"}`);
+            }
+          } else {
+            setError(
+              err instanceof Error ? err.message : "Something went wrong",
+            );
+            setErrorCode("UNKNOWN");
+          }
+        }
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     }
 
@@ -44,11 +85,25 @@ export function useEmployeeProfile(): UseEmployeeProfileResult {
     };
   }, [reloadKey]);
 
+  const loadSampleProfile = useCallback(() => {
+    setError(null);
+    setErrorCode(null);
+    setProfile(SWAGGER_SAMPLE_EMPLOYEE_PROFILE);
+  }, []);
+
   const updateProfile = useCallback((patch: Partial<EmployeeProfile>) => {
     setProfile((prev) => (prev ? { ...prev, ...patch } : prev));
   }, []);
 
   const refetch = useCallback(() => setReloadKey((k) => k + 1), []);
 
-  return { profile, isLoading, error, updateProfile, refetch };
+  return {
+    profile,
+    isLoading,
+    error,
+    errorCode,
+    loadSampleProfile,
+    updateProfile,
+    refetch,
+  };
 }

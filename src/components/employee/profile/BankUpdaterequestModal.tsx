@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
+import { requestBankDetailsUpdate } from "@/lib/api/employee";
 
 interface BankUpdateRequestModalProps {
   onClose: () => void;
@@ -66,33 +67,10 @@ export default function BankUpdateRequestModal({
     setError(null);
 
     try {
-      const res = await fetch(
-        "/api/v1/employee/profile/bank-details/update-request",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...form,
-            accountNumber: Number(form.accountNumber),
-          }),
-        },
-      );
-
-      if (res.status === 400)
-        throw new Error("Please check the bank details you entered.");
-      if (res.status === 401)
-        throw new Error("Your session has expired. Please sign in again.");
-      if (res.status === 403)
-        throw new Error("You don't have access to request this change.");
-      if (res.status === 404) throw new Error("Employee record not found.");
-      if (res.status === 409) {
-        throw new Error(
-          "You already have a pending request, or these details match your current ones.",
-        );
-      }
-      if (res.status === 500)
-        throw new Error("Something went wrong on our end — try again shortly.");
-      if (res.status !== 201) throw new Error("Failed to submit the request.");
+      await requestBankDetailsUpdate({
+        ...form,
+        accountNumber: form.accountNumber,
+      });
 
       onSubmitted();
       onClose();
@@ -119,7 +97,7 @@ export default function BankUpdateRequestModal({
         </div>
 
         <p className="mb-4 text-sm text-gray-500">
-          This won't change your bank details immediately — it submits a request
+          This won&apos;t change your bank details immediately — it submits a request
           for HR to review and approve.
         </p>
 

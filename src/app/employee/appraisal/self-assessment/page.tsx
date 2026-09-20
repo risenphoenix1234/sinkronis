@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 
-import FooterActions from "@/components/employee/appraisal/FooterActions";
 import ConfirmSubmitModal from "@/components/employee/appraisal/ConfirmSubmitModal";
 import { useSelfAssessment } from "@/components/employee/appraisal/UseSelfAssessment";
 import {
@@ -23,13 +22,19 @@ import OverallRating from "@/components/employee/appraisal/OverallRating";
 import ReflectionQuestions from "@/components/employee/appraisal/ReflectionQuestion";
 import SignOff from "@/components/employee/appraisal/SignOff";
 import FooterAction from "@/components/employee/appraisal/FooterActions";
+
 export default function SelfAssessmentPage() {
   const [open, setOpen] = useState(false);
-
   const { loading, saveDraft, submit } = useSelfAssessment();
 
-  const completed = 7;
-  const total = 10;
+  const handleSaveDraft = async () => {
+    try {
+      await saveDraft();
+      toast.success("Draft saved successfully.");
+    } catch {
+      toast.error("Failed to save draft.");
+    }
+  };
 
   const handleSubmit = async () => {
     const validation = validateSelfAssessment(
@@ -42,18 +47,18 @@ export default function SelfAssessmentPage() {
       validation.errors.forEach((error) => {
         toast.error(error);
       });
-
       return;
     }
 
-    await submit();
+    try {
+      await submit();
+      toast.success("Self-assessment submitted.");
+      setOpen(false);
+    } catch {
+      toast.error("Failed to submit self-assessment.");
+    }
   };
 
-  toast.success("Draft saved successfully.");
-
-  toast.success("Self-assessment submitted.");
-
-  toast.error("Please complete all required fields.");
   return (
     <>
       <main className="min-h-screen bg-slate-50 p-6 pb-28">
@@ -77,9 +82,10 @@ export default function SelfAssessmentPage() {
           <SignOff />
 
           <FooterAction
-            disableSubmit={true}
-            onSaveDraft={() => console.log("Draft Saved")}
-            onSubmit={() => console.log("Submitted")}
+            disableSubmit={loading}
+            loading={loading}
+            onSaveDraft={handleSaveDraft}
+            onSubmit={() => setOpen(true)}
           />
         </div>
       </main>

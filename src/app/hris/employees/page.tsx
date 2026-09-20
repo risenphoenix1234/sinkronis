@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { getEmployees } from "@/lib/api/hris";
 import type { EmployeeListItem } from "@/lib/api/types/hrisTypes";
 import axios from "axios";
-import { BiSearch, BiPlus, BiFilterAlt, BiSortAlt2, BiPencil } from "react-icons/bi";
+import { BiSearch, BiPlus, BiFilterAlt, BiSortAlt2, BiPencil, BiUserCheck } from "react-icons/bi";
 import FilterPanel, { type FilterValues } from "@/components/modals/Hris/FilterPanel";
+import ChangeEmployeeStatusModal from "@/components/modals/Hris/ChangeEmployeeStatusModal";
 interface EmployeeRow {
   id: string;
   employeeId: string;
@@ -62,7 +63,7 @@ function toRow(emp: EmployeeListItem): EmployeeRow {
     name: emp.name,
     role: emp.role,
     department: emp.department?.name ?? "",
-    lifecycleStatus: toLifecycleStatus(emp.status),
+    lifecycleStatus: toLifecycleStatus(emp.lifecycleStatus || emp.status),
     contact: emp.phoneNumber,
     joinedDate: formatJoinedDate(emp.joinedDate),
     joinedDateIso: emp.joinedDate,
@@ -83,12 +84,17 @@ export default function EmployeeListPage() {
   const [rows, setRows] = useState<EmployeeRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [statusModalEmployee, setStatusModalEmployee] = useState<{
+    id: string;
+    name: string;
+    status: LifecycleStatus;
+  } | null>(null);
 
   const loadEmployees = async () => {
     setLoading(true);
     setLoadError(null);
     try {
-      const employees = await getEmployees ({ limit: 100 }); // no destructuring — it's already the array
+      const employees = await getEmployees({ limit: 100 }); // no destructuring — it's already the array
       setRows(employees.map(toRow));
     } catch (error) {
       console.error("loadEmployees failed:", error);
@@ -215,9 +221,8 @@ export default function EmployeeListPage() {
               key={tab}
               type="button"
               onClick={() => setActiveTab(tab)}
-              className={`relative pb-3 text-[14px] font-medium transition ${
-                activeTab === tab ? "text-[#2563EB]" : "text-[#98A2B3] hover:text-[#667085]"
-              }`}
+              className={`relative pb-3 text-[14px] font-medium transition ${activeTab === tab ? "text-[#2563EB]" : "text-[#98A2B3] hover:text-[#667085]"
+                }`}
             >
               {tab}
               {activeTab === tab && (
@@ -271,7 +276,15 @@ export default function EmployeeListPage() {
                       <td className="px-4 py-4 text-[#344054]">{row.department}</td>
                       <td className="px-4 py-4">
                         <span
-                          className={`inline-flex rounded-full px-2.5 py-1 text-[12px] font-medium ${STATUS_STYLES[row.lifecycleStatus]}`}
+                          onClick={() =>
+                            setStatusModalEmployee({
+                              id: row.id,
+                              name: row.name,
+                              status: row.lifecycleStatus,
+                            })
+                          }
+                          title="Click to change status"
+                          className={`inline-flex cursor-pointer items-center rounded-full px-2.5 py-1 text-[12px] font-medium transition hover:opacity-80 hover:ring-1 hover:ring-slate-300 ${STATUS_STYLES[row.lifecycleStatus]}`}
                         >
                           {STATUS_LABEL[row.lifecycleStatus]}
                         </span>
@@ -279,14 +292,31 @@ export default function EmployeeListPage() {
                       <td className="px-4 py-4 text-[#344054]">{row.contact}</td>
                       <td className="px-4 py-4 text-[#344054]">{row.joinedDate}</td>
                       <td className="px-4 py-4">
-                        <button
-                          type="button"
-                          aria-label={`Edit ${row.name}`}
-                          onClick={() => router.push(`/hris/employees/${row.id}`)}
-                          className="text-[#98A2B3] transition hover:text-[#2388D0]"
-                        >
-                          <BiPencil className="h-4 w-4" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          {/* <button
+                            type="button"
+                            aria-label={`Change status for ${row.name}`}
+                            title="Change status"
+                            onClick={() =>
+                              setStatusModalEmployee({
+                                id: row.id,
+                                name: row.name,
+                                status: row.lifecycleStatus,
+                              })
+                            }
+                            className="text-[#98A2B3] transition hover:text-[#2388D0]"
+                          >
+                            <BiUserCheck className="h-4 w-4" />
+                          </button> */}
+                          <button
+                            type="button"
+                            aria-label={`Edit ${row.name}`}
+                            onClick={() => router.push(`/hris/employees/${row.id}`)}
+                            className="text-[#98A2B3] transition hover:text-[#2388D0]"
+                          >
+                            <BiPencil className="h-4 w-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -296,6 +326,17 @@ export default function EmployeeListPage() {
           )}
         </div>
       </div>
+
+      {statusModalEmployee && (
+        <ChangeEmployeeStatusModal
+          open={!!statusModalEmployee}
+          onClose={() => setStatusModalEmployee(null)}
+          employeeId={statusModalEmployee.id}
+          employeeName={statusModalEmployee.name}
+          currentStatus={statusModalEmployee.status}
+          onSuccess={loadEmployees}
+        />
+      )}
     </main>
   );
 }
@@ -316,9 +357,8 @@ function SortableHeader({
       <button
         type="button"
         onClick={() => onSort(sortKey)}
-        className={`flex items-center gap-1 transition hover:text-[#344054] ${
-          activeKey === sortKey ? "text-[#344054]" : ""
-        }`}
+        className={`flex items-center gap-1 transition hover:text-[#344054] ${activeKey === sortKey ? "text-[#344054]" : ""
+          }`}
       >
         {label}
         <BiSortAlt2 className="h-3.5 w-3.5" />

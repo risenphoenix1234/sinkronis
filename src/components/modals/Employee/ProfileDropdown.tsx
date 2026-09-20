@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { User, Settings, LogOut } from "lucide-react";
+import { logoutAndRedirectToLogin } from "@/utils/authSession";
 
 export default function ProfileDropdown() {
   return (
@@ -55,7 +56,10 @@ export default function ProfileDropdown() {
       </button>
 
       {/* Sign Out Link */}
-      <button className="absolute top-3 right-4 text-[11px] font-medium text-[#F04438] hover:text-red-600">
+      <button
+        onClick={() => logoutAndRedirectToLogin("employee_signout")}
+        className="absolute top-3 right-4 text-[11px] font-medium text-[#F04438] hover:text-red-600"
+      >
         Sign out
       </button>
     </div>

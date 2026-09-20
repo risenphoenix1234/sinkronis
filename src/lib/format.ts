@@ -1,6 +1,7 @@
 // lib/format.ts
 
-export function getInitials(fullName: string): string {
+export function getInitials(fullName?: string | null): string {
+  if (!fullName) return "—";
   return fullName
     .split(" ")
     .filter(Boolean)
@@ -9,16 +10,23 @@ export function getInitials(fullName: string): string {
     .join("");
 }
 
-export function formatDate(iso: string): string {
+export function formatDate(iso?: string | null): string {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("en-NG", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "—";
+    return d.toLocaleDateString("en-NG", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  } catch {
+    return "—";
+  }
 }
 
-export function formatMoney(amount: number, currency: string): string {
+export function formatMoney(amount?: number | null, currency?: string | null): string {
+  if (amount == null) return "—";
   return new Intl.NumberFormat("en-NG", {
     style: "currency",
     currency: currency || "NGN",
@@ -27,7 +35,15 @@ export function formatMoney(amount: number, currency: string): string {
 }
 
 export function resourceName(
-  resource: { name: string } | Record<string, never> | undefined
+  resource?: { name?: string } | Record<string, unknown> | null
 ): string {
-  return resource && "name" in resource ? resource.name : "—";
+  if (
+    resource &&
+    typeof resource === "object" &&
+    "name" in resource &&
+    typeof resource.name === "string"
+  ) {
+    return resource.name;
+  }
+  return "—";
 }

@@ -40,7 +40,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Upload, Loader2 } from "lucide-react";
 import { getInitials } from "@/lib/format";
-import { ProfileHeaderData } from "@/lib/api/employee";
+import { ProfileHeaderData, uploadProfilePhoto } from "@/lib/api/employee";
 
 interface ProfileHeaderProps {
   data: ProfileHeaderData;
@@ -89,28 +89,7 @@ export default function ProfileHeader({
     setIsUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append("photo", file);
-
-      const res = await fetch("/api/v1/employee/profile/photo", {
-        method: "PATCH",
-        body: formData,
-      });
-
-      if (res.status === 400)
-        throw new Error("Image missing, too large, or an invalid file.");
-      if (res.status === 401)
-        throw new Error("Your session has expired. Please sign in again.");
-      if (res.status === 403)
-        throw new Error("You don't have access to update this record.");
-      if (res.status === 404) throw new Error("Employee record not found.");
-      if (res.status === 500)
-        throw new Error("Upload failed on our end — try again shortly.");
-      if (!res.ok) throw new Error("Upload failed.");
-
-      // Response body is {} — no URL comes back, so ask the parent to refetch
-      // the profile to pick up the new profileImage. Keep showing the local
-      // preview in the meantime.
+      await uploadProfilePhoto(file);
       onPhotoUploaded();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -152,7 +131,7 @@ export default function ProfileHeader({
             </h2>
 
             <p className="mt-1 text-sm text-gray-500">
-              {data.role.name} • {data.employeeId}
+              {data.role?.name || data.department?.name || "Employee"} • {data.employeeId || "—"}
             </p>
 
             <input

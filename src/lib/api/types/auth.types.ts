@@ -1,5 +1,11 @@
 export interface LoginPayload {
-  organizationSlug: string;
+  organizationSlug?: string;
+  email: string;
+  password: string;
+  twoFactorMethod?: "AUTHENTICATOR_APP" | "SMS_OTP" | "EMAIL_OTP";
+}
+
+export interface EmployeeLoginPayload {
   email: string;
   password: string;
 }
@@ -11,6 +17,8 @@ export interface LoginUser {
   firstName: string;
   lastName: string;
   role: string;
+  accountType: "PLATFORM_ADMIN" | "TENANT_USER";
+  isPlatformAdmin: boolean;
   lastLoginAt: string;
 }
 
@@ -21,17 +29,7 @@ export interface LoginResponse {
     refreshToken: string;
   };
 }
-export interface LoginUser {
-  id: string;
-  organizationId: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-  accountType: "PLATFORM_ADMIN" | "TENANT_USER";
-  isPlatformAdmin: boolean;
-  lastLoginAt: string;
-}
+
 export interface MeResponse {
   user: LoginUser;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
@@ -15,27 +15,37 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-const handleSignIn = async () => {
-  setError(null);
-  setLoading(true);
-  try {
-    const res = await login({ organizationSlug, email, password });
-    localStorage.setItem("accessToken", res.tokens.accessToken);
-    localStorage.setItem("refreshToken", res.tokens.refreshToken);
-
-    if (res.user.accountType === "PLATFORM_ADMIN") {
-      router.push("/platform-admin/tenants");
-    } else {
-      router.push("/tenant-admin/overview");
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("expired") === "true") {
+        setError("Your session has expired. Please sign in again.");
+      }
     }
-  } catch (err: any) {
-    setError(
-      err?.response?.data?.message || "Invalid credentials. Please try again."
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+  }, []);
+
+  const handleSignIn = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await login({ organizationSlug, email, password });
+      localStorage.setItem("accessToken", res.tokens.accessToken);
+      localStorage.setItem("refreshToken", res.tokens.refreshToken);
+      localStorage.setItem("user", JSON.stringify(res.user));
+
+      if (res.user.accountType === "PLATFORM_ADMIN") {
+        router.push("/platform-admin/tenants");
+      } else {
+        router.push("/tenant-admin/overview");
+      }
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.message || "Invalid credentials. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#F7F9FC] px-6 py-12">
@@ -136,6 +146,16 @@ const handleSignIn = async () => {
             className="hover:text-[#2388D0] hover:underline"
           >
             Create account
+          </Link>
+        </div>
+
+        <div className="mt-5 border-t border-[#E5E9F0] pt-4 text-center text-[13px] text-[#667085]">
+          Are you an employee?{" "}
+          <Link
+            href="/employee/login"
+            className="font-medium text-[#2183C6] hover:underline"
+          >
+            Sign in to Employee Portal →
           </Link>
         </div>
       </div>
