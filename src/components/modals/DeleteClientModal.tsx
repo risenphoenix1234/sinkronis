@@ -1,18 +1,27 @@
-// src/components/modals/DeleteClientModal.tsx
 "use client";
+
+import { useState } from "react";
 
 interface DeleteClientModalProps {
   open: boolean;
-  onClose: () => void;
   clientName?: string;
+  onClose: () => void;
+  onConfirm: () => void;
 }
 
-export default function DeleteClientModal({
-  open,
-  onClose,
-  clientName = "Zenith Technologies Ltd",
-}: DeleteClientModalProps) {
+export default function DeleteClientModal({ open, clientName, onClose, onConfirm }: DeleteClientModalProps) {
+  const [deleting, setDeleting] = useState(false);
+
   if (!open) return null;
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await onConfirm();
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30">
@@ -22,9 +31,7 @@ export default function DeleteClientModal({
         </div>
         <h2 className="mb-1 text-base font-semibold">Delete Client?</h2>
         <p className="mb-4 text-xs text-slate-500">
-          This will permanently remove{" "}
-          <span className="font-semibold">{clientName}</span> and all related
-          records from your clients list (static demo only).
+          This will permanently remove <span className="font-semibold">{clientName}</span> and all related records from your clients list.
         </p>
 
         <div className="flex justify-center gap-2 text-xs">
@@ -37,9 +44,11 @@ export default function DeleteClientModal({
           </button>
           <button
             type="button"
-            className="rounded bg-rose-600 px-4 py-1.5 font-medium text-white hover:bg-rose-700"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="rounded bg-rose-600 px-4 py-1.5 font-medium text-white hover:bg-rose-700 disabled:opacity-60"
           >
-            Delete (static)
+            {deleting ? "Deleting..." : "Delete"}
           </button>
         </div>
       </div>

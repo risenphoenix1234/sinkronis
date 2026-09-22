@@ -1,84 +1,99 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FiEye, FiEdit2, FiTrash2 } from "react-icons/fi";
-import AddClientModal from "@/components/modals/AddClientModal";
+import AddClientModal, { NewClientInput } from "@/components/modals/AddClientModal";
 import EditClientModal from "@/components/modals/EditClientModal";
 import DeleteClientModal from "@/components/modals/DeleteClientModal";
+import { getCustomers, createCustomer, updateCustomer, deleteCustomer } from "@/lib/api/accounting";
+import { Customer, CustomerSummary, UpdateCustomerPayload } from "@/lib/api/types/accounting.types";
 
-type ClientRow = {
-  id: string;
-  name: string;
-  tin: string;
-  contact: string;
-  email: string;
-  status: "Active" | "Inactive";
-  since: string;
-};
-
-const staticClients: ClientRow[] = [
-  {
-    id: "CLT-001",
-    name: "Zenith Technologies Ltd",
-    tin: "TIN-2034567890",
-    contact: "Mr. Chidi Obi",
-    email: "finance@zenithtech.ng",
-    status: "Active",
-    since: "10 Jan 2026",
-  },
-  {
-    id: "CLT-002",
-    name: "Prestige Global Services",
-    tin: "TIN-3045678901",
-    contact: "Mrs. Funke Adeyemi",
-    email: "accounts@prestigeglobal.ng",
-    status: "Active",
-    since: "15 Feb 2026",
-  },
-  {
-    id: "CLT-003",
-    name: "Blustar Logistics",
-    tin: "TIN-4056789012",
-    contact: "Mr. Tunde Bankole",
-    email: "billing@blustarlogistics.com",
-    status: "Active",
-    since: "01 Mar 2026",
-  },
-  {
-    id: "CLT-004",
-    name: "Nexus Capital Partners",
-    tin: "TIN-5067890123",
-    contact: "Ms. Adaeze Nwosu",
-    email: "finance@nexuscapital.ng",
-    status: "Inactive",
-    since: "20 Mar 2026",
-  },
-];
+type StatusFilter = "ALL" | "ACTIVE" | "INACTIVE";
 
 export default function AccountingClientsPage() {
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [summary, setSummary] = useState<CustomerSummary>({ totalCustomers: 0, activeCustomers: 0 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
+
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [activeClient, setActiveClient] = useState<ClientRow | null>(null);
+  const [activeClient, setActiveClient] = useState<Customer | null>(null);
 
-  const openEdit = (client: ClientRow) => {
+  const fetchCustomers = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await getCustomers({ search: search || undefined });
+      setCustomers(res.data.customers);
+      setSummary(res.data.summary);
+    } catch (err) {
+      setError("Failed to load clients.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const debounce = setTimeout(fetchCustomers, 400);
+    return () => clearTimeout(debounce);
+  }, [search]);
+
+  const filteredCustomers = customers.filter((c) => statusFilter === "ALL" || c.status === statusFilter);
+
+  const handleAdd = async (input: NewClientInput) => {
+    try {
+      await createCustomer(input);
+      setAddOpen(false);
+      await fetchCustomers();
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Failed to create client.");
+    }
+  };
+
+  const openEdit = (client: Customer) => {
     setActiveClient(client);
     setEditOpen(true);
   };
 
-  const openDelete = (client: ClientRow) => {
+const handleEdit = async (id: string, updates: UpdateCustomerPayload) => {
+    try {
+      await updateCustomer(id, updates);
+      setEditOpen(false);
+      await fetchCustomers();
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Failed to update client.");
+    }
+  };
+
+  const openDelete = (client: Customer) => {
     setActiveClient(client);
     setDeleteOpen(true);
   };
 
+  const handleDelete = async () => {
+    if (!activeClient) return;
+    try {
+      await deleteCustomer(activeClient.id);
+      setDeleteOpen(false);
+      await fetchCustomers();
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Failed to delete client.");
+    }
+  };
+
   return (
     <section className="space-y-6">
-      {/* Title row */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-slate-900">Clients</h1>
-          <p className="mt-1 text-xs text-slate-500">4 clients • 3 active</p>
+          <p className="mt-1 text-xs text-slate-500">
+            {summary.totalCustomers} clients • {summary.activeCustomers} active
+          </p>
         </div>
 
         <button
@@ -90,33 +105,46 @@ export default function AccountingClientsPage() {
         </button>
       </div>
 
-      {/* Search + filters */}
       <div className="flex flex-wrap items-center justify-between gap-4 text-sm">
         <div className="relative w-full max-w-md">
           <input
             type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name or Tax ID..."
             className="w-full rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 outline-none placeholder:text-slate-400"
           />
-          <span className="pointer-events-none absolute right-4 top-2.5 text-xs text-slate-400">
-            🔍
-          </span>
+          <span className="pointer-events-none absolute right-4 top-2.5 text-xs text-slate-400">🔍</span>
         </div>
 
         <div className="flex items-center gap-2 text-xs">
-          <button className="rounded-full border border-slate-200 bg-white px-4 py-1.5 text-slate-700">
+          <button
+            onClick={() => setStatusFilter("ALL")}
+            className={`rounded-full border px-4 py-1.5 ${
+              statusFilter === "ALL" ? "border-slate-300 bg-slate-100 font-semibold text-slate-800" : "border-slate-200 bg-white text-slate-700"
+            }`}
+          >
             All
           </button>
-          <button className="rounded-full border border-emerald-100 bg-emerald-50 px-4 py-1.5 font-semibold text-emerald-700">
+          <button
+            onClick={() => setStatusFilter("ACTIVE")}
+            className={`rounded-full border px-4 py-1.5 ${
+              statusFilter === "ACTIVE" ? "border-emerald-100 bg-emerald-50 font-semibold text-emerald-700" : "border-slate-200 bg-white text-slate-700"
+            }`}
+          >
             Active
           </button>
-          <button className="rounded-full border border-slate-200 bg-white px-4 py-1.5 text-slate-700">
+          <button
+            onClick={() => setStatusFilter("INACTIVE")}
+            className={`rounded-full border px-4 py-1.5 ${
+              statusFilter === "INACTIVE" ? "border-slate-300 bg-slate-100 font-semibold text-slate-800" : "border-slate-200 bg-white text-slate-700"
+            }`}
+          >
             Inactive
           </button>
         </div>
       </div>
 
-      {/* Table */}
       <div className="overflow-hidden rounded-xl bg-white shadow-sm">
         <table className="min-w-full text-left text-sm">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
@@ -132,81 +160,88 @@ export default function AccountingClientsPage() {
             </tr>
           </thead>
           <tbody>
-            {staticClients.map((client) => (
-              <tr
-                key={client.id}
-                className="border-t border-slate-100 text-sm hover:bg-slate-50/80"
-              >
-                <td className="px-6 py-3 text-sky-600">
-                  <Link href={`/accounting/clients/${client.id}`}>
-                    {client.id}
-                  </Link>
-                </td>
-                <td className="px-6 py-3">{client.name}</td>
-                <td className="px-6 py-3">{client.tin}</td>
-                <td className="px-6 py-3">{client.contact}</td>
-                <td className="px-6 py-3">{client.email}</td>
-                <td className="px-6 py-3">
-                  <span
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                      client.status === "Active"
-                        ? "bg-emerald-50 text-emerald-700"
-                        : "bg-slate-100 text-slate-600"
-                    }`}
-                  >
-                    {client.status}
-                  </span>
-                </td>
-                <td className="px-6 py-3">{client.since}</td>
-                <td className="px-6 py-3 text-right">
-                  <div className="inline-flex items-center gap-3 text-slate-400">
-                    {/* eye icon */}
-                    <Link
-                      href={`/accounting/clients/${client.id}`}
-                      className="rounded-full p-1.5 hover:bg-slate-100 hover:text-sky-600"
-                      aria-label="View client"
-                    >
-                      <FiEye className="h-4 w-4" />
-                    </Link>
-
-                    {/* pencil icon */}
-                    <button
-                      type="button"
-                      onClick={() => openEdit(client)}
-                      className="rounded-full p-1.5 hover:bg-slate-100 hover:text-sky-600"
-                      aria-label="Edit client"
-                    >
-                      <FiEdit2 className="h-4 w-4" />
-                    </button>
-
-                    {/* trash icon */}
-                    <button
-                      type="button"
-                      onClick={() => openDelete(client)}
-                      className="rounded-full p-1.5 hover:bg-slate-100 hover:text-rose-600"
-                      aria-label="Delete client"
-                    >
-                      <FiTrash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </td>
+            {loading && (
+              <tr>
+                <td colSpan={8} className="px-6 py-8 text-center text-sm text-slate-400">Loading clients...</td>
               </tr>
-            ))}
+            )}
+
+            {!loading && error && (
+              <tr>
+                <td colSpan={8} className="px-6 py-8 text-center text-sm text-red-500">{error}</td>
+              </tr>
+            )}
+
+          {!loading && !error && filteredCustomers.map((client) => (
+  <tr key={client.id} className="border-t border-slate-100 text-sm hover:bg-slate-50/80">
+    <td className="px-6 py-3 text-sky-600">
+      <Link href={`/accounting/clients/${client.id}`}>{client.customerId}</Link>
+    </td>
+    <td className="px-6 py-3">{client.companyName}</td>
+    <td className="px-6 py-3">{client.taxId ?? "—"}</td>
+    <td className="px-6 py-3">{client.contactPerson ?? "—"}</td>
+    <td className="px-6 py-3">{client.email}</td>
+    <td className="px-6 py-3">
+      <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+        client.status === "ACTIVE" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"
+      }`}>
+        {client.status === "ACTIVE" ? "Active" : "Inactive"}
+      </span>
+    </td>
+    <td className="px-6 py-3">
+      {new Date(client.since).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+    </td>
+    <td className="px-6 py-3 text-right">
+      <div className="inline-flex items-center gap-3 text-slate-400">
+        <Link
+          href={`/accounting/clients/${client.id}`}
+          className="rounded-full p-1.5 hover:bg-slate-100 hover:text-sky-600"
+          aria-label="View client"
+        >
+          <FiEye className="h-4 w-4" />
+        </Link>
+        <button
+          type="button"
+          onClick={() => openEdit(client)}
+          className="rounded-full p-1.5 hover:bg-slate-100 hover:text-sky-600"
+          aria-label="Edit client"
+        >
+          <FiEdit2 className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={() => openDelete(client)}
+          className="rounded-full p-1.5 hover:bg-slate-100 hover:text-rose-600"
+          aria-label="Delete client"
+        >
+          <FiTrash2 className="h-4 w-4" />
+        </button>
+      </div>
+    </td>
+  </tr>
+))}
+
+            {!loading && !error && filteredCustomers.length === 0 && (
+              <tr>
+                <td colSpan={8} className="px-6 py-8 text-center text-sm text-slate-400">No clients yet.</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
-      {/* Modals */}
-      <AddClientModal open={addOpen} onClose={() => setAddOpen(false)} />
+      <AddClientModal open={addOpen} onClose={() => setAddOpen(false)} onSave={handleAdd} />
       <EditClientModal
         open={editOpen}
+        client={activeClient}
         onClose={() => setEditOpen(false)}
-        clientName={activeClient?.name}
+        onSave={handleEdit}
       />
       <DeleteClientModal
         open={deleteOpen}
+        clientName={activeClient?.companyName}
         onClose={() => setDeleteOpen(false)}
-        clientName={activeClient?.name}
+        onConfirm={handleDelete}
       />
     </section>
   );

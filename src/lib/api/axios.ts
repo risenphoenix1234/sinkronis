@@ -45,7 +45,7 @@ api.interceptors.response.use(
           { refreshToken: storedRefreshToken }
         );
 
-        const { accessToken, refreshToken: newRefreshToken } = res.data;
+        const { accessToken, refreshToken: newRefreshToken } = res.data.tokens;
         localStorage.setItem("accessToken", accessToken);
         localStorage.setItem("refreshToken", newRefreshToken);
 
@@ -68,10 +68,6 @@ api.interceptors.response.use(
 
     return Promise.reject(error);
   }
-
-  
 );
-
-
 
 export default api;

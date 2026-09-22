@@ -1,80 +1,107 @@
-// src/components/modals/EditClientModal.tsx
 "use client";
+
+import { useEffect, useState } from "react";
+import { Customer } from "@/lib/api/types/accounting.types";
+import { UpdateCustomerPayload } from "@/lib/api/types/accounting.types";
 
 interface EditClientModalProps {
   open: boolean;
+  client: Customer | null;
   onClose: () => void;
-  // optional: pass prefilled name for display
-  clientName?: string;
+  onSave: (id: string, updates: UpdateCustomerPayload) => void;
 }
 
-export default function EditClientModal({
-  open,
-  onClose,
-  clientName = "Zenith Technologies Ltd",
-}: EditClientModalProps) {
-  if (!open) return null;
+export default function EditClientModal({ open, client, onClose, onSave }: EditClientModalProps) {
+  const [companyName, setCompanyName] = useState("");
+  const [taxId, setTaxId] = useState("");
+  const [contactPerson, setContactPerson] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (client) {
+      setCompanyName(client.companyName);
+      setTaxId(client.taxId ?? "");
+      setContactPerson(client.contactPerson ?? "");
+      setEmail(client.email);
+      setPhone(client.phone ?? "");
+      setAddress(client.address ?? "");
+    }
+  }, [client]);
+
+  if (!open || !client) return null;
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await onSave(client.id, {
+        companyName: companyName.trim(),
+        taxId: taxId.trim() || undefined,
+        contactPerson: contactPerson.trim() || undefined,
+        email: email.trim(),
+        phone: phone.trim() || undefined,
+        address: address.trim() || undefined,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30">
       <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg text-sm">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-base font-semibold">Edit Client</h2>
-          <button
-            onClick={onClose}
-            className="text-xs text-slate-400 hover:text-slate-600"
-          >
+          <button onClick={onClose} className="text-xs text-slate-400 hover:text-slate-600">
             ✕
           </button>
         </div>
 
-        <form className="space-y-3">
+        <div className="space-y-3">
           <div>
-            <label className="mb-1 block text-xs text-slate-500">
-              Company Name
-            </label>
+            <label className="mb-1 block text-xs text-slate-500">Company Name</label>
             <input
-              defaultValue={clientName}
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
               className="w-full rounded border border-slate-200 px-3 py-2 text-xs"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-xs text-slate-500">
-              Tax ID (TIN)
-            </label>
+            <label className="mb-1 block text-xs text-slate-500">Tax ID (TIN)</label>
             <input
-              defaultValue="TIN-2034567890"
+              value={taxId}
+              onChange={(e) => setTaxId(e.target.value)}
               className="w-full rounded border border-slate-200 px-3 py-2 text-xs"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-xs text-slate-500">
-              Contact Person
-            </label>
+            <label className="mb-1 block text-xs text-slate-500">Contact Person</label>
             <input
-              defaultValue="Mr. Chidi Obi"
+              value={contactPerson}
+              onChange={(e) => setContactPerson(e.target.value)}
               className="w-full rounded border border-slate-200 px-3 py-2 text-xs"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-xs text-slate-500">
-              Email Address
-            </label>
+            <label className="mb-1 block text-xs text-slate-500">Email Address</label>
             <input
-              defaultValue="finance@zenithtech.ng"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded border border-slate-200 px-3 py-2 text-xs"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-xs text-slate-500">
-              Phone Number
-            </label>
+            <label className="mb-1 block text-xs text-slate-500">Phone Number</label>
             <input
-              defaultValue="+234 800 123 4567"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
               className="w-full rounded border border-slate-200 px-3 py-2 text-xs"
             />
           </div>
@@ -82,7 +109,8 @@ export default function EditClientModal({
           <div>
             <label className="mb-1 block text-xs text-slate-500">Address</label>
             <textarea
-              defaultValue="Victoria Island, Lagos"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
               className="w-full rounded border border-slate-200 px-3 py-2 text-xs"
               rows={2}
             />
@@ -98,12 +126,14 @@ export default function EditClientModal({
             </button>
             <button
               type="button"
-              className="rounded bg-sky-600 px-4 py-1.5 font-medium text-white hover:bg-sky-700"
+              onClick={handleSave}
+              disabled={saving}
+              className="rounded bg-sky-600 px-4 py-1.5 font-medium text-white hover:bg-sky-700 disabled:opacity-60"
             >
-              Save Changes (static)
+              {saving ? "Saving..." : "Save Changes"}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

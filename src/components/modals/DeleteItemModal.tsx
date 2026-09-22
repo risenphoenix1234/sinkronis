@@ -1,18 +1,27 @@
-// src/components/modals/DeleteItemModal.tsx
 "use client";
+
+import { useState } from "react";
 
 interface DeleteItemModalProps {
   open: boolean;
-  onClose: () => void;
   itemName?: string;
+  onClose: () => void;
+  onConfirm: () => void;
 }
 
-export default function DeleteItemModal({
-  open,
-  onClose,
-  itemName = "HR Software Licence",
-}: DeleteItemModalProps) {
+export default function DeleteItemModal({ open, itemName, onClose, onConfirm }: DeleteItemModalProps) {
+  const [deleting, setDeleting] = useState(false);
+
   if (!open) return null;
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await onConfirm();
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30">
@@ -22,9 +31,7 @@ export default function DeleteItemModal({
         </div>
         <h2 className="mb-1 text-base font-semibold">Delete Item?</h2>
         <p className="mb-4 text-xs text-slate-500">
-          This will remove{" "}
-          <span className="font-semibold">{itemName}</span> from your Items &amp;
-          Services list (static demo only).
+          This will remove <span className="font-semibold">{itemName}</span> from your Items &amp; Services list.
         </p>
 
         <div className="flex justify-center gap-2 text-xs">
@@ -37,9 +44,11 @@ export default function DeleteItemModal({
           </button>
           <button
             type="button"
-            className="rounded bg-rose-600 px-4 py-1.5 font-medium text-white hover:bg-rose-700"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="rounded bg-rose-600 px-4 py-1.5 font-medium text-white hover:bg-rose-700 disabled:opacity-60"
           >
-            Delete (static)
+            {deleting ? "Deleting..." : "Delete"}
           </button>
         </div>
       </div>
