@@ -939,3 +939,28 @@ export interface MyPlanBillingAnalyticsResponse {
   message: string;
   data: MyPlanBillingAnalytics;
 }
+export interface CacVerificationPayload {
+  cacNumber: string;
+}
+
+export interface CacVerificationData {
+  verified: boolean;
+  verificationStatus: "VERIFIED" | "MISMATCH" | "FAILED" | "PROVIDER_UNAVAILABLE";
+  available: boolean;
+  reasonCode: string;
+  retryable: boolean;
+  availableActions: string[];
+  nextAction: string | null;
+  registrationNumber: string;
+  registeredName: string | null;
+  registryStatus: string | null;
+  provider: string;
+  checkedAt: string;
+  verifiedAt: string | null;
+}
+
+export interface CacVerificationResponse {
+  success: boolean;
+  message: string;
+  data: CacVerificationData;
+}

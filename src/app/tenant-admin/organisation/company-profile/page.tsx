@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getOrganizationProfile, updateOrganizationProfile } from "@/lib/api/admin";
+import { getOrganizationProfile, updateOrganizationProfile, verifyCacNumber } from "@/lib/api/admin";
+import { CacVerificationData } from "@/lib/api/types/admin.types";
 
 const industryOptions = [
   "Technology",
@@ -60,6 +61,10 @@ export default function CompanyProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
+  const [verifying, setVerifying] = useState(false);
+  const [verifyResult, setVerifyResult] = useState<CacVerificationData | null>(null);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+
   useEffect(() => {
     const load = async () => {
       setLoading(true);
@@ -106,6 +111,21 @@ export default function CompanyProfilePage() {
       setError(err?.response?.data?.message || "Failed to save changes.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleVerifyCac = async () => {
+    if (!cacNumber.trim() || verifying) return;
+    setVerifying(true);
+    setVerifyError(null);
+    setVerifyResult(null);
+    try {
+      const res = await verifyCacNumber({ cacNumber: cacNumber.trim() });
+      setVerifyResult(res.data);
+    } catch (err: any) {
+      setVerifyError(err?.response?.data?.message || "Failed to verify CAC number.");
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -157,11 +177,55 @@ export default function CompanyProfilePage() {
         </Field>
 
         <Field label="CAC Number">
-          <input
-            className={inputClass}
-            value={cacNumber}
-            onChange={(e) => setCacNumber(e.target.value)}
-          />
+          <div className="flex gap-2">
+            <input
+              className={inputClass}
+              value={cacNumber}
+              onChange={(e) => {
+                setCacNumber(e.target.value);
+                setVerifyResult(null);
+                setVerifyError(null);
+              }}
+              placeholder="e.g. RC-1234567"
+            />
+            <button
+              type="button"
+              onClick={handleVerifyCac}
+              disabled={verifying || !cacNumber.trim()}
+              className="shrink-0 rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {verifying ? "Verifying..." : "Verify CAC"}
+            </button>
+          </div>
+
+          {verifyError && (
+            <p className="mt-1.5 text-xs text-red-600">{verifyError}</p>
+          )}
+
+          {verifyResult && (
+            <div className="mt-1.5">
+              {verifyResult.verificationStatus === "VERIFIED" && (
+                <p className="text-xs text-emerald-600">
+                  ✓ Verified — matches "{verifyResult.registeredName}"
+                </p>
+              )}
+              {verifyResult.verificationStatus === "MISMATCH" && (
+                <p className="text-xs text-amber-600">
+                  ⚠ Record found, but company details don't match{verifyResult.registeredName ? ` (registered as "${verifyResult.registeredName}")` : ""}.
+                </p>
+              )}
+              {verifyResult.verificationStatus === "FAILED" && (
+                <p className="text-xs text-red-600">
+                  ✕ Verification failed.{verifyResult.retryable ? " You can try again." : ""}
+                </p>
+              )}
+              {verifyResult.verificationStatus === "PROVIDER_UNAVAILABLE" && (
+                <p className="text-xs text-slate-500">
+                  CAC service is currently unavailable. Please try again later.
+                </p>
+              )}
+            </div>
+          )}
         </Field>
 
         <Field label="Tax ID (TIN)">

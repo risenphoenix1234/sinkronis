@@ -55,6 +55,8 @@ import {
   MyPlanPaymentMethodResponse,
   MyPlanPlansResponse,
   MyPlanPreviewResponse,
+  CacVerificationPayload,
+  CacVerificationResponse,
 } from "./types/admin.types";
 
 const BASE = "/admin";
@@ -441,4 +443,12 @@ export const downloadInvoicePdf2 = async (invoiceId: string) => {
     responseType: "blob",
   });
   return response.data;
+};
+
+export const verifyCacNumber = async (payload: CacVerificationPayload) => {
+  const { data } = await api.post<CacVerificationResponse>(
+    `${BASE}/organization/cac-verification`,
+    payload
+  );
+  return data;
 };

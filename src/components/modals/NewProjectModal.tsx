@@ -1,121 +1,118 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getCustomers } from "@/lib/api/accounting";
+import { Customer, CreateProjectPayload } from "@/lib/api/types/accounting.types";
 
 type Props = {
   open: boolean;
   onClose: () => void;
+  onCreate: (payload: CreateProjectPayload) => void;
 };
 
-export default function NewProjectModal({ open, onClose }: Props) {
-  const [form, setForm] = useState({
-    projectName: "",
-    client: "",
-    assignedAgent: "",
-    projectValue: "",
-    startDate: "",
-    endDate: "",
-    status: "",
-  });
+export default function NewProjectModal({ open, onClose, onCreate }: Props) {
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [name, setName] = useState("");
+  const [clientId, setClientId] = useState("");
+  const [value, setValue] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [status, setStatus] = useState<"ACTIVE" | "ON_HOLD" | "COMPLETED">("ACTIVE");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      getCustomers().then((res) => setCustomers(res.data.customers)).catch(() => {});
+    }
+  }, [open]);
 
   if (!open) return null;
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const resetForm = () => {
+    setName("");
+    setClientId("");
+    setValue("");
+    setStartDate("");
+    setEndDate("");
+    setStatus("ACTIVE");
   };
 
-  const handleSubmit = () => {
-    // hook up to your API here
-    onClose();
+  const handleSubmit = async () => {
+    if (!name.trim() || !clientId || !value.trim() || !startDate) return;
+    setSaving(true);
+    try {
+      await onCreate({
+        name: name.trim(),
+        clientId,
+        value: value.trim(),
+        startDate,
+        endDate: endDate || undefined,
+        status,
+      });
+      resetForm();
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
-        {/* Header */}
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-slate-900">New Project</h2>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 text-xl leading-none"
-          >
-            ×
-          </button>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
         </div>
 
-        {/* Fields */}
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm text-slate-600">
-              Project Name
-            </label>
+            <label className="mb-1 block text-sm text-slate-600">Project Name</label>
             <input
-              name="projectName"
-              value={form.projectName}
-              onChange={handleChange}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-400"
             />
           </div>
 
           <div>
             <label className="mb-1 block text-sm text-slate-600">Client</label>
-            <input
-              name="client"
-              value={form.client}
-              onChange={handleChange}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-400"
-            />
+            <select
+              value={clientId}
+              onChange={(e) => setClientId(e.target.value)}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-400 bg-white"
+            >
+              <option value="">Select a client</option>
+              {customers.map((c) => (
+                <option key={c.id} value={c.id}>{c.companyName}</option>
+              ))}
+            </select>
           </div>
 
           <div>
-            <label className="mb-1 block text-sm text-slate-600">
-              Assigned Agent
-            </label>
+            <label className="mb-1 block text-sm text-slate-600">Project Value (₦)</label>
             <input
-              name="assignedAgent"
-              value={form.assignedAgent}
-              onChange={handleChange}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
               className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-400"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm text-slate-600">
-              Project Value (₦)
-            </label>
-            <input
-              name="projectValue"
-              value={form.projectValue}
-              onChange={handleChange}
-              type="number"
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-400"
+              placeholder="2500000.00"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-sm text-slate-600">
-                Start Date
-              </label>
+              <label className="mb-1 block text-sm text-slate-600">Start Date</label>
               <input
-                name="startDate"
-                value={form.startDate}
-                onChange={handleChange}
                 type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
                 className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-400"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm text-slate-600">
-                End Date
-              </label>
+              <label className="mb-1 block text-sm text-slate-600">End Date</label>
               <input
-                name="endDate"
-                value={form.endDate}
-                onChange={handleChange}
                 type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
                 className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-400"
               />
             </div>
@@ -124,20 +121,17 @@ export default function NewProjectModal({ open, onClose }: Props) {
           <div>
             <label className="mb-1 block text-sm text-slate-600">Status</label>
             <select
-              name="status"
-              value={form.status}
-              onChange={handleChange}
+              value={status}
+              onChange={(e) => setStatus(e.target.value as typeof status)}
               className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-400 bg-white"
             >
-              <option value="">Select status</option>
-              <option value="Active">Active</option>
-              <option value="On Hold">On Hold</option>
-              <option value="Completed">Completed</option>
+              <option value="ACTIVE">Active</option>
+              <option value="ON_HOLD">On Hold</option>
+              <option value="COMPLETED">Completed</option>
             </select>
           </div>
         </div>
 
-        {/* Footer */}
         <div className="mt-6 flex justify-end gap-3">
           <button
             onClick={onClose}
@@ -147,9 +141,10 @@ export default function NewProjectModal({ open, onClose }: Props) {
           </button>
           <button
             onClick={handleSubmit}
-            className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
+            disabled={saving || !name.trim() || !clientId || !value.trim() || !startDate}
+            className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-60"
           >
-            Create Project
+            {saving ? "Creating..." : "Create Project"}
           </button>
         </div>
       </div>
