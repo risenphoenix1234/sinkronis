@@ -1,4 +1,16 @@
-import { EmployeeLeaveCalendarData } from "@/lib/api/types/employeeTypes";
+export interface EmployeeLeaveCalendarEntry {
+  status?: string;
+  dates?: string[];
+  startDate?: string;
+  endDate?: string;
+  [key: string]: unknown;
+}
+
+export interface EmployeeLeaveCalendarData {
+  month?: string;
+  entries?: EmployeeLeaveCalendarEntry[];
+  [key: string]: unknown;
+}
 
 interface MiniCalendarProps {
   calendar?: EmployeeLeaveCalendarData | null;
@@ -51,7 +63,7 @@ export function MiniCalendar({
   const pendingDays = new Set<number>();
 
   if (calendar?.entries && Array.isArray(calendar.entries)) {
-    calendar.entries.forEach((entry) => {
+    calendar.entries.forEach((entry: EmployeeLeaveCalendarEntry) => {
       const statusUpper = (entry.status || "").toUpperCase();
       const datesToInspect: string[] = [];
 
@@ -76,6 +88,13 @@ export function MiniCalendar({
     });
   }
 
+  const today = new Date();
+  const todayYear = today.getFullYear();
+  const todayMonth = today.getMonth() + 1;
+  const todayDay = today.getDate();
+  const isCurrentMonth = year === todayYear && month === todayMonth;
+  const currentMonthStr = `${todayYear}-${String(todayMonth).padStart(2, "0")}`;
+
   const handlePrevMonth = () => {
     if (!onMonthChange) return;
     const prevDate = new Date(year, month - 2, 1);
@@ -90,50 +109,85 @@ export function MiniCalendar({
     onMonthChange(nextStr);
   };
 
+  const handleToday = () => {
+    if (!onMonthChange) return;
+    onMonthChange(currentMonthStr);
+  };
+
   const getDayClass = (day: number | null) => {
     if (!day) return "";
-    if (pendingDays.has(day)) return "bg-yellow-400 text-white rounded-md font-semibold";
-    if (approvedDays.has(day)) return "bg-blue-500 text-white rounded-md font-semibold";
-    return "text-gray-600";
+    const isToday = isCurrentMonth && day === todayDay;
+
+    if (pendingDays.has(day)) {
+      return isToday
+        ? "bg-yellow-400 text-white rounded-md font-bold ring-2 ring-yellow-500 ring-offset-1"
+        : "bg-yellow-400 text-white rounded-md font-semibold";
+    }
+    if (approvedDays.has(day)) {
+      return isToday
+        ? "bg-blue-500 text-white rounded-md font-bold ring-2 ring-blue-500 ring-offset-1"
+        : "bg-blue-500 text-white rounded-md font-semibold";
+    }
+    if (isToday) {
+      return "bg-sky-600 text-white rounded-full font-bold shadow-xs ring-2 ring-sky-500/30";
+    }
+    return "text-gray-600 hover:bg-gray-100 rounded-md";
   };
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
       {/* Month nav */}
       <div className="flex items-center justify-between mb-4">
-        <button
-          type="button"
-          onClick={handlePrevMonth}
-          aria-label="Previous month"
-          className="text-gray-400 hover:text-gray-700 p-1 transition-colors rounded-lg hover:bg-gray-100"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            className="w-4 h-4"
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-gray-800">
+            {monthLabel}
+          </span>
+          {!isCurrentMonth && onMonthChange && (
+            <button
+              type="button"
+              onClick={handleToday}
+              className="rounded bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold text-sky-600 hover:bg-sky-100 transition border border-sky-200"
+              title="Jump to present day"
+            >
+              Today
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={handlePrevMonth}
+            aria-label="Previous month"
+            className="text-gray-400 hover:text-gray-700 p-1 transition-colors rounded-lg hover:bg-gray-100"
           >
-            <path d="m15 18-6-6 6-6" />
-          </svg>
-        </button>
-        <span className="text-sm font-semibold text-gray-800">{monthLabel}</span>
-        <button
-          type="button"
-          onClick={handleNextMonth}
-          aria-label="Next month"
-          className="text-gray-400 hover:text-gray-700 p-1 transition-colors rounded-lg hover:bg-gray-100"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            className="w-4 h-4"
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              className="w-4 h-4"
+            >
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={handleNextMonth}
+            aria-label="Next month"
+            className="text-gray-400 hover:text-gray-700 p-1 transition-colors rounded-lg hover:bg-gray-100"
           >
-            <path d="m9 18 6-6-6-6" />
-          </svg>
-        </button>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              className="w-4 h-4"
+            >
+              <path d="m9 18 6-6-6-6" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Weekday headers */}
@@ -168,7 +222,11 @@ export function MiniCalendar({
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 mt-4 pt-3 border-t border-gray-50">
+      <div className="flex items-center flex-wrap gap-4 mt-4 pt-3 border-t border-gray-50">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-sky-600 ring-1 ring-sky-300" />
+          <span className="text-[11px] font-medium text-gray-700">Today</span>
+        </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-sm bg-blue-500" />
           <span className="text-[11px] text-gray-500">Approved</span>

@@ -1,199 +1,263 @@
-import SectionHeader from "./SectionHeader";
+"use client";
 
-interface ManagerObjective {
-  objective: string;
-  weight: string;
-  keyResult: string;
-  kpi: string;
-  target: string;
-  initiatives: string;
-  achieved: string;
-  result: string;
-  comment: string;
+import type {
+  SelfAssessmentTemplateSection,
+  TemplateSection,
+  ManagerReviewGoalRating,
+} from "@/lib/api/types/hrisTypes";
+
+export interface ManagerObjectivesTableProps {
+  section?: SelfAssessmentTemplateSection | TemplateSection | null;
+  quarter?: string;
+  totalScore?: string | number | null;
+  goalRatings?: ManagerReviewGoalRating[] | null;
+  editable?: boolean;
+  onRatingChange?: (goalId: string, rating: number) => void;
+  onCommentChange?: (goalId: string, comment: string) => void;
+  inputRatings?: Record<string, { rating?: number; comment?: string }>;
 }
 
-const managerObjectives: ManagerObjective[] = [
-  {
-    objective: "Revenue & Business Growth",
-    weight: "30%",
-    keyResult: "Achieve monthly sales target",
-    kpi: "20%",
-    target: "100",
-    initiatives:
-      "Weekly pipeline review; pursue 3 enterprise prospects; partner with marketing on campaigns.",
-    achieved: "75",
-    result: "15%",
-    comment:
-      "Achieved 75% of target. Pipeline improved toward the end of the quarter.",
-  },
-  {
-    objective: "",
-    weight: "",
-    keyResult: "Onboard 3 new clients per quarter",
-    kpi: "10%",
-    target: "3",
-    initiatives: "Referral programme activation and targeted outreach.",
-    achieved: "1",
-    result: "3.3%",
-    comment:
-      "One client onboarded. More consistent prospect follow-up is required.",
-  },
-  {
-    objective: "Operational Excellence",
-    weight: "30%",
-    keyResult: "Reduce process turnaround time",
-    kpi: "15%",
-    target: "15",
-    initiatives: "Process mapping and implementation of improved workflows.",
-    achieved: "8",
-    result: "8%",
-    comment:
-      "Some improvements were delivered, but the target was not fully achieved.",
-  },
-  {
-    objective: "",
-    weight: "",
-    keyResult: "Complete projects on schedule",
-    kpi: "15%",
-    target: "100",
-    initiatives: "Weekly sprint planning and project status reviews.",
-    achieved: "80",
-    result: "12%",
-    comment: "Most projects were completed on schedule.",
-  },
-  {
-    objective: "Customer & Stakeholder Experience",
-    weight: "20%",
-    keyResult: "Maintain CSAT score ≥85%",
-    kpi: "10%",
-    target: "85",
-    initiatives: "Monthly customer feedback and service improvement sessions.",
-    achieved: "78",
-    result: "9.2%",
-    comment:
-      "Customer satisfaction improved but remained below the agreed target.",
-  },
-  {
-    objective: "",
-    weight: "",
-    keyResult: "Resolve escalations within 24 hrs",
-    kpi: "10%",
-    target: "24",
-    initiatives: "Escalation playbook and weekly issue review.",
-    achieved: "16",
-    result: "6.7%",
-    comment: "Average resolution time was 16 hours.",
-  },
-];
+export default function ManagerObjectivesTable({
+  section,
+  quarter = "Q2",
+  goalRatings,
+  editable = true,
+  onCommentChange,
+  inputRatings = {},
+}: ManagerObjectivesTableProps = {}) {
+  const objectives = section?.objectives ?? [];
+  const sectionWeight = section?.weight ?? 80;
 
-export default function ManagerObjectivesTable() {
+  const calculateResultPercent = (
+    achievedStr: string | undefined,
+    target: number | string | undefined,
+    kpiWeight: number | string | undefined,
+  ): string => {
+    if (!achievedStr || achievedStr.trim() === "" || achievedStr === "—")
+      return "—";
+    const achievedNum = parseFloat(achievedStr);
+    const kpiNum =
+      typeof kpiWeight === "number"
+        ? kpiWeight
+        : parseFloat(String(kpiWeight ?? 0));
+    if (isNaN(achievedNum) || isNaN(kpiNum)) return "—";
+
+    const targetNum =
+      typeof target === "number" ? target : parseFloat(String(target ?? 0));
+    if (!isNaN(targetNum) && targetNum > 0) {
+      const calc = (achievedNum / targetNum) * kpiNum;
+      return `${Number.isInteger(calc) ? calc : calc.toFixed(1)}%`;
+    }
+    const calc = (achievedNum * kpiNum) / 100;
+    return `${Number.isInteger(calc) ? calc : calc.toFixed(1)}%`;
+  };
+
+  let totalResultSum = 0;
+  let hasAnyAchieved = false;
+
+  const rows = objectives.flatMap((objective, objIndex) =>
+    (objective.keyResults ?? []).map((kr, i) => {
+      const isFirstRow = i === 0;
+      const krId = kr.id;
+      const ratingMatch = goalRatings?.find((g) => g.goalId === krId);
+
+      const rawTarget =
+        "target" in kr && kr.target != null && String(kr.target) !== ""
+          ? kr.target
+          : "—";
+
+      const rawInitiatives =
+        "initiatives" in kr && kr.initiatives ? kr.initiatives : "—";
+
+      const rawAchieved =
+        "achieved" in kr && (kr as Record<string, unknown>).achieved != null
+          ? String((kr as Record<string, unknown>).achieved)
+          : "";
+
+      const rawDescription =
+        "description" in kr
+          ? kr.description
+          : (kr as unknown as { keyResult: string }).keyResult || "Key Result";
+
+      const resultPct = calculateResultPercent(
+        rawAchieved,
+        rawTarget,
+        kr.kpiWeight,
+      );
+
+      if (rawAchieved && rawAchieved.trim() !== "" && rawAchieved !== "—") {
+        hasAnyAchieved = true;
+        const val = parseFloat(resultPct.replace("%", ""));
+        if (!isNaN(val)) totalResultSum += val;
+      }
+
+      const currentComment =
+        inputRatings[krId]?.comment ??
+        ratingMatch?.comment ??
+        ("comment" in kr && (kr as Record<string, unknown>).comment
+          ? String((kr as Record<string, unknown>).comment)
+          : "");
+
+      return {
+        krId,
+        objective,
+        objIndex,
+        isFirstRow,
+        rawDescription,
+        kpiWeight: kr.kpiWeight,
+        rawTarget,
+        rawInitiatives,
+        rawAchieved,
+        resultPct,
+        currentComment,
+      };
+    }),
+  );
+
+  const displayFooterTotal =
+    hasAnyAchieved && totalResultSum > 0
+      ? `${Number.isInteger(totalResultSum) ? totalResultSum : totalResultSum.toFixed(1)}%`
+      : `${sectionWeight}%`;
+
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-      <SectionHeader title="SECTION A : OBJECTIVES (KRA)" weight="80%" />
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs">
+      {/* Header bar */}
+      <div className="flex items-center justify-between bg-[#1677C8] px-6 py-3 text-white">
+        <h2 className="text-xs font-semibold uppercase tracking-wide">
+          SECTION A: OBJECTIVES (KRA)
+        </h2>
+        <span className="text-xs font-medium">
+          Total weight: {sectionWeight}%
+        </span>
+      </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-[1250px] w-full border-collapse">
-          <thead className="bg-[#F8FAFC]">
-            <tr className="border-b">
-              <th className="px-6 py-4 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                Objective
-              </th>
-
-              <th className="px-3 py-4 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                WT.
-              </th>
-
-              <th className="px-4 py-4 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                Key Result
-              </th>
-
-              <th className="px-4 py-4 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                KPI%
-              </th>
-
-              <th className="px-4 py-4 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                Target
-              </th>
-
-              <th className="px-4 py-4 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                Initiatives
-              </th>
-
-              <th className="px-4 py-4 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                Achieved
-              </th>
-
-              <th className="px-4 py-4 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                Result%
-              </th>
-
-              <th className="px-4 py-4 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                Manager Comment
-              </th>
+        <table className="w-full text-left">
+          <thead className="bg-[#F8FAFC] border-b border-slate-200">
+            <tr className="text-[11px] uppercase font-semibold text-slate-400">
+              <th className="px-6 py-3.5">Objective</th>
+              <th className="px-3 py-3.5">WT.</th>
+              <th className="px-4 py-3.5">Key Result</th>
+              <th className="px-3 py-3.5">KPI%</th>
+              <th className="px-3 py-3.5">Target</th>
+              <th className="px-4 py-3.5">Initiatives</th>
+              <th className="px-3 py-3.5">Emp. Achieved</th>
+              <th className="px-3 py-3.5">Result%</th>
+              <th className="px-4 py-3.5">Manager Comment</th>
             </tr>
           </thead>
 
-          <tbody>
-            {managerObjectives.map((row, index) => (
-              <tr
-                key={`${row.keyResult}-${index}`}
-                className="border-b border-gray-100 last:border-0"
-              >
-                <td className="px-6 py-5 align-top">
-                  {row.objective && (
-                    <span className="font-semibold text-[#1677C8]">
-                      {row.objective}
-                    </span>
-                  )}
-                </td>
-
-                <td className="px-3 py-5 align-top">
-                  {row.weight && (
-                    <span className="inline-flex rounded-full bg-[#1677C8] px-3 py-1 text-[11px] font-semibold text-white">
-                      {row.weight}
-                    </span>
-                  )}
-                </td>
-
-                <td className="px-4 py-5 align-top text-sm text-slate-700">
-                  {row.keyResult}
-                </td>
-
-                <td className="px-4 py-5 align-top font-semibold text-[#1677C8]">
-                  {row.kpi}
-                </td>
-
-                <td className="px-4 py-5 align-top text-sm text-slate-700">
-                  {row.target}
-                </td>
-
-                <td className="max-w-[260px] px-4 py-5 align-top text-sm leading-6 text-slate-500">
-                  {row.initiatives}
-                </td>
-
-                <td className="px-4 py-5 align-top font-semibold text-slate-700">
-                  {row.achieved}
-                </td>
-
-                <td className="px-4 py-5 align-top font-bold text-[#A16207]">
-                  {row.result}
-                </td>
-
-                <td className="max-w-[280px] px-4 py-5 align-top text-sm leading-6 text-slate-500">
-                  {row.comment}
+          <tbody className="divide-y divide-slate-100">
+            {rows.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={9}
+                  className="px-6 py-8 text-center text-sm text-slate-400"
+                >
+                  No KRA objectives defined for this review.
                 </td>
               </tr>
-            ))}
+            ) : (
+              rows.map(
+                ({
+                  krId,
+                  objective,
+                  objIndex,
+                  isFirstRow,
+                  rawDescription,
+                  kpiWeight,
+                  rawTarget,
+                  rawInitiatives,
+                  rawAchieved,
+                  resultPct,
+                  currentComment,
+                }) => (
+                  <tr
+                    key={krId || `${objIndex}-${rawDescription}`}
+                    className="hover:bg-slate-50/50 transition-colors"
+                  >
+                    {/* Objective */}
+                    <td className="px-6 py-4 align-top">
+                      {isFirstRow ? (
+                        <div className="border-l-[3px] border-[#1677C8] pl-2.5 font-semibold text-[#1677C8] text-sm leading-tight">
+                          {objective.title}
+                        </div>
+                      ) : null}
+                    </td>
+
+                    {/* Weight */}
+                    <td className="px-3 py-4 align-top">
+                      {isFirstRow ? (
+                        <span className="inline-block rounded-full bg-[#1677C8] px-2.5 py-0.5 text-xs font-semibold text-white">
+                          {objective.weight}%
+                        </span>
+                      ) : null}
+                    </td>
+
+                    {/* Key Result */}
+                    <td className="px-4 py-4 text-sm text-slate-700 max-w-xs align-top">
+                      {rawDescription}
+                    </td>
+
+                    {/* KPI% */}
+                    <td className="px-3 py-4 text-sm font-semibold text-[#1677C8] align-top whitespace-nowrap">
+                      {kpiWeight}%
+                    </td>
+
+                    {/* Target */}
+                    <td className="px-3 py-4 text-sm text-slate-700 align-top whitespace-nowrap">
+                      {rawTarget}
+                    </td>
+
+                    {/* Initiatives */}
+                    <td className="px-4 py-4 text-xs text-slate-500 max-w-xs align-top leading-relaxed">
+                      {rawInitiatives}
+                    </td>
+
+                    {/* Emp. Achieved */}
+                    <td className="px-3 py-4 text-sm font-semibold text-slate-800 align-top whitespace-nowrap">
+                      {rawAchieved || "—"}
+                    </td>
+
+                    {/* Result% */}
+                    <td className="px-3 py-4 text-sm font-semibold text-slate-800 align-top whitespace-nowrap">
+                      {resultPct}
+                    </td>
+
+                    {/* Manager Comment */}
+                    <td className="px-4 py-4 align-top min-w-[150px] max-w-xs">
+                      {editable ? (
+                        <input
+                          type="text"
+                          value={currentComment}
+                          onChange={(e) =>
+                            onCommentChange?.(krId, e.target.value)
+                          }
+                          placeholder="Manager comment..."
+                          className="w-full rounded border border-slate-200 px-3 py-1 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-[#1677C8] focus:ring-1 focus:ring-[#1677C8]/20"
+                        />
+                      ) : (
+                        <p className="text-xs text-slate-600 leading-relaxed">
+                          {currentComment || "—"}
+                        </p>
+                      )}
+                    </td>
+                  </tr>
+                ),
+              )
+            )}
           </tbody>
         </table>
       </div>
 
-      <div className="flex items-center justify-between bg-[#EEF7FF] px-6 py-4">
-        <span className="text-sm font-semibold text-[#1677C8]">
-          TOTAL KRA — Q2
+      {/* Footer bar */}
+      <div className="flex items-center justify-between border-t border-[#B9E6FE] bg-[#F0F9FF] px-6 py-3.5">
+        <span className="text-xs font-bold text-[#026AA2] uppercase tracking-wider">
+          TOTAL KRA – {quarter}
         </span>
-
-        <span className="text-xl font-bold text-[#1677C8]">54.2%</span>
+        <span className="text-sm font-bold text-[#026AA2]">
+          {displayFooterTotal}
+        </span>
       </div>
     </div>
   );

@@ -1,491 +1,211 @@
 "use client";
 
 import { useState } from "react";
+import { AlertCircle, Loader2, X } from "lucide-react";
+import { toast } from "react-toastify";
+import { createEmployeeAppraisalGoal } from "@/lib/api/employee";
 import {
-  ChevronDown,
-  ChevronRight,
-  Info,
-  Plus,
-  Trash2,
-  Copy,
-  X,
-} from "lucide-react";
+  CreateEmployeeAppraisalGoalPayload,
+  HistoricalAppraisalGoal,
+} from "@/lib/api/types/employeeTypes";
 
-export interface ModalKeyResult {
-  id: number;
-  keyResult: string;
-  initiatives: string;
-  target: string;
-  comments: string;
-}
-
-export interface ModalObjective {
-  id: number;
-  title: string;
-  weight: number;
-  expanded: boolean;
-  keyResults: ModalKeyResult[];
-}
-
-interface AddGoalsModalProps {
+interface AddGoalModalProps {
   open: boolean;
   onClose: () => void;
-  onSave?: (objectives: ModalObjective[]) => void;
+  appraisalId?: string;
+  onGoalCreated?: (goal: HistoricalAppraisalGoal) => void;
 }
 
-export default function AddGoalsModal({
+export default function AddGoalModal({
   open,
   onClose,
-  onSave,
-}: AddGoalsModalProps) {
-  const [cycle, setCycle] = useState("Q1 2026 - Q2 2026");
+  appraisalId,
+  onGoalCreated,
+}: AddGoalModalProps) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [successCriteria, setSuccessCriteria] = useState("");
+  const [targetDate, setTargetDate] = useState("");
 
-  const [department, setDepartment] = useState("Engineering");
-
-  const [objectives, setObjectives] = useState<ModalObjective[]>([
-    {
-      id: 1,
-      title: "Revenue & Business Growth",
-      weight: 30,
-      expanded: true,
-
-      keyResults: [
-        {
-          id: 1,
-          keyResult: "Achieve monthly headcount target for new hires",
-
-          initiatives:
-            "Weekly talent pipeline review with external recruiters; partner with 3 staffing agencies",
-
-          target: "100",
-
-          comments:
-            "Weekly talent pipeline review with external recruiters; partner with 3 staffing agencies",
-        },
-
-        {
-          id: 2,
-
-          keyResult: "Reduce average time-to-hire",
-
-          initiatives: "Streamline interview process; implement ATS automation",
-
-          target: "80",
-
-          comments:
-            "Weekly talent pipeline review with external recruiters; partner with 3 staffing agencies",
-        },
-      ],
-    },
-
-    {
-      id: 2,
-      title: "Operational Excellence",
-      weight: 40,
-      expanded: false,
-
-      keyResults: [],
-    },
-
-    {
-      id: 3,
-      title: "Employee Experience",
-      weight: 30,
-      expanded: false,
-
-      keyResults: [],
-    },
-  ]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!open) return null;
 
-  const totalWeight = objectives.reduce((sum, item) => sum + item.weight, 0);
-
-  const toggleObjective = (id: number) => {
-    setObjectives((prev) =>
-      prev.map((objective) =>
-        objective.id === id
-          ? {
-              ...objective,
-              expanded: !objective.expanded,
-            }
-          : objective,
-      ),
-    );
+  const handleReset = () => {
+    setTitle("");
+    setDescription("");
+    setSuccessCriteria("");
+    setTargetDate("");
+    setError(null);
   };
 
-  const addKeyResult = (objectiveId: number) => {
-    setObjectives((prev) =>
-      prev.map((objective) =>
-        objective.id === objectiveId
-          ? {
-              ...objective,
-              expanded: true,
-              keyResults: [
-                ...objective.keyResults,
-                {
-                  id: Date.now(),
-                  keyResult: "",
-                  initiatives: "",
-                  target: "",
-                  comments: "",
-                },
-              ],
-            }
-          : objective,
-      ),
-    );
+  const handleClose = () => {
+    handleReset();
+    onClose();
   };
 
-  const removeKeyResult = (objectiveId: number, keyResultId: number) => {
-    setObjectives((prev) =>
-      prev.map((objective) =>
-        objective.id === objectiveId
-          ? {
-              ...objective,
-              keyResults: objective.keyResults.filter(
-                (item) => item.id !== keyResultId,
-              ),
-            }
-          : objective,
-      ),
-    );
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (
+      !title.trim() ||
+      !description.trim() ||
+      !successCriteria.trim() ||
+      !targetDate
+    ) {
+      setError("All fields are required to create a performance goal.");
+      return;
+    }
 
-  const updateKeyResult = (
-    objectiveId: number,
-    keyResultId: number,
-    field: keyof ModalKeyResult,
-    value: string,
-  ) => {
-    setObjectives((prev) =>
-      prev.map((objective) =>
-        objective.id === objectiveId
-          ? {
-              ...objective,
-              keyResults: objective.keyResults.map((item) =>
-                item.id === keyResultId
-                  ? {
-                      ...item,
-                      [field]: value,
-                    }
-                  : item,
-              ),
-            }
-          : objective,
-      ),
-    );
+    setLoading(true);
+    setError(null);
+
+    const payload: CreateEmployeeAppraisalGoalPayload = {
+      title: title.trim(),
+      description: description.trim(),
+      successCriteria: successCriteria.trim(),
+      targetDate: targetDate.includes("T")
+        ? targetDate.split("T")[0]
+        : targetDate,
+    };
+
+    try {
+      if (appraisalId) {
+        const createdGoal = await createEmployeeAppraisalGoal(
+          appraisalId,
+          payload,
+        );
+        toast.success("Employee appraisal goal created successfully");
+        onGoalCreated?.(createdGoal);
+      } else {
+        toast.success("Goal saved");
+      }
+      handleClose();
+    } catch (err: unknown) {
+      console.error("Failed to create employee appraisal goal:", err);
+      const apiMsg = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message;
+      setError(
+        apiMsg ||
+          (err instanceof Error
+            ? err.message
+            : "Failed to create goal. Please try again."),
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6">
-      <div className="flex max-h-[95vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
-        {/* Header */}
-
-        <div className="flex items-start justify-between border-b px-6 py-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="flex max-h-[90vh] w-full max-w-lg flex-col rounded-xl bg-white shadow-2xl">
+        {/* Modal Header */}
+        <div className="flex shrink-0 items-start justify-between border-b border-gray-100 p-6">
           <div>
-            <h2 className="text-2xl font-semibold">Add Your Goals</h2>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Define objectives and key results.
+            <h2 className="text-lg font-bold text-gray-900">
+              Add Performance Goal
+            </h2>
+            <p className="mt-0.5 text-xs text-gray-500">
+              Define your key objective and success criteria for this appraisal
+              cycle.
             </p>
           </div>
-
-          <button onClick={onClose}>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="rounded-md p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+          >
             <X size={18} />
           </button>
         </div>
 
-        {/* Body */}
-
-        <div className="flex-1 overflow-y-auto p-6">
-          {/* Top Selects */}
-
-          <div className="grid gap-5 md:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                Appraisal Cycle
-              </label>
-
-              <select
-                value={cycle}
-                onChange={(e) => setCycle(e.target.value)}
-                className="w-full rounded-md border px-3 py-2"
-              >
-                <option>Q1 2026 - Q2 2026</option>
-
-                <option>Q3 2026 - Q4 2026</option>
-              </select>
+        {/* Modal Body / Form */}
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-1 flex-col overflow-y-auto p-6 space-y-4"
+        >
+          {error && (
+            <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{error}</span>
             </div>
+          )}
 
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                Department
-              </label>
-
-              <select
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
-                className="w-full rounded-md border px-3 py-2"
-              >
-                <option>Engineering</option>
-                <option>HR</option>
-                <option>Finance</option>
-                <option>Operations</option>
-              </select>
-            </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
+              Goal Title <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. Reduce order-processing time"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 p-2.5 text-xs text-gray-900 placeholder-gray-400 focus:border-[#1683D8] focus:outline-none focus:ring-1 focus:ring-[#1683D8]"
+            />
           </div>
 
-          {/* Objectives */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
+              Description <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              required
+              rows={3}
+              placeholder="e.g. Remove manual approval bottlenecks."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 p-2.5 text-xs text-gray-900 placeholder-gray-400 focus:border-[#1683D8] focus:outline-none focus:ring-1 focus:ring-[#1683D8]"
+            />
+          </div>
 
-          <div className="mt-8 space-y-5">
-            {objectives.map((objective) => (
-              <div
-                key={objective.id}
-                className="overflow-hidden rounded-lg border"
-              >
-                {/* Accordion Header */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
+              Success Criteria <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              required
+              rows={2}
+              placeholder="e.g. Average processing time is 24 hours or less."
+              value={successCriteria}
+              onChange={(e) => setSuccessCriteria(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 p-2.5 text-xs text-gray-900 placeholder-gray-400 focus:border-[#1683D8] focus:outline-none focus:ring-1 focus:ring-[#1683D8]"
+            />
+          </div>
 
-                <button
-                  onClick={() => toggleObjective(objective.id)}
-                  className="flex w-full items-center justify-between bg-slate-50 px-5 py-4"
-                >
-                  <div className="flex items-center gap-3">
-                    {objective.expanded ? (
-                      <ChevronDown size={18} />
-                    ) : (
-                      <ChevronRight size={18} />
-                    )}
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
+              Target Date <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              required
+              value={targetDate}
+              onChange={(e) => setTargetDate(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 p-2.5 text-xs text-gray-900 focus:border-[#1683D8] focus:outline-none focus:ring-1 focus:ring-[#1683D8]"
+            />
+          </div>
 
-                    <span className="font-semibold text-blue-600">
-                      Objective {objective.id}
-                    </span>
-
-                    <span className="font-medium">{objective.title}</span>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <span className="rounded bg-blue-100 px-3 py-1 text-sm text-blue-700">
-                      Weight: {objective.weight}%
-                    </span>
-
-                    <Trash2
-                      size={16}
-                      className="cursor-pointer text-gray-400"
-                    />
-                  </div>
-                </button>
-
-                {/* Accordion Content */}
-
-                {objective.expanded && (
-                  <div className="space-y-6 p-5">
-                    {objective.keyResults.map((keyResult, index) => (
-                      <div
-                        key={keyResult.id}
-                        className="rounded-lg border bg-white p-5"
-                      >
-                        <div className="mb-5 flex items-center justify-between">
-                          <h4 className="font-semibold">
-                            Key Result {index + 1}
-                          </h4>
-
-                          <div className="flex gap-3">
-                            <Copy
-                              size={16}
-                              className="cursor-pointer text-gray-400"
-                            />
-
-                            <Trash2
-                              size={16}
-                              onClick={() =>
-                                removeKeyResult(objective.id, keyResult.id)
-                              }
-                              className="cursor-pointer text-red-500"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-4">
-                          <div>
-                            <label className="mb-1 block text-sm">
-                              Key Result
-                            </label>
-
-                            <input
-                              value={keyResult.keyResult}
-                              onChange={(e) =>
-                                updateKeyResult(
-                                  objective.id,
-                                  keyResult.id,
-                                  "keyResult",
-                                  e.target.value,
-                                )
-                              }
-                              className="w-full rounded border px-3 py-2"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="mb-1 block text-sm">
-                              Initiatives
-                            </label>
-
-                            <textarea
-                              rows={3}
-                              value={keyResult.initiatives}
-                              onChange={(e) =>
-                                updateKeyResult(
-                                  objective.id,
-                                  keyResult.id,
-                                  "initiatives",
-                                  e.target.value,
-                                )
-                              }
-                              className="w-full rounded border px-3 py-2"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="mb-1 block text-sm">
-                              Target (100 max)
-                            </label>
-
-                            <input
-                              value={keyResult.target}
-                              onChange={(e) =>
-                                updateKeyResult(
-                                  objective.id,
-                                  keyResult.id,
-                                  "target",
-                                  e.target.value,
-                                )
-                              }
-                              className="w-full rounded border px-3 py-2"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="mb-1 block text-sm">
-                              Comments
-                            </label>
-
-                            <textarea
-                              rows={3}
-                              value={keyResult.comments}
-                              onChange={(e) =>
-                                updateKeyResult(
-                                  objective.id,
-                                  keyResult.id,
-                                  "comments",
-                                  e.target.value,
-                                )
-                              }
-                              className="w-full rounded border px-3 py-2"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-
-                    <button
-                      onClick={() => addKeyResult(objective.id)}
-                      className="flex items-center gap-2 text-sm font-medium text-blue-600"
-                    >
-                      <Plus size={16} />
-                      Add Key Result
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-            {/* Add Objective */}
-
+          {/* Modal Footer */}
+          <div className="mt-6 flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
             <button
-              onClick={() => {
-                setObjectives((prev) => [
-                  ...prev,
-                  {
-                    id: prev.length + 1,
-                    title: "New Objective",
-                    weight: 0,
-                    expanded: true,
-                    keyResults: [],
-                  },
-                ]);
-              }}
-              className="mt-5 flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+              type="button"
+              disabled={loading}
+              onClick={handleClose}
+              className="rounded-lg border border-gray-300 px-4 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
             >
-              <Plus size={16} />
-              Add Objective
+              Cancel
             </button>
-
-            {/* Employee Assessment Info */}
-
-            <div className="mt-8 rounded-lg border border-blue-200 bg-blue-50 p-5">
-              <div className="flex items-start gap-3">
-                <Info size={18} className="mt-0.5 text-blue-600" />
-
-                <div>
-                  <h3 className="font-semibold text-slate-800">
-                    Employee Assessment
-                  </h3>
-
-                  <p className="mt-1 text-sm leading-6 text-slate-600">
-                    Employees will submit their Q1 and Q2 achievements during
-                    the appraisal period. Scores will be calculated
-                    automatically against the configured KPI Weight. Employees
-                    cannot modify objectives, key results or targets.
-                  </p>
-                </div>
-              </div>
-            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#1683D8] px-5 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-[#1270B8] disabled:opacity-50"
+            >
+              {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              {loading ? "Creating Goal..." : "Create Goal"}
+            </button>
           </div>
-
-          {/* Footer */}
-
-          <div className="border-t bg-white">
-            <div className="flex items-center justify-between px-6 py-5">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-green-500" />
-
-                <span className="font-medium text-slate-700">
-                  Total Weight: {totalWeight}%
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={onClose}
-                  className="rounded-md border border-gray-300 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-gray-100"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  onClick={() => {
-                    onSave?.(objectives);
-                    onClose();
-                  }}
-                  disabled={totalWeight !== 100}
-                  className={`rounded-md px-6 py-2.5 text-sm font-medium text-white transition ${
-                    totalWeight === 100
-                      ? "bg-blue-600 hover:bg-blue-700"
-                      : "cursor-not-allowed bg-gray-300"
-                  }`}
-                >
-                  Save Goals
-                </button>
-              </div>
-            </div>
-
-            {totalWeight !== 100 && (
-              <div className="border-t bg-red-50 px-6 py-3 text-sm text-red-600">
-                Total objective weight must equal 100% before saving.
-              </div>
-            )}
-          </div>
-        </div>
+        </form>
       </div>
     </div>
   );

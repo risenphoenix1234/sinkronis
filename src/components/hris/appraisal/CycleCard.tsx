@@ -3,7 +3,9 @@
 
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import axios from "axios";
+import { toast } from "react-toastify";
 import StatusBadge from "../../ui/StatusBadge";
 import {
   deleteAppraisalCycle,
@@ -18,13 +20,14 @@ interface Props {
   onChanged?: () => void; // called after launch/complete so the parent can refetch
 }
 
-const STATUS_LABELS: Record<AppraisalCycleSummary["status"], string> = {
-  DRAFT: "Draft", // no matching key in StatusBadge → falls through to its gray default
-  ACTIVE: "Active", // matches StatusBadge's green "Active" style
-  COMPLETED: "Completed", // matches StatusBadge's existing gray "Completed" style
+const STATUS_LABELS: Record<string, string> = {
+  DRAFT: "Draft",
+  ACTIVE: "Active",
+  COMPLETED: "Completed",
 };
 
 function formatDate(iso: string) {
+  if (!iso) return "—";
   return new Date(iso).toLocaleDateString(undefined, {
     year: "numeric",
     month: "short",
@@ -33,6 +36,7 @@ function formatDate(iso: string) {
 }
 
 export default function CycleCard({ cycle, onDeleted, onChanged }: Props) {
+  const router = useRouter();
   const [busy, setBusy] = useState<"delete" | "launch" | "complete" | null>(
     null,
   );
@@ -45,13 +49,39 @@ export default function CycleCard({ cycle, onDeleted, onChanged }: Props) {
     setActionError(null);
     try {
       await deleteAppraisalCycle(cycle.id);
+      toast.success("Appraisal cycle deleted successfully");
       onDeleted?.(cycle.id);
     } catch (err) {
       console.error(
         "Cycle delete failed:",
         axios.isAxiosError(err) ? err.response?.data : err,
       );
-      setActionError("Couldn't delete this cycle.");
+      let msg = "Couldn't delete this cycle.";
+      if (axios.isAxiosError(err)) {
+        const errData = err.response?.data as
+          | {
+              message?: string;
+              validationErrors?: Array<{
+                message?: string;
+                field?: string;
+              }> | null;
+            }
+          | undefined;
+        if (
+          errData?.validationErrors &&
+          Array.isArray(errData.validationErrors) &&
+          errData.validationErrors.length > 0
+        ) {
+          msg = errData.validationErrors
+            .map((v) => v.message || v.field)
+            .filter(Boolean)
+            .join(", ");
+        } else if (errData?.message) {
+          msg = errData.message;
+        }
+      }
+      setActionError(msg);
+      toast.error(msg);
     } finally {
       setBusy(null);
     }
@@ -68,35 +98,88 @@ export default function CycleCard({ cycle, onDeleted, onChanged }: Props) {
     setActionError(null);
     try {
       await launchAppraisalCycle(cycle.id);
+      toast.success("Appraisal cycle launched successfully");
       onChanged?.();
     } catch (err) {
       console.error(
         "Cycle launch failed:",
         axios.isAxiosError(err) ? err.response?.data : err,
       );
-      setActionError("Couldn't launch this cycle.");
+      let msg = "Couldn't launch this cycle.";
+      if (axios.isAxiosError(err)) {
+        const errData = err.response?.data as
+          | {
+              message?: string;
+              validationErrors?: Array<{
+                message?: string;
+                field?: string;
+              }> | null;
+            }
+          | undefined;
+        if (
+          errData?.validationErrors &&
+          Array.isArray(errData.validationErrors) &&
+          errData.validationErrors.length > 0
+        ) {
+          msg = errData.validationErrors
+            .map((v) => v.message || v.field)
+            .filter(Boolean)
+            .join(", ");
+        } else if (errData?.message) {
+          msg = errData.message;
+        }
+      }
+      setActionError(msg);
+      toast.error(msg);
     } finally {
       setBusy(null);
     }
   };
 
   const handleComplete = async () => {
+    if (
+      !window.confirm(
+        `Complete appraisal cycle "${cycle.name}"? This action will finalize the cycle.`,
+      )
+    )
+      return;
     setBusy("complete");
     setActionError(null);
     try {
       await completeAppraisalCycle(cycle.id);
+      toast.success("Appraisal cycle completed successfully");
       onChanged?.();
     } catch (err) {
-      // The 409 case has a specific, user-facing message from the API —
-      // surface it directly rather than a generic failure string.
-      const message = axios.isAxiosError(err)
-        ? (err.response?.data?.message ?? "Couldn't complete this cycle.")
-        : "Couldn't complete this cycle.";
       console.error(
         "Cycle complete failed:",
         axios.isAxiosError(err) ? err.response?.data : err,
       );
+      let message = "Couldn't complete this cycle.";
+      if (axios.isAxiosError(err)) {
+        const errData = err.response?.data as
+          | {
+              message?: string;
+              validationErrors?: Array<{
+                message?: string;
+                field?: string;
+              }> | null;
+            }
+          | undefined;
+        if (
+          errData?.validationErrors &&
+          Array.isArray(errData.validationErrors) &&
+          errData.validationErrors.length > 0
+        ) {
+          message = errData.validationErrors
+            .map((v) => v.message || v.field)
+            .filter(Boolean)
+            .join(", ");
+        } else if (errData?.message) {
+          message = errData.message;
+        }
+      }
       setActionError(message);
+      toast.error(message);
     } finally {
       setBusy(null);
     }
@@ -112,9 +195,11 @@ export default function CycleCard({ cycle, onDeleted, onChanged }: Props) {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-3">
               <h3 className="font-semibold text-[#101828]">{cycle.name}</h3>
-              <StatusBadge status={STATUS_LABELS[cycle.status]} />
+              <StatusBadge
+                status={STATUS_LABELS[cycle.status] || cycle.status}
+              />
               <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-gray-100 text-gray-600">
-                Template: {cycle.template.name}
+                Template: {cycle.template?.name || "Standard Template"}
               </span>
             </div>
           </div>
@@ -126,10 +211,10 @@ export default function CycleCard({ cycle, onDeleted, onChanged }: Props) {
           <p className="text-xs text-[#98A2B3]">
             {formatDate(cycle.periodFrom)} – {formatDate(cycle.periodTo)} · Due{" "}
             {formatDate(cycle.submissionDeadline)} ·{" "}
-            {cycle.progress.totalEmployees} enrolled
+            {cycle.progress?.totalEmployees ?? 0} enrolled
           </p>
 
-          {isActive && (
+          {isActive && cycle.progress && (
             <>
               <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
                 <div
@@ -152,7 +237,7 @@ export default function CycleCard({ cycle, onDeleted, onChanged }: Props) {
             <button
               onClick={handleLaunch}
               disabled={busy !== null}
-              className="px-4 py-2 bg-[#EFF8FF] text-[#1570EF] rounded-md text-sm font-medium disabled:opacity-50"
+              className="px-4 py-2 bg-[#EFF8FF] text-[#1570EF] rounded-md text-sm font-medium disabled:opacity-50 hover:bg-[#E0F2FE] transition"
             >
               {busy === "launch" ? "Launching…" : "Launch"}
             </button>
@@ -160,13 +245,20 @@ export default function CycleCard({ cycle, onDeleted, onChanged }: Props) {
 
           {isActive && (
             <>
-              <button className="px-4 py-2 bg-[#EFF8FF] text-[#1570EF] rounded-md text-sm font-medium">
+              <button
+                onClick={() =>
+                  router.push(
+                    `/hris/appraisal?view=reviews&cycleId=${cycle.id}`,
+                  )
+                }
+                className="px-4 py-2 bg-[#EFF8FF] text-[#1570EF] rounded-md text-sm font-medium hover:bg-[#E0F2FE] transition"
+              >
                 View Reviews
               </button>
               <button
                 onClick={handleComplete}
                 disabled={busy !== null}
-                className="px-4 py-2 bg-[#ECFDF3] text-[#027A48] rounded-md text-sm font-medium disabled:opacity-50"
+                className="px-4 py-2 bg-[#ECFDF3] text-[#027A48] rounded-md text-sm font-medium disabled:opacity-50 hover:bg-[#D1FADF] transition"
                 title="Requires every appraisal in the cycle to be acknowledged first"
               >
                 {busy === "complete" ? "Completing…" : "Complete"}
@@ -178,11 +270,14 @@ export default function CycleCard({ cycle, onDeleted, onChanged }: Props) {
             onClick={handleDelete}
             disabled={busy !== null}
             title="Delete cycle"
+            className="p-1 rounded hover:bg-red-50 transition"
           >
             <Trash2
               size={16}
               className={
-                busy === "delete" ? "text-[#D0D5DD]" : "text-[#98A2B3]"
+                busy === "delete"
+                  ? "text-[#D0D5DD]"
+                  : "text-[#98A2B3] hover:text-red-600"
               }
             />
           </button>

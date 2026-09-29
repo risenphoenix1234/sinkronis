@@ -1,12 +1,13 @@
 "use client";
 
-import { Ban, CheckCircle2, X } from "lucide-react";
-import { useState } from "react";
-import type { AttendanceDispute } from "@/types/hris/attendance";
+import { useEffect, useState } from "react";
+import { Ban, Check, X } from "lucide-react";
+import type { AttendanceDispute } from "@/lib/api/types/hrisTypes";
 
 interface Props {
   isOpen: boolean;
   dispute: AttendanceDispute | null;
+  initialAction?: "Approved" | "Rejected";
   onClose: () => void;
   onSubmit: (data: {
     action: "Approved" | "Rejected";
@@ -14,19 +15,79 @@ interface Props {
   }) => void;
 }
 
+function formatTime(val?: string | null): string {
+  if (!val) return "";
+  if (/^\d{1,2}:\d{2}$/.test(val)) return val;
+  try {
+    const d = new Date(val);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+    }
+  } catch {}
+  return val;
+}
+
+function formatDate(val?: string | null): string {
+  if (!val) return "—";
+  try {
+    const d = new Date(val);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+    }
+  } catch {}
+  return val;
+}
+
 export default function ApproveDisputeModal({
   isOpen,
   dispute,
+  initialAction = "Approved",
   onClose,
   onSubmit,
 }: Props) {
-  const [action, setAction] = useState<"Approved" | "Rejected">("Approved");
+  const [action, setAction] = useState<"Approved" | "Rejected">(initialAction);
   const [resolution, setResolution] = useState("");
+
+  useEffect(() => {
+    if (isOpen) {
+      setAction(initialAction);
+      setResolution("");
+    }
+  }, [isOpen, initialAction]);
 
   if (!isOpen || !dispute) return null;
 
+  const anyDispute = dispute as any;
   const isSubmitDisabled = !resolution.trim();
   const isApproving = action === "Approved";
+
+  const displayId = anyDispute.disputeId || anyDispute.disputeNo || dispute.id;
+  const employeeName =
+    anyDispute.employee?.name ||
+    dispute.employeeName ||
+    (anyDispute.employee?.firstName && anyDispute.employee?.lastName
+      ? `${anyDispute.employee.firstName} ${anyDispute.employee.lastName}`
+      : "—");
+  const formattedDate = formatDate(dispute.date || dispute.createdAt);
+  const issueFormatted = (
+    anyDispute.issueType ||
+    dispute.issue ||
+    "Attendance Dispute"
+  )
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (c: string) => c.toUpperCase());
+
+  const claimedIn = formatTime(dispute.claimedClockIn);
+  const claimedOut = formatTime(dispute.claimedClockOut);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/45 p-4 text-left">
@@ -37,16 +98,16 @@ export default function ApproveDisputeModal({
         className="flex max-h-[calc(100vh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
       >
         {/* Header */}
-        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 px-6 py-5">
           <div className="min-w-0">
             <h2
               id="approve-dispute-title"
-              className="text-lg font-semibold text-slate-900"
+              className="text-xl font-bold text-slate-900"
             >
-              Approve dispute
+              Approve Dispute
             </h2>
             <p className="mt-1 truncate text-sm text-slate-500">
-              {dispute.id} • {dispute.employeeName} • {dispute.date}
+              {displayId} • {employeeName} • {formattedDate}
             </p>
           </div>
 
@@ -54,41 +115,33 @@ export default function ApproveDisputeModal({
             type="button"
             onClick={onClose}
             aria-label="Close dialog"
-            className="-mr-2 -mt-1 shrink-0 rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+            className="-mr-1 -mt-1 shrink-0 rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none"
           >
-            <X className="h-4 w-4" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Body */}
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          {/* Dispute Summary Card */}
+          <div className="rounded-xl border border-slate-100 bg-[#F8FAFC] p-4">
             <p className="text-sm font-semibold text-slate-800">
-              {dispute.issue}
+              {issueFormatted}
             </p>
-            <p className="mt-2 break-words text-sm text-slate-600">
+            <p className="mt-1.5 break-words text-xs leading-relaxed text-slate-600">
               {dispute.description}
             </p>
 
-            <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div>
-                <dt className="text-xs font-medium text-slate-500">
-                  Claimed In
-                </dt>
-                <dd className="mt-1 text-sm text-slate-800">
-                  {dispute.claimedClockIn ?? "--"}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium text-slate-500">
-                  Claimed Out
-                </dt>
-                <dd className="mt-1 text-sm text-slate-800">
-                  {dispute.claimedClockOut ?? "--"}
-                </dd>
-              </div>
-            </dl>
+            {(claimedIn || claimedOut) && (
+              <p className="mt-3 text-xs text-slate-500">
+                Claimed: {claimedIn ? `In ${claimedIn}` : ""}
+                {claimedIn && claimedOut ? " • " : ""}
+                {claimedOut ? `Out ${claimedOut}` : ""}
+              </p>
+            )}
           </div>
+
+          {/* Toggle Buttons */}
           <div
             role="group"
             aria-label="Resolution decision"
@@ -98,13 +151,13 @@ export default function ApproveDisputeModal({
               type="button"
               onClick={() => setAction("Approved")}
               aria-pressed={isApproving}
-              className={`flex items-center justify-center gap-2 rounded-lg border px-3 py-3 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+              className={`flex items-center justify-center gap-2 rounded-lg border py-2.5 px-4 text-sm font-medium transition focus:outline-none ${
                 isApproving
-                  ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                  : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                  ? "border-[#86EFAC] bg-[#E8F8EE] text-[#15803D]"
+                  : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
               }`}
             >
-              <CheckCircle2 size={16} className="shrink-0" />
+              <Check size={16} className="stroke-[2.5]" />
               Approve
             </button>
 
@@ -112,23 +165,24 @@ export default function ApproveDisputeModal({
               type="button"
               onClick={() => setAction("Rejected")}
               aria-pressed={!isApproving}
-              className={`flex items-center justify-center gap-2 rounded-lg border px-3 py-3 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+              className={`flex items-center justify-center gap-2 rounded-lg border py-2.5 px-4 text-sm font-medium transition focus:outline-none ${
                 !isApproving
-                  ? "border-rose-500 bg-rose-50 text-rose-700"
-                  : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                  ? "border-[#FCA5A5] bg-rose-50 text-rose-800"
+                  : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
               }`}
             >
-              <Ban size={16} className="shrink-0" />
+              <Ban size={15} />
               Reject
             </button>
           </div>
 
+          {/* Resolution Note Field */}
           <div>
             <label
               htmlFor="dispute-resolution-note"
-              className="mb-2 block text-sm font-medium text-slate-700"
+              className="mb-1.5 block text-xs font-semibold text-slate-700"
             >
-              Resolution Note <span className="text-rose-500">*</span>
+              Resolution Note <span className="text-red-500">*</span>
             </label>
             <textarea
               id="dispute-resolution-note"
@@ -136,29 +190,26 @@ export default function ApproveDisputeModal({
               value={resolution}
               onChange={(e) => setResolution(e.target.value)}
               placeholder="e.g. Verified with CCTV. Times corrected."
-              className="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+              className="w-full resize-none rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             />
-          </div>
-
-          <div
-            className={`rounded-lg border px-3 py-2 text-sm ${
-              isApproving
-                ? "border-emerald-100 bg-emerald-50 text-emerald-700"
-                : "border-rose-100 bg-rose-50 text-rose-700"
-            }`}
-          >
-            {isApproving
-              ? "Approving will update the attendance record to reflect the claimed times and add an audit log entry."
-              : "Rejecting will leave the attendance record unchanged and add an audit log entry."}
+            <p
+              className={`mt-2 text-xs ${
+                isApproving ? "text-emerald-700" : "text-rose-700"
+              }`}
+            >
+              {isApproving
+                ? "Approving will update the attendance record to reflect the claimed times and add an audit log entry."
+                : "Rejecting will leave the attendance record unchanged and add an audit log entry."}
+            </p>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-slate-200 px-6 py-4 sm:flex-row sm:justify-end">
+        <div className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-100 px-6 py-4">
           <button
             type="button"
             onClick={onClose}
-            className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 sm:w-auto"
+            className="rounded-lg border border-slate-200 bg-white px-6 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none"
           >
             Cancel
           </button>
@@ -172,15 +223,15 @@ export default function ApproveDisputeModal({
               })
             }
             disabled={isSubmitDisabled}
-            className={`w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 sm:w-auto ${
+            className={`rounded-lg px-6 py-2.5 text-sm font-medium text-white transition focus:outline-none ${
               isSubmitDisabled
-                ? "cursor-not-allowed bg-slate-300"
+                ? "cursor-not-allowed bg-[#CBD5E1] text-white"
                 : isApproving
-                  ? "bg-emerald-600 hover:bg-emerald-700"
-                  : "bg-rose-600 hover:bg-rose-700"
+                  ? "bg-[#16A34A] hover:bg-[#15803D]"
+                  : "bg-[#DC2626] hover:bg-[#B91C1C]"
             }`}
           >
-            {isApproving ? "Confirm Approval" : "Confirm Rejection"}
+            {isApproving ? "Confirm Approve" : "Confirm Reject"}
           </button>
         </div>
       </div>

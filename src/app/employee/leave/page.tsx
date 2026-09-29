@@ -74,7 +74,8 @@ function formatStatus(status: string): string {
 }
 
 function statusBadgeClass(status: string): string {
-  const base = "text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap inline-flex items-center";
+  const base =
+    "text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap inline-flex items-center";
   const s = (status || "").toUpperCase();
   if (s === "APPROVED") return `${base} bg-green-100 text-green-700`;
   if (s === "PENDING") return `${base} bg-yellow-100 text-yellow-700`;
@@ -123,7 +124,9 @@ export default function MyLeave() {
       setData(response);
     } catch (err: unknown) {
       console.error("Failed to load employee leave data:", err);
-      setError("Failed to load leave records. Please check your connection and try again.");
+      setError(
+        "Failed to load leave records. Please check your connection and try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -140,7 +143,7 @@ export default function MyLeave() {
   const pendingCount = data?.pendingRequestsCount ?? 0;
   const balances = data?.balances ?? [];
   const displayBalances = balances.length > 0 ? balances : DEFAULT_BALANCES;
-  const history = data?.history ?? [];
+  const history = data?.history ?? data?.requests ?? [];
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans px-8 py-8">
@@ -221,7 +224,8 @@ export default function MyLeave() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {displayBalances.map((b, idx) => {
-            const theme = BALANCE_COLOR_THEMES[idx % BALANCE_COLOR_THEMES.length];
+            const theme =
+              BALANCE_COLOR_THEMES[idx % BALANCE_COLOR_THEMES.length];
             const pct =
               b.totalDays > 0
                 ? Math.min(100, Math.round((b.usedDays / b.totalDays) * 100))
@@ -233,8 +237,13 @@ export default function MyLeave() {
                 className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4"
               >
                 <div className="flex items-center gap-2 mb-3">
-                  <span className={`w-2.5 h-2.5 rounded-full ${theme.dotColor}`} />
-                  <span className="text-xs font-medium text-gray-500 truncate" title={b.name}>
+                  <span
+                    className={`w-2.5 h-2.5 rounded-full ${theme.dotColor}`}
+                  />
+                  <span
+                    className="text-xs font-medium text-gray-500 truncate"
+                    title={b.name}
+                  >
                     {b.name}
                   </span>
                 </div>
@@ -317,7 +326,10 @@ export default function MyLeave() {
                           {formatStatus(row.status)}
                         </span>
                       </td>
-                      <td className="py-3.5 text-xs text-gray-400 max-w-xs truncate" title={row.managerComment || ""}>
+                      <td
+                        className="py-3.5 text-xs text-gray-400 max-w-xs truncate"
+                        title={row.managerComment || ""}
+                      >
                         {row.managerComment || "—"}
                       </td>
                     </tr>
@@ -339,7 +351,9 @@ export default function MyLeave() {
                 <line x1="8" y1="2" x2="8" y2="6" />
                 <line x1="3" y1="10" x2="21" y2="10" />
               </svg>
-              <p className="text-sm font-medium text-gray-600">No leave requests found</p>
+              <p className="text-sm font-medium text-gray-600">
+                No leave requests found
+              </p>
               <p className="text-xs text-gray-400 mt-1">
                 You have not submitted any leave requests for this period.
               </p>

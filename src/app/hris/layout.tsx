@@ -5,14 +5,14 @@ import { SidebarItem } from "@/components/layout/Sidebar";
 
 const sidebarItems: SidebarItem[] = [
   {
-    label: "Dashboard",
+    label: "Overview",
     href: "/hris/dashboard",
-    icon: "dashboard",
+    icon: "overview",
   },
   {
     label: "Employee",
     href: "/hris/employees",
-    icon: "users",
+    icon: "hris-employee",
     children: [
       {
         label: "Add Employee",
@@ -54,10 +54,7 @@ export default function HRISLayout({
   return (
     <div className="flex h-screen overflow-hidden">
       <div className="min-w-0 flex-1 overflow-x-auto">
-        <DashboardLayout
-          sidebarTitle="HRIS"
-          sidebarItems={sidebarItems}
-        >
+        <DashboardLayout sidebarTitle="HRIS" sidebarItems={sidebarItems}>
           {children}
         </DashboardLayout>
       </div>

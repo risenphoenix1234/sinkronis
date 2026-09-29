@@ -18,7 +18,7 @@ export default function UserProfileCard({ open, onClose }: UserProfileProps) {
 
             <p className="text-xs text-[#667085]">Consultant</p>
           </div>
-          <div >
+          <div>
             <X className="cursor-pointer" size={16} onClick={onClose} />
           </div>
         </div>

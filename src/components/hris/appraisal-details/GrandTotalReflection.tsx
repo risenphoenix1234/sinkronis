@@ -1,118 +1,258 @@
 "use client";
 
-import { Award } from "lucide-react";
+import type { ManagerReviewRecommendation } from "@/lib/api/types/hrisTypes";
 
-type FeedbackItem = {
-  question: string;
-  employeeResponse: string;
-  managerResponse: string;
-};
+export interface GrandTotalReflectionProps {
+  overallFeedback?: string | null;
+  recommendation?: string | null;
+  overallScore?: number | null;
+  quarter?: string | null;
+  responses?: Array<{ questionId: string; response: string }> | null;
+  employeeReflections?: Array<{ questionId: string; response: string }> | null;
+  reflectionQuestions?: Array<{ id: string; question: string }> | null;
+  editable?: boolean;
+  onResponseChange?: (questionId: string, response: string) => void;
+  onOverallFeedbackChange?: (feedback: string) => void;
+  onRecommendationChange?: (rec: ManagerReviewRecommendation | string) => void;
+  inputResponses?: Record<string, string>;
+  inputFeedback?: string;
+  inputRecommendation?: ManagerReviewRecommendation | string | "";
+}
 
-const feedbackItems: FeedbackItem[] = [
+const DEFAULT_MANAGER_QUESTIONS = [
   {
+    id: "mq1",
     question:
       "1. What is this employee's most significant contribution this period?",
-    employeeResponse:
-      "Resolved three operational bottlenecks and delivered our highest SLA compliance quarter yet.",
-    managerResponse:
-      "Tunde's process optimisation work is his strongest contribution this quarter.",
+    placeholder: "Describe their key achievements and impacts...",
+    empQuestionIndex: 0,
   },
   {
+    id: "mq2",
     question:
       "2. What is one key area where this employee should focus on improving?",
-    employeeResponse:
-      "Dealing with a complex vendor issue in May delayed one deliverable. Escalated and resolved within a week.",
-    managerResponse:
-      "Cross-team communication is an area to develop — he tends to stay siloed within his own team.",
+    placeholder:
+      "Be constructive and specific — include recommended actions...",
+    empQuestionIndex: 1,
   },
   {
+    id: "mq3",
     question:
       "3. What development opportunities do you recommend for this employee?",
-    employeeResponse:
-      "More visibility into cross-department project timelines so I can plan operations proactively.",
-    managerResponse:
-      "I recommend Tunde joins the quarterly cross-functional planning sessions and takes on a cross-team project in Q3.",
+    placeholder:
+      "Training, mentorship, stretch assignments, role changes, etc...",
+    empQuestionIndex: 2,
   },
 ];
 
-export default function GrandTotalReflection() {
+const RECOMMENDATION_OPTIONS: Array<{
+  value: string;
+  label: string;
+}> = [
+  { value: "PROMOTE", label: "Promote" },
+  { value: "ON_TRACK", label: "On Track" },
+  { value: "NEEDS_IMPROVEMENT", label: "Needs Improvement" },
+  { value: "PERFORMANCE_REVIEW", label: "Performance Review" },
+];
+
+export default function GrandTotalReflection({
+  overallFeedback = "",
+  recommendation,
+  employeeReflections,
+  reflectionQuestions,
+  editable = true,
+  onResponseChange,
+  onOverallFeedbackChange,
+  onRecommendationChange,
+  inputResponses = {},
+  inputFeedback = "",
+  inputRecommendation,
+}: GrandTotalReflectionProps = {}) {
+  // Map questions with employee responses
+  const questionsToDisplay =
+    reflectionQuestions && reflectionQuestions.length > 0
+      ? reflectionQuestions.map((q, idx) => {
+          const empMatch = employeeReflections?.[idx]?.response;
+          return {
+            id: q.id,
+            question: q.question.match(/^\d+\./)
+              ? q.question
+              : `${idx + 1}. ${q.question}`,
+            placeholder:
+              idx === 1
+                ? "Be constructive and specific — include recommended actions..."
+                : idx === 2
+                  ? "Training, mentorship, stretch assignments, role changes, etc..."
+                  : "Enter your response...",
+            empResponse: empMatch || "No employee response recorded.",
+          };
+        })
+      : DEFAULT_MANAGER_QUESTIONS.map((q, idx) => ({
+          id: q.id,
+          question: q.question,
+          placeholder: q.placeholder,
+          empResponse:
+            employeeReflections?.[idx]?.response ||
+            "No employee response recorded.",
+        }));
+
+  const currentRecommendationValue =
+    inputRecommendation !== undefined && inputRecommendation !== ""
+      ? inputRecommendation
+      : recommendation || "";
+
+  const feedbackValue =
+    inputFeedback !== undefined ? inputFeedback : overallFeedback || "";
+
   return (
-    <section className="w-full space-y-4">
-      {/* Feedback Questions */}
-      <div className="space-y-4">
-        {feedbackItems.map((item) => (
-          <div key={item.question} className="space-y-2">
-            {/* Question */}
-            <h3 className="text-[13px] font-semibold leading-5 text-[#1F2937]">
-              {item.question}
-            </h3>
+    <div className="space-y-6">
+      {/* 3 Feedback Questions */}
+      <div className="space-y-6">
+        {questionsToDisplay.map((item) => {
+          const qVal = inputResponses[item.id] ?? "";
 
-            {/* Employee Response */}
-            <div className="rounded-md border border-[#E1E7ED] bg-[#F8FAFC] px-3 py-2.5">
-              <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#94A3B8]">
-                Employee Said
-              </p>
+          return (
+            <div key={item.id} className="space-y-2">
+              <h3 className="text-sm font-semibold text-slate-800">
+                {item.question}
+              </h3>
 
-              <p className="text-[11px] leading-[18px] text-[#64748B]">
-                {item.employeeResponse}
-              </p>
+              {/* EMPLOYEE SAID Box */}
+              <div className="rounded-lg border border-dashed border-slate-200 bg-[#FAFAFC] p-3.5 space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                  EMPLOYEE SAID
+                </span>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  {item.empResponse}
+                </p>
+              </div>
+
+              {/* Manager Response Textarea */}
+              {editable ? (
+                <textarea
+                  rows={3}
+                  value={qVal}
+                  onChange={(e) => onResponseChange?.(item.id, e.target.value)}
+                  placeholder={item.placeholder}
+                  className="w-full rounded-md border border-slate-200 p-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#7A1E9E] focus:ring-1 focus:ring-[#7A1E9E]/20 min-h-[75px] resize-y"
+                />
+              ) : (
+                <div className="rounded-md border border-dashed border-slate-200 bg-white p-3 text-sm text-slate-700 min-h-[48px]">
+                  {qVal || "Not yet provided."}
+                </div>
+              )}
             </div>
-
-            {/* Manager Response */}
-            <div className="rounded-md border border-[#E1E7ED] bg-[#F8FAFC] px-3 py-2.5">
-              <p className="text-[11px] leading-[18px] text-[#64748B]">
-                {item.managerResponse}
-              </p>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {/* Overall Feedback + Recommendation */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_1fr]">
-        {/* Overall Feedback */}
-        <div>
-          <h3 className="mb-2 text-[13px] font-semibold text-[#1F2937]">
+      {/* Overall Feedback + Recommendation (Two Columns) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-2">
+        {/* Left: Overall Feedback */}
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-slate-800">
             Overall Feedback
-          </h3>
-
-          <div className="min-h-[60px] rounded-md border border-[#E1E7ED] bg-[#F8FAFC] px-3 py-3">
-            <p className="text-[11px] leading-[18px] text-[#64748B]">
-              Tunde is a dependable team member who meets expectations
-              consistently. He would benefit from more proactive cross-team
-              communication.
-            </p>
-          </div>
+          </label>
+          {editable ? (
+            <textarea
+              rows={4}
+              value={feedbackValue}
+              onChange={(e) => onOverallFeedbackChange?.(e.target.value)}
+              placeholder="Provide a comprehensive summary of this employee's performance..."
+              className="w-full rounded-md border border-slate-200 p-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#7A1E9E] focus:ring-1 focus:ring-[#7A1E9E]/20 min-h-[105px] resize-y"
+            />
+          ) : (
+            <div className="rounded-md border border-dashed border-slate-200 bg-white p-3 text-sm text-slate-700 min-h-[48px]">
+              {feedbackValue || "No overall feedback provided."}
+            </div>
+          )}
         </div>
 
-        {/* Recommendation */}
-        <div>
-          <h3 className="mb-2 text-[13px] font-semibold text-[#1F2937]">
+        {/* Right: Recommendation */}
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-slate-800">
             Recommendation
-          </h3>
+          </label>
 
-          <span className="inline-flex items-center rounded-full bg-[#E0F2FE] px-3 py-1 text-[11px] font-medium text-[#1677C8]">
-            On Track
-          </span>
+          {editable ? (
+            <div className="space-y-2.5 pt-1">
+              {RECOMMENDATION_OPTIONS.map((opt) => {
+                const isChecked =
+                  currentRecommendationValue === opt.value ||
+                  currentRecommendationValue?.toUpperCase() === opt.value;
+
+                return (
+                  <label
+                    key={opt.value}
+                    className={`flex items-center gap-3 cursor-pointer select-none text-sm ${
+                      isChecked
+                        ? "text-slate-900 font-semibold"
+                        : "text-slate-700 font-normal"
+                    }`}
+                    onClick={() => {
+                      if (editable) onRecommendationChange?.(opt.value);
+                    }}
+                  >
+                    <span
+                      className={`flex h-4 w-4 items-center justify-center rounded-full border transition ${
+                        isChecked
+                          ? "border-[#1677C8] bg-white"
+                          : "border-slate-300 bg-white"
+                      }`}
+                    >
+                      {isChecked && (
+                        <span className="h-2 w-2 rounded-full bg-[#1677C8]" />
+                      )}
+                    </span>
+                    <span>{opt.label}</span>
+                  </label>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="pt-1">
+              {(() => {
+                const upper = String(currentRecommendationValue || "").toUpperCase();
+                const label =
+                  RECOMMENDATION_OPTIONS.find(
+                    (opt) =>
+                      opt.value === currentRecommendationValue ||
+                      opt.value === upper,
+                  )?.label ||
+                  currentRecommendationValue ||
+                  "Promote";
+
+                if (upper === "NEEDS_IMPROVEMENT" || upper === "NEEDS IMPROVEMENT") {
+                  return (
+                    <span className="inline-flex items-center rounded-full bg-[#FEF0C7] text-[#B54708] border border-[#FEDF89] px-3.5 py-1 text-xs font-semibold">
+                      {label}
+                    </span>
+                  );
+                }
+                if (upper === "ON_TRACK" || upper === "ON TRACK") {
+                  return (
+                    <span className="inline-flex items-center rounded-full bg-[#F0F9FF] text-[#026AA2] border border-[#B9E6FE] px-3.5 py-1 text-xs font-semibold">
+                      {label}
+                    </span>
+                  );
+                }
+                if (upper === "PERFORMANCE_REVIEW" || upper === "PERFORMANCE REVIEW") {
+                  return (
+                    <span className="inline-flex items-center rounded-full bg-[#FEF3F2] text-[#B42318] border border-[#FECDCA] px-3.5 py-1 text-xs font-semibold">
+                      {label}
+                    </span>
+                  );
+                }
+                return (
+                  <span className="inline-flex items-center rounded-full bg-[#ECFDF3] text-[#027A48] border border-[#A6F4C5] px-3.5 py-1 text-xs font-semibold">
+                    {label}
+                  </span>
+                );
+              })()}
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Final Score */}
-      <div className="flex min-h-[70px] items-center rounded-md border border-[#E1E7ED] bg-[#F8FAFC] px-4 py-3">
-        <div className="flex items-center gap-3">
-          <Award size={22} strokeWidth={1.8} className="text-[#A16207]" />
-
-          <div>
-            <p className="text-[10px] font-medium text-[#94A3B8]">
-              OKR Final Score (Q2)
-            </p>
-
-            <p className="mt-0.5 text-[17px] font-bold text-[#946B00]">
-              63% — Below Expectation
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
+    </div>
   );
 }

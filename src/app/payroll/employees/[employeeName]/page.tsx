@@ -1,5 +1,7 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import AddToPayrollModal from "@/components/payroll/employee/AddToPayroll";
 import BIK from "@/components/payroll/employee/BIK";
 import DeductionsLoans from "@/components/payroll/employee/DeductionsLoans";
@@ -7,9 +9,14 @@ import EmployeeOverview from "@/components/payroll/employee/EmployeeOverview";
 import PayBreakdown from "@/components/payroll/employee/PayBreakdown";
 import PayrollHistory from "@/components/payroll/employee/PayrollHistory";
 import RemoveFromPayrollModal from "@/components/payroll/employee/RemoveFromPayroll";
-import { ChevronLeft } from "lucide-react";
+import { AlertCircle, ChevronLeft, Loader2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import {
+  enrollPayrollEmployee,
+  getPayrollEmployeeOverview,
+  PayrollEmployeeOverviewData,
+  removePayrollEmployeeEnrollment,
+} from "@/lib/api/payroll";
 
 type DetailRowProps = {
   label: string;
@@ -31,90 +38,6 @@ const tabs = [
   "Payroll History",
 ];
 
-const personalDetails = [
-  {
-    label: "Employee ID",
-    value: "CS-004",
-  },
-  {
-    label: "Email",
-    value: "a.nwachukwu@sinkronis.com",
-  },
-  {
-    label: "Phone",
-    value: "+234 803 100 0007",
-  },
-  {
-    label: "Join Date",
-    value: "2022-02-28",
-  },
-  {
-    label: "Tax State",
-    value: "Lagos",
-  },
-  {
-    label: "Tax Status",
-    value: "Permanent — PAYE",
-  },
-  {
-    label: "Bank",
-    value: "Zenith Bank — 2109876543",
-  },
-  {
-    label: "TIN",
-    value: "1234567-0007",
-  },
-  {
-    label: "Pension PIN",
-    value: "PENI00078901",
-  },
-  {
-    label: "PFA",
-    value: "Leadway Pension",
-  },
-  {
-    label: "NHF No.",
-    value: "NHF/007/2022",
-  },
-];
-
-const paySummary = [
-  {
-    label: "Basic Salary",
-    value: "₦180,000",
-  },
-  {
-    label: "Housing Allowance",
-    value: "₦36,000",
-  },
-  {
-    label: "Transport Allowance",
-    value: "₦18,000",
-  },
-  {
-    label: "Other Allowance",
-    value: "₦9,000",
-  },
-];
-
-const deductions = [
-  {
-    label: "PAYE",
-    value: "(₦13,177)",
-    className: "text-[#EF4444]",
-  },
-  {
-    label: "Employee Pension (8%)",
-    value: "(₦18,720)",
-    className: "text-[#A16207]",
-  },
-  {
-    label: "NHF (2.5%)",
-    value: "(₦4,500)",
-    className: "text-[#9333EA]",
-  },
-];
-
 export default function EmployeePayrollDetailsPage() {
   const router = useRouter();
   const params = useParams();
@@ -124,32 +47,159 @@ export default function EmployeePayrollDetailsPage() {
   const [activeTab, setActiveTab] = useState("Overview");
   const [isOnPayroll, setIsOnPayroll] = useState(false);
 
-  // Safely get employeeName from the URL
+  // Enrollment action loading states
+  const [enrolling, setEnrolling] = useState(false);
+  const [removing, setRemoving] = useState(false);
+
+  // ── API State ───────────────────────────────────────────
+  const [apiData, setApiData] = useState<PayrollEmployeeOverviewData | null>(
+    null,
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Safely get employeeName/employeeId from the URL
   const employeeNameParam = params?.employeeName;
 
   const employeeName = Array.isArray(employeeNameParam)
     ? decodeURIComponent(employeeNameParam[0] ?? "")
     : decodeURIComponent(employeeNameParam ?? "Employee");
 
-  // Shared employee details used by both modals — replace with real data
-  // from your API/state once this page is wired to a data source.
+  const fetchEmployeeData = useCallback(async () => {
+    if (!employeeNameParam) return;
+    const id = Array.isArray(employeeNameParam)
+      ? employeeNameParam[0]
+      : employeeNameParam;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await getPayrollEmployeeOverview(id);
+      if (res.data) {
+        setApiData(res.data);
+        if (res.data.employee?.payrollStatus) {
+          setIsOnPayroll(res.data.employee.payrollStatus === "ON_PAYROLL");
+        }
+      }
+    } catch (err: unknown) {
+      const axiosErr = err as {
+        response?: {
+          status?: number;
+          data?: { message?: string };
+        };
+      };
+      const errorMsg =
+        axiosErr.response?.data?.message ??
+        "Could not load employee payroll profile. Please try again.";
+      setError(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  }, [employeeNameParam]);
+
+  useEffect(() => {
+    fetchEmployeeData();
+  }, [fetchEmployeeData]);
+
+  // Shared employee details used by modals
   const employeeSummary = {
-    name: employeeName || "Adaeze Nwachukwu",
-    role: "Support Lead",
-    department: "Customer Support",
-    grossPay: "₦243,000",
-    netPay: "₦206,603",
+    name: apiData?.employee?.fullName || employeeName || "",
+    role: apiData?.employee?.role || "",
+    department: apiData?.employee?.department?.name || "",
+    grossPay: apiData
+      ? `₦${(apiData.paySummary?.gross || apiData.employee?.grossPay || 0).toLocaleString("en-NG")}`
+      : "",
+    netPay: apiData
+      ? `₦${(apiData.paySummary?.netPay || apiData.employee?.netPay || 0).toLocaleString("en-NG")}`
+      : "",
   };
 
-  const handleConfirmAddToPayroll = () => {
-    setIsOnPayroll(true);
-    setAddToPayRollOpen(false);
+  const handleConfirmAddToPayroll = async () => {
+    const id = Array.isArray(employeeNameParam)
+      ? employeeNameParam[0]
+      : employeeNameParam;
+    if (!id) return;
+
+    setEnrolling(true);
+    try {
+      await enrollPayrollEmployee(id);
+      setIsOnPayroll(true);
+      setAddToPayRollOpen(false);
+      toast.success("Employee enrolled in payroll successfully.");
+      // Refresh to get the latest payroll status from the server
+      fetchEmployeeData();
+    } catch (err: unknown) {
+      const axiosErr = err as {
+        response?: { data?: { message?: string; missingFields?: string[] } };
+      };
+      const msg =
+        axiosErr.response?.data?.message ??
+        "Failed to enroll employee in payroll.";
+      toast.error(msg);
+    } finally {
+      setEnrolling(false);
+    }
   };
 
-  const handleConfirmRemoveFromPayroll = () => {
-    setIsOnPayroll(false);
-    setRemoveFromPayrollOpen(false);
+  const handleConfirmRemoveFromPayroll = async () => {
+    const id = Array.isArray(employeeNameParam)
+      ? employeeNameParam[0]
+      : employeeNameParam;
+    if (!id) return;
+
+    setRemoving(true);
+    try {
+      await removePayrollEmployeeEnrollment(id);
+      setIsOnPayroll(false);
+      setRemoveFromPayrollOpen(false);
+      toast.success("Employee removed from payroll successfully.");
+      // Refresh to get the latest payroll status from the server
+      fetchEmployeeData();
+    } catch (err: unknown) {
+      const axiosErr = err as {
+        response?: { data?: { message?: string } };
+      };
+      const msg =
+        axiosErr.response?.data?.message ??
+        "Failed to remove employee from payroll.";
+      toast.error(msg);
+    } finally {
+      setRemoving(false);
+    }
   };
+
+  const displayName =
+    apiData?.employee?.fullName || employeeName || "";
+
+  const initials =
+    apiData?.employee?.initials ||
+    (apiData?.employee?.fullName
+      ? apiData.employee.fullName
+          .split(" ")
+          .map((w) => w[0])
+          .slice(0, 2)
+          .join("")
+          .toUpperCase()
+      : (displayName ? displayName.slice(0, 2).toUpperCase() : "EM"));
+
+  const displayStatus =
+    apiData?.employee?.employeeStatus === "ACTIVE"
+      ? "Active"
+      : apiData?.employee?.employeeStatus || "Inactive";
+
+  const role = apiData?.employee?.role || "—";
+  const deptName = apiData?.employee?.department?.name || "—";
+  const empType = apiData?.employee?.employmentType || "Full-time";
+  const subtitle = `${role} · ${deptName} · ${empType}`;
+
+  const grossFormatted = apiData?.paySummary?.gross || apiData?.employee?.grossPay
+    ? `₦${(apiData.paySummary?.gross || apiData.employee?.grossPay || 0).toLocaleString("en-NG")}`
+    : "₦0";
+
+  const netPayFormatted = apiData?.paySummary?.netPay || apiData?.employee?.netPay
+    ? `₦${(apiData.paySummary?.netPay || apiData.employee?.netPay || 0).toLocaleString("en-NG")}`
+    : "₦0";
 
   return (
     <main className="min-h-screen bg-[#F8F9FA] p-4 text-[#263342] sm:px-6">
@@ -157,14 +207,30 @@ export default function EmployeePayrollDetailsPage() {
       {/* BACK BUTTON */}
       {/* ================================================================ */}
 
-      <button
-        type="button"
-        onClick={() => router.back()}
-        className="mb-6 flex items-center gap-2 text-sm text-[#667085] transition hover:text-[#1683D8]"
-      >
-        <ChevronLeft size={16} />
-        Back to Employees
-      </button>
+      <div className="mb-6 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-sm text-[#667085] transition hover:text-[#1683D8]"
+        >
+          <ChevronLeft size={16} />
+          Back to Employees
+        </button>
+
+        {loading && (
+          <div className="flex items-center gap-2 text-xs text-[#1683D8]">
+            <Loader2 size={14} className="animate-spin" />
+            Loading employee details...
+          </div>
+        )}
+      </div>
+
+      {error && (
+        <div className="mb-4 flex items-center gap-2 rounded border border-[#FEDF89] bg-[#FFFAEB] px-4 py-2.5 text-xs text-[#B54708]">
+          <AlertCircle size={15} />
+          <span>{error}</span>
+        </div>
+      )}
 
       {/* ================================================================ */}
       {/* EMPLOYEE HEADER */}
@@ -178,7 +244,7 @@ export default function EmployeePayrollDetailsPage() {
             {/* Avatar */}
 
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#E0F2FE] text-base font-semibold text-[#1683D8]">
-              AN
+              {initials}
             </div>
 
             {/* Name + role */}
@@ -186,16 +252,22 @@ export default function EmployeePayrollDetailsPage() {
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-base font-semibold text-[#263342] sm:text-lg">
-                  {employeeName}
+                  {displayName}
                 </h1>
 
-                <span className="rounded-full bg-[#F2F4F7] px-2.5 py-1 text-[11px] font-medium text-[#667085]">
-                  Inactive
+                <span
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                    displayStatus === "Active"
+                      ? "bg-[#DCF7DF] text-[#15803D]"
+                      : "bg-[#F2F4F7] text-[#667085]"
+                  }`}
+                >
+                  {displayStatus}
                 </span>
               </div>
 
               <p className="mt-1 text-xs text-[#667085] sm:text-sm">
-                Support Lead · Customer Support · Full-time
+                {subtitle}
               </p>
             </div>
           </div>
@@ -209,7 +281,7 @@ export default function EmployeePayrollDetailsPage() {
               </p>
 
               <p className="mt-1 text-base font-bold text-[#1683D8] sm:text-lg">
-                ₦243,000
+                {grossFormatted}
               </p>
             </div>
 
@@ -219,7 +291,7 @@ export default function EmployeePayrollDetailsPage() {
               </p>
 
               <p className="mt-1 text-base font-bold text-[#15803D] sm:text-lg">
-                ₦206,603
+                {netPayFormatted}
               </p>
             </div>
 
@@ -285,27 +357,80 @@ export default function EmployeePayrollDetailsPage() {
       {/* TAB CONTENT */}
       {/* ================================================================ */}
 
-      {activeTab === "Overview" && <EmployeeOverview />}
+      {activeTab === "Overview" && (
+        <EmployeeOverview
+          overviewData={apiData || undefined}
+          employeeId={
+            Array.isArray(employeeNameParam)
+              ? (employeeNameParam[0] ?? undefined)
+              : (employeeNameParam ?? undefined)
+          }
+          onRefresh={fetchEmployeeData}
+        />
+      )}
 
-      {activeTab === "Pay Breakdown" && <PayBreakdown />}
+      {activeTab === "Pay Breakdown" && (
+        <PayBreakdown
+          employeeId={
+            Array.isArray(employeeNameParam)
+              ? (employeeNameParam[0] ?? undefined)
+              : (employeeNameParam ?? undefined)
+          }
+          overviewData={apiData || undefined}
+        />
+      )}
 
-      {activeTab === "Deductions & Loans" && <DeductionsLoans />}
+      {activeTab === "Deductions & Loans" && (
+        <DeductionsLoans
+          employeeId={
+            Array.isArray(employeeNameParam)
+              ? (employeeNameParam[0] ?? undefined)
+              : (employeeNameParam ?? undefined)
+          }
+          overviewData={apiData || undefined}
+          onRefresh={fetchEmployeeData}
+        />
+      )}
 
-      {activeTab === "BIK" && <BIK />}
+      {activeTab === "BIK" && (
+        <BIK
+          employeeId={
+            Array.isArray(employeeNameParam)
+              ? (employeeNameParam[0] ?? undefined)
+              : (employeeNameParam ?? undefined)
+          }
+        />
+      )}
 
-      {activeTab === "Payroll History" && <PayrollHistory />}
+      {activeTab === "Payroll History" && (
+        <PayrollHistory
+          employeeId={
+            Array.isArray(employeeNameParam)
+              ? (employeeNameParam[0] ?? undefined)
+              : (employeeNameParam ?? undefined)
+          }
+        />
+      )}
 
       <AddToPayrollModal
         isOpen={addToPayRollOpen}
         onClose={() => setAddToPayRollOpen(false)}
         onConfirm={handleConfirmAddToPayroll}
         employeeName={employeeSummary.name}
+        employeeId={
+          Array.isArray(employeeNameParam)
+            ? (employeeNameParam[0] ?? undefined)
+            : (employeeNameParam ?? undefined)
+        }
+        employee={employeeSummary}
+        isLoading={enrolling}
       />
 
       <RemoveFromPayrollModal
         open={removeFromPayrollOpen}
         onClose={() => setRemoveFromPayrollOpen(false)}
         onConfirm={handleConfirmRemoveFromPayroll}
+        isLoading={removing}
         employee={employeeSummary}
       />
     </main>

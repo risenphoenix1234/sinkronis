@@ -9,7 +9,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ChevronDown, ChevronUp, Download, FileText, AlertCircle } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Download,
+  FileText,
+  AlertCircle,
+} from "lucide-react";
 import { toast } from "react-toastify";
 import {
   downloadEmployeePayslipPdf,
@@ -110,7 +116,9 @@ function NetPayChart({
   loading: boolean;
 }) {
   const chartData = (trend || []).map((item) => ({
-    month: item.period ? item.period.split(" ")[0].slice(0, 3) : `M${item.month}`,
+    month: item.period
+      ? item.period.split(" ")[0].slice(0, 3)
+      : `M${item.month}`,
     net: item.netPay ?? 0,
     fullPeriod: item.period,
     currency: item.currency,
@@ -123,8 +131,12 @@ function NetPayChart({
         : `${trend[0].period} – ${trend[trend.length - 1].period}`
       : "Recent pay history";
 
-  const maxNet = trend.length > 0 ? Math.max(...trend.map((t) => t.netPay || 0)) : 0;
-  const upperDomain = Math.max(360000, Math.ceil((maxNet * 1.2) / 10000) * 10000);
+  const maxNet =
+    trend.length > 0 ? Math.max(...trend.map((t) => t.netPay || 0)) : 0;
+  const upperDomain = Math.max(
+    360000,
+    Math.ceil((maxNet * 1.2) / 10000) * 10000,
+  );
 
   if (loading) {
     return (
@@ -245,10 +257,9 @@ function PayslipCard({
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const safePeriod = (payslip.period || `${payslip.month}-${payslip.year}`).replace(
-        /[^a-zA-Z0-9-_]/g,
-        "_",
-      );
+      const safePeriod = (
+        payslip.period || `${payslip.month}-${payslip.year}`
+      ).replace(/[^a-zA-Z0-9-_]/g, "_");
       a.download = `Payslip_${safePeriod}.pdf`;
       document.body.appendChild(a);
       a.click();
@@ -272,7 +283,9 @@ function PayslipCard({
   const earningsList =
     detail?.earnings && detail.earnings.length > 0 ? detail.earnings : null;
   const deductionsList =
-    detail?.deductions && detail.deductions.length > 0 ? detail.deductions : null;
+    detail?.deductions && detail.deductions.length > 0
+      ? detail.deductions
+      : null;
 
   return (
     <div className="rounded-lg border border-[#EAECF0] bg-white shadow-sm">
@@ -313,7 +326,10 @@ function PayslipCard({
                 : "text-[#98A2B3] opacity-60 cursor-not-allowed"
             }`}
           >
-            <Download size={15} className={downloading ? "animate-bounce" : ""} />
+            <Download
+              size={15}
+              className={downloading ? "animate-bounce" : ""}
+            />
             {downloading ? "Downloading..." : "Download PDF"}
           </button>
           <button
@@ -426,7 +442,9 @@ function PayslipCard({
 }
 
 export default function MyPayslipsPage() {
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [selectedYear, setSelectedYear] = useState<number>(
+    new Date().getFullYear(),
+  );
   const [data, setData] = useState<EmployeePayslipsData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -496,7 +514,10 @@ export default function MyPayslipsPage() {
         )}
 
         <div className="mt-6">
-          <NetPayChart trend={data?.netPayTrend || []} loading={loading && !data} />
+          <NetPayChart
+            trend={data?.netPayTrend || []}
+            loading={loading && !data}
+          />
         </div>
 
         <YearFilter
@@ -537,7 +558,8 @@ export default function MyPayslipsPage() {
               No payslips found for {selectedYear}
             </h3>
             <p className="mx-auto mt-1 max-w-sm text-sm text-[#667085]">
-              There are no finalized payslips for this year. Approved payslips will appear here once payroll is processed.
+              There are no finalized payslips for this year. Approved payslips
+              will appear here once payroll is processed.
             </p>
           </div>
         )}

@@ -6,7 +6,13 @@ type SectionTabProps = {
   value: string;
 };
 
-export function SectionTab({ active, onClick, color, label, value }: SectionTabProps) {
+export function SectionTab({
+  active,
+  onClick,
+  color,
+  label,
+  value,
+}: SectionTabProps) {
   const isBlue = color === "blue";
 
   return (

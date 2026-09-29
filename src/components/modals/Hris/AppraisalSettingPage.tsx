@@ -1,17 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, AlertCircle } from "lucide-react";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 import NewTemplate from "@/components/hris/appraisal-details/NewTemplateForm";
 import TemplateView from "@/components/hris/appraisal-details/NewTemplateView";
 import { TemplateCard } from "@/components/hris/appraisal-details/TemplateCard";
 
-import { ratingScale } from "@/data/hris/appraisal";
-
 import {
-  archiveAppraisalTemplate,
   createAppraisalCycle,
   getAppraisalSettings,
   getAppraisalTemplateDetail,
@@ -25,17 +23,56 @@ import type {
   CreateAppraisalCyclePayload,
 } from "@/lib/api/types/hrisTypes";
 
+const RATING_SCALE_BANDS = [
+  {
+    rating: "5",
+    title: "Outstanding",
+    range: ">121%",
+    background: "bg-green-100",
+    text: "text-green-700",
+  },
+  {
+    rating: "4",
+    title: "Above Expectation",
+    range: "101–120%",
+    background: "bg-blue-100",
+    text: "text-blue-700",
+  },
+  {
+    rating: "3",
+    title: "Meets Expectation",
+    range: "80–100%",
+    background: "bg-gray-100",
+    text: "text-gray-600",
+  },
+  {
+    rating: "2",
+    title: "Below Expectation",
+    range: "60–79%",
+    background: "bg-yellow-100",
+    text: "text-yellow-700",
+  },
+  {
+    rating: "1",
+    title: "Poor Performance",
+    range: "0–59%",
+    background: "bg-red-100",
+    text: "text-red-600",
+  },
+];
+
 type ModalType = "new" | "preview" | "edit" | null;
 
 export default function AppraisalSettings() {
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const [settings, setSettings] = useState<AppraisalSettings | null>(null);
   const [settingsLoading, setSettingsLoading] = useState(true);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
   const [savingFrequency, setSavingFrequency] = useState(false);
 
   const [templates, setTemplates] = useState<AppraisalTemplateSummary[]>([]);
-
   const [templatesLoading, setTemplatesLoading] = useState(true);
+  const [templatesError, setTemplatesError] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] =
     useState<AppraisalTemplate | null>(null);
   const [templateDetailLoading, setTemplateDetailLoading] = useState(false);
@@ -54,6 +91,10 @@ export default function AppraisalSettings() {
         "Template detail failed:",
         axios.isAxiosError(err) ? err.response?.data : err,
       );
+      const apiMsg = axios.isAxiosError(err)
+        ? err.response?.data?.message || err.message
+        : "Failed to load appraisal template detail";
+      toast.error(apiMsg);
     } finally {
       setTemplateDetailLoading(false);
     }
@@ -61,46 +102,61 @@ export default function AppraisalSettings() {
 
   const refetchTemplates = () => {
     setTemplatesLoading(true);
+    setTemplatesError(null);
     getAppraisalTemplates()
-      .then((res) => setTemplates(res.data))
+      .then((res) => {
+        setTemplates(Array.isArray(res?.data) ? res.data : []);
+        setTemplatesError(null);
+      })
       .catch((err) => {
         console.error(
           "Appraisal templates failed:",
           axios.isAxiosError(err) ? err.response?.data : err,
         );
+        const apiMsg = axios.isAxiosError(err)
+          ? err.response?.data?.message
+          : null;
+        const msg =
+          apiMsg ||
+          (err instanceof Error
+            ? err.message
+            : "Failed to load appraisal templates.");
+        setTemplatesError(msg);
+        toast.error(msg);
+        setTemplates([]);
       })
       .finally(() => setTemplatesLoading(false));
   };
 
-  const handleArchiveTemplate = async (templateId: string) => {
-    if (
-      !confirm(
-        "Archive this template? It won't be available for future cycles, but existing appraisals using it are unaffected.",
-      )
-    ) {
-      return;
-    }
-    try {
-      await archiveAppraisalTemplate(templateId);
-      setTemplates((prev) => prev.filter((t) => t.id !== templateId));
-    } catch (err) {
-      console.error(
-        "Archive template failed:",
-        axios.isAxiosError(err) ? err.response?.data : err,
-      );
-    }
-  };
-
-  useEffect(() => {
+  const fetchSettings = () => {
+    setSettingsLoading(true);
+    setSettingsError(null);
     getAppraisalSettings()
-      .then((res) => setSettings(res))
+      .then((res) => {
+        setSettings(res);
+        setSettingsError(null);
+      })
       .catch((err) => {
         console.error(
           "Appraisal settings failed:",
           axios.isAxiosError(err) ? err.response?.data : err,
         );
+        const apiMsg = axios.isAxiosError(err)
+          ? err.response?.data?.message
+          : null;
+        const msg =
+          apiMsg ||
+          (err instanceof Error
+            ? err.message
+            : "Failed to load appraisal settings.");
+        setSettingsError(msg);
+        toast.error(msg);
       })
       .finally(() => setSettingsLoading(false));
+  };
+
+  useEffect(() => {
+    fetchSettings();
   }, []);
 
   useEffect(() => {
@@ -121,15 +177,23 @@ export default function AppraisalSettings() {
   ) => {
     setSavingFrequency(true);
     try {
-      await updateAppraisalSettings({ defaultReviewFrequency: value });
-      setSettings((prev) =>
-        prev ? { ...prev, defaultReviewFrequency: value } : prev,
-      );
+      const updated = await updateAppraisalSettings({
+        defaultReviewFrequency: value,
+      });
+      setSettings(updated);
+      toast.success("Appraisal review frequency updated successfully");
     } catch (err) {
       console.error(
         "Update settings failed:",
         axios.isAxiosError(err) ? err.response?.data : err,
       );
+      const apiMsg = axios.isAxiosError(err)
+        ? err.response?.data?.message ||
+          (Array.isArray(err.response?.data?.validationErrors)
+            ? err.response?.data?.validationErrors[0]?.message
+            : null)
+        : null;
+      toast.error(apiMsg || "Failed to update review frequency");
     } finally {
       setSavingFrequency(false);
     }
@@ -164,15 +228,31 @@ export default function AppraisalSettings() {
             </button>
           </div>
 
+          {templatesError && (
+            <div className="mt-4 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 p-4 text-xs text-red-700">
+              <div className="flex items-center gap-2">
+                <AlertCircle size={16} className="shrink-0 text-red-600" />
+                <span>{templatesError}</span>
+              </div>
+              <button
+                type="button"
+                onClick={refetchTemplates}
+                className="font-semibold underline hover:text-red-900"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
           <div className="mt-5 space-y-3">
             {templatesLoading ? (
               <p className="text-sm text-[#94A3B8]">Loading templates…</p>
-            ) : templates.length === 0 ? (
+            ) : templates.length === 0 && !templatesError ? (
               <p className="rounded-md border border-dashed border-[#E5E9EF] py-8 text-center text-sm text-[#94A3B8]">
                 No templates yet. Create one to get started.
               </p>
             ) : (
-              templates.map((template: any) => (
+              templates.map((template: AppraisalTemplateSummary) => (
                 <TemplateCard
                   key={template.id}
                   template={template}
@@ -189,6 +269,9 @@ export default function AppraisalSettings() {
         <RatingScale
           currentFrequency={settings?.defaultReviewFrequency}
           loading={settingsLoading || savingFrequency}
+          isSaving={savingFrequency}
+          error={settingsError}
+          onRetry={fetchSettings}
           onFrequencyChange={handleFrequencyChange}
         />
       </main>
@@ -218,10 +301,16 @@ export default function AppraisalSettings() {
 function RatingScale({
   currentFrequency,
   loading,
+  isSaving,
+  error,
+  onRetry,
   onFrequencyChange,
 }: {
   currentFrequency?: string;
   loading: boolean;
+  isSaving?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
   onFrequencyChange: (
     value: AppraisalSettings["defaultReviewFrequency"],
   ) => void;
@@ -232,9 +321,12 @@ function RatingScale({
   }[] = [
     { label: "Monthly", value: "MONTHLY" },
     { label: "Quarterly", value: "QUARTERLY" },
-    { label: "BiAnnual", value: "BIANNUAL" },
+    { label: "BiAnnual", value: "BI_ANNUAL" },
     { label: "Annual", value: "ANNUAL" },
   ];
+
+  const normalizedCurrent =
+    currentFrequency === "BIANNUAL" ? "BI_ANNUAL" : currentFrequency;
 
   return (
     <section className="mt-6 overflow-hidden rounded-md border border-[#E5E9EF]">
@@ -247,7 +339,7 @@ function RatingScale({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
-        {ratingScale.map((item) => (
+        {RATING_SCALE_BANDS.map((item) => (
           <div
             key={item.rating}
             className={`min-h-[84px] px-4 py-4 ${item.background}`}
@@ -270,9 +362,27 @@ function RatingScale({
       <div className="p-4 sm:p-5">
         <h2 className="font-bold text-[#1F2937]">Default Review Frequency</h2>
 
+        {error && (
+          <div className="mt-3 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+            <div className="flex items-center gap-2">
+              <AlertCircle size={15} className="shrink-0 text-red-600" />
+              <span>{error}</span>
+            </div>
+            {onRetry && (
+              <button
+                type="button"
+                onClick={onRetry}
+                className="font-semibold underline hover:text-red-900"
+              >
+                Retry
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="mt-3 flex flex-wrap gap-2">
           {frequencies.map((frequency) => {
-            const isActive = !loading && currentFrequency === frequency.value;
+            const isActive = !loading && normalizedCurrent === frequency.value;
             return (
               <button
                 key={frequency.value}
@@ -291,11 +401,15 @@ function RatingScale({
           })}
         </div>
 
-        {loading && (
+        {isSaving ? (
+          <p className="mt-2 text-xs font-medium text-sky-600 animate-pulse">
+            Updating review frequency…
+          </p>
+        ) : loading ? (
           <p className="mt-2 text-xs text-[#94A3B8]">
             Loading current setting…
           </p>
-        )}
+        ) : null}
       </div>
     </section>
   );

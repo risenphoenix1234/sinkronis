@@ -3,7 +3,13 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { FiX, FiAlertTriangle, FiCheck, FiCalendar, FiClock } from "react-icons/fi";
+import {
+  FiX,
+  FiAlertTriangle,
+  FiCheck,
+  FiCalendar,
+  FiClock,
+} from "react-icons/fi";
 import { updateEmployeeStatus } from "@/lib/api/hris";
 import type { EmployeeStatus } from "@/lib/api/types/hrisTypes";
 import Button from "@/components/ui/Button";
@@ -54,13 +60,15 @@ const STATUS_OPTIONS: StatusOption[] = [
   {
     value: "INACTIVE",
     label: "Inactive",
-    description: "Deactivated status. Linked user portal access will be revoked.",
+    description:
+      "Deactivated status. Linked user portal access will be revoked.",
     isDestructive: true,
   },
   {
     value: "EXITED",
     label: "Exited",
-    description: "Separated from organization. Linked user portal access will be revoked.",
+    description:
+      "Separated from organization. Linked user portal access will be revoked.",
     isDestructive: true,
   },
 ];
@@ -87,7 +95,7 @@ export default function ChangeEmployeeStatusModal({
   const getTodayDate = () => new Date().toISOString().split("T")[0];
 
   const [selectedStatus, setSelectedStatus] = useState<EmployeeStatus>(
-    initialStatus || (currentStatus as EmployeeStatus) || "ACTIVE"
+    initialStatus || (currentStatus as EmployeeStatus) || "ACTIVE",
   );
   const [effectiveDate, setEffectiveDate] = useState<string>(getTodayDate());
   const [submitting, setSubmitting] = useState(false);
@@ -110,7 +118,9 @@ export default function ChangeEmployeeStatusModal({
 
   if (!open) return null;
 
-  const currentOption = STATUS_OPTIONS.find((opt) => opt.value === selectedStatus);
+  const currentOption = STATUS_OPTIONS.find(
+    (opt) => opt.value === selectedStatus,
+  );
   const isDestructive = currentOption?.isDestructive;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -134,7 +144,7 @@ export default function ChangeEmployeeStatusModal({
       });
 
       toast.success(
-        `Employee status updated to ${currentOption?.label || selectedStatus} successfully!`
+        `Employee status updated to ${currentOption?.label || selectedStatus} successfully!`,
       );
       onSuccess?.();
       onClose();
@@ -143,9 +153,14 @@ export default function ChangeEmployeeStatusModal({
       let errMsg = "Failed to update employee status. Please try again.";
       if (axios.isAxiosError(err)) {
         const resData = err.response?.data;
-        if (resData?.validationErrors && Array.isArray(resData.validationErrors)) {
+        if (
+          resData?.validationErrors &&
+          Array.isArray(resData.validationErrors)
+        ) {
           errMsg = resData.validationErrors
-            .map((v: { field?: string; message?: string }) => v.message || v.field)
+            .map(
+              (v: { field?: string; message?: string }) => v.message || v.field,
+            )
             .join(", ");
         } else if (resData?.message) {
           errMsg = resData.message;
@@ -176,7 +191,8 @@ export default function ChangeEmployeeStatusModal({
               Change Employee Status
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Updating status for <span className="font-medium text-slate-800">{employeeName}</span>
+              Updating status for{" "}
+              <span className="font-medium text-slate-800">{employeeName}</span>
             </p>
           </div>
           <button
@@ -270,9 +286,13 @@ export default function ChangeEmployeeStatusModal({
             <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-800 text-xs">
               <FiAlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
               <div>
-                <p className="font-semibold">Security Access Revocation Notice</p>
+                <p className="font-semibold">
+                  Security Access Revocation Notice
+                </p>
                 <p className="mt-0.5 text-amber-700 leading-relaxed">
-                  Changing status to <strong>{selectedStatus}</strong> will immediately revoke this employee&apos;s linked login credentials and access to the employee portal.
+                  Changing status to <strong>{selectedStatus}</strong> will
+                  immediately revoke this employee&apos;s linked login
+                  credentials and access to the employee portal.
                 </p>
               </div>
             </div>

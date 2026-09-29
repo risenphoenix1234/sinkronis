@@ -3,6 +3,7 @@
 import { approveLeaveReq, rejectLeaveReq } from "@/lib/api/hris";
 import { LeaveRequestRecord } from "@/lib/api/types/hrisTypes";
 import { useState } from "react";
+import { toast } from "react-toastify";
 
 interface LeaveTableProps {
   requests: LeaveRequestRecord[];
@@ -25,7 +26,7 @@ export default function LeaveTable({
 }: LeaveTableProps) {
   const [actingId, setActingId] = useState<string | null>(null);
 
-  const statusClass = (status: string) => {
+  const statusClass = (status?: string) => {
     switch (status?.toUpperCase()) {
       case "APPROVED":
         return "bg-green-100 text-green-600";
@@ -44,19 +45,30 @@ export default function LeaveTable({
     setActingId(id);
     try {
       await approveLeaveReq(id, comment ? { comment } : undefined);
+      toast.success("Leave request approved successfully");
       onActionComplete();
-    } catch (err: any) {
-      const status = err.response?.status;
-      if (status === 409)
-        alert("This request was already reviewed by someone else.");
-      else if (status === 404) alert("This leave request no longer exists.");
-      else if (status === 403)
-        alert("You don't have permission to approve leave requests.");
-      else
-        alert(
-          err.response?.data?.message ?? "Failed to approve leave request.",
+    } catch (err: unknown) {
+      const axiosErr = err as {
+        response?: {
+          status?: number;
+          data?: { message?: string };
+        };
+        message?: string;
+      };
+      const status = axiosErr.response?.status;
+      if (status === 409) {
+        toast.error("This request was already reviewed by someone else.");
+      } else if (status === 404) {
+        toast.error("This leave request no longer exists.");
+      } else if (status === 403) {
+        toast.error("You don't have permission to approve leave requests.");
+      } else {
+        toast.error(
+          axiosErr.response?.data?.message ||
+            axiosErr.message ||
+            "Failed to approve leave request.",
         );
-      console.error("Approve leave failed:", err.response?.data ?? err.message);
+      }
       onActionComplete();
     } finally {
       setActingId(null);
@@ -70,21 +82,30 @@ export default function LeaveTable({
     setActingId(id);
     try {
       await rejectLeaveReq(id, reason ? { reason } : undefined);
+      toast.success("Leave request rejected successfully");
       onActionComplete();
-    } catch (err: any) {
-      const status = err.response?.status;
+    } catch (err: unknown) {
+      const axiosErr = err as {
+        response?: {
+          status?: number;
+          data?: { message?: string };
+        };
+        message?: string;
+      };
+      const status = axiosErr.response?.status;
       if (status === 409) {
-        alert("This request was already reviewed by someone else.");
+        toast.error("This request was already reviewed by someone else.");
       } else if (status === 404) {
-        alert("This leave request no longer exists.");
+        toast.error("This leave request no longer exists.");
       } else if (status === 403) {
-        alert("You don't have permission to reject leave requests.");
-      } else if (status === 400) {
-        alert(err.response?.data?.message ?? "Invalid request.");
+        toast.error("You don't have permission to reject leave requests.");
       } else {
-        alert(err.response?.data?.message ?? "Failed to reject leave request.");
+        toast.error(
+          axiosErr.response?.data?.message ||
+            axiosErr.message ||
+            "Failed to reject leave request.",
+        );
       }
-      console.error("Reject leave failed:", err.response?.data ?? err.message);
       onActionComplete();
     } finally {
       setActingId(null);
@@ -155,7 +176,7 @@ export default function LeaveTable({
                         disabled={actingId === item.id}
                         className="bg-red-100 text-red-500 text-xs px-3 py-1 rounded disabled:opacity-50"
                       >
-                        Reject
+                        {actingId === item.id ? "..." : "Reject"}
                       </button>
                     </div>
                   ) : (

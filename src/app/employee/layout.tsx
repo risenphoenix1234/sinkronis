@@ -9,21 +9,21 @@ const sidebarItems: SidebarItem[] = [
   {
     label: "My Dashboard",
     href: "/employee/dashboard",
-    icon: "employee-dashboard",
+    icon: "dashboard",
   },
   { label: "My Profile", href: "/employee/profile", icon: "profile" },
   {
     label: "My Attendance",
     href: "/employee/attendance",
-    icon: "employee-attendance",
+    icon: "attendance",
   },
-  { label: "My Leave", href: "/employee/leave", icon: "employee-leave" },
+  { label: "My Leave", href: "/employee/leave", icon: "leave" },
   {
     label: "My Appraisal",
     href: "/employee/appraisal",
-    icon: "employee-appraisal",
+    icon: "appraisal",
   },
-  { label: "My Payslip", href: "/employee/payslip", icon: "payslips" },
+  { label: "My Payslip", href: "/employee/payslip", icon: "payslip" },
   { label: "My Inbox", href: "/employee/inbox", icon: "inbox" },
 ];
 

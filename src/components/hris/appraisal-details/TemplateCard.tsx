@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import axios from "axios";
+import { toast } from "react-toastify";
 import { archiveAppraisalTemplate } from "@/lib/api/hris";
 import type { AppraisalTemplateSummary } from "@/lib/api/types/hrisTypes";
 
@@ -32,17 +33,18 @@ export function TemplateCard({
     setArchiving(true);
     try {
       await archiveAppraisalTemplate(template.id);
+      toast.success("Appraisal template archived successfully");
       onArchived?.();
     } catch (err) {
       console.error(
         "Archive template failed:",
         axios.isAxiosError(err) ? err.response?.data : err,
       );
-      alert(
-        axios.isAxiosError(err)
-          ? (err.response?.data?.message ?? "Couldn't archive this template.")
-          : "Couldn't archive this template.",
-      );
+      const apiMsg =
+        axios.isAxiosError(err) && err.response?.data?.message
+          ? err.response.data.message
+          : "Couldn't archive this template.";
+      toast.error(apiMsg);
     } finally {
       setArchiving(false);
     }
@@ -88,7 +90,7 @@ export function TemplateCard({
             Edit
           </button>
 
-          {!template.isDefault && (
+          {/* {!template.isDefault && (
             <button
               type="button"
               onClick={handleArchive}
@@ -98,7 +100,7 @@ export function TemplateCard({
             >
               <Trash2 size={13} />
             </button>
-          )}
+          )} */}
         </div>
       </div>
     </article>

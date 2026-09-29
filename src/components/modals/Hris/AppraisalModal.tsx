@@ -27,7 +27,9 @@ export default function AppraisalModal({
   const [periodTo, setPeriodTo] = useState("");
   const [submissionDeadline, setSubmissionDeadline] = useState("");
   const [description, setDescription] = useState("");
-  const [launchMode, setLaunchMode] = useState<"SAVE_AS_DRAFT" | "LAUNCH_AS_ACTIVE">("SAVE_AS_DRAFT");
+  const [launchMode, setLaunchMode] = useState<
+    "SAVE_AS_DRAFT" | "LAUNCH_AS_ACTIVE"
+  >("SAVE_AS_DRAFT");
 
   const [templates, setTemplates] = useState<AppraisalTemplateSummary[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(false);
@@ -45,6 +47,7 @@ export default function AppraisalModal({
       })
       .catch((err) => {
         console.error("Failed to fetch appraisal templates:", err);
+        toast.error("Failed to load appraisal templates list.");
       })
       .finally(() => setTemplatesLoading(false));
   }, [isOpen]);
@@ -99,12 +102,29 @@ export default function AppraisalModal({
 
       onSuccess?.();
       onClose();
-    } catch (err) {
-      const detail = axios.isAxiosError(err)
-        ? (err.response?.data?.message ?? err.message)
-        : "Failed to create appraisal cycle";
+    } catch (err: unknown) {
+      console.error("Error creating appraisal cycle:", err);
+      let detail = "Failed to create appraisal cycle";
+      if (axios.isAxiosError(err) && err.response?.data) {
+        const data = err.response.data as {
+          message?: string;
+          validationErrors?: Array<{ message?: string; field?: string }>;
+        };
+        if (
+          Array.isArray(data.validationErrors) &&
+          data.validationErrors.length > 0
+        ) {
+          detail = data.validationErrors
+            .map((v) => v.message || v.field)
+            .filter(Boolean)
+            .join(", ");
+        } else if (data.message) {
+          detail = data.message;
+        }
+      } else if (err instanceof Error) {
+        detail = err.message;
+      }
       toast.error(detail);
-      console.error("Error creating cycle:", err);
     } finally {
       setSubmitting(false);
     }

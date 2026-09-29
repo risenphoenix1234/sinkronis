@@ -14,9 +14,7 @@ export default function RateBar({ value }: Props) {
         />
       </div>
 
-      <span className="text-sm font-medium text-green-700">
-        {value}%
-      </span>
+      <span className="text-sm font-medium text-green-700">{value}%</span>
     </div>
   );
 }

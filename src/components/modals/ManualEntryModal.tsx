@@ -1,8 +1,7 @@
-// components/modals/ManualEntryModal.tsx
 "use client";
 
 import { useState } from "react";
-import { FiX, FiArrowLeft, FiUpload } from "react-icons/fi";
+import { FiX, FiArrowLeft } from "react-icons/fi";
 
 export type ManualEntryData = {
   bankName: string;
@@ -17,7 +16,7 @@ type ManualEntryModalProps = {
   open: boolean;
   onClose: () => void;
   onBack: () => void;
-  onSubmit: (data: ManualEntryData) => void;
+  onSubmit: (data: ManualEntryData) => Promise<void>;
 };
 
 const emptyForm: ManualEntryData = {
@@ -31,19 +30,33 @@ const emptyForm: ManualEntryData = {
 
 export default function ManualEntryModal({ open, onClose, onBack, onSubmit }: ManualEntryModalProps) {
   const [form, setForm] = useState<ManualEntryData>(emptyForm);
-  const [fileName, setFileName] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!open) return null;
 
   const update = (field: keyof ManualEntryData) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [field]: e.target.value }));
 
-  const isValid = form.bankName && form.amount && form.reference && form.dateOfPayment;
+  const isValid = form.amount && form.reference;
+
+  const handleSubmit = async () => {
+    if (!isValid) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await onSubmit(form);
+      setForm(emptyForm);
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Failed to log manual funding.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
       <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
-        {/* Header */}
         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
           <div className="flex items-start gap-3">
             <button onClick={onBack} className="mt-0.5 text-slate-400 hover:text-slate-600">
@@ -51,7 +64,7 @@ export default function ManualEntryModal({ open, onClose, onBack, onSubmit }: Ma
             </button>
             <div>
               <h2 className="text-base font-semibold text-slate-900">Manual Entry</h2>
-              <p className="mt-0.5 text-sm text-slate-400">Log a bank transfer with reference</p>
+              <p className="mt-0.5 text-sm text-slate-400">Log a bank transfer you've already confirmed</p>
             </div>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
@@ -60,6 +73,8 @@ export default function ManualEntryModal({ open, onClose, onBack, onSubmit }: Ma
         </div>
 
         <div className="max-h-[60vh] space-y-4 overflow-y-auto p-6">
+          {error && <div className="rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-600">{error}</div>}
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="mb-1 block text-xs text-slate-500">Bank Name</label>
@@ -128,40 +143,22 @@ export default function ManualEntryModal({ open, onClose, onBack, onSubmit }: Ma
             />
           </div>
 
-          {/* Proof of payment upload */}
-          <div>
-            <label className="mb-1 block text-xs text-slate-500">Proof of Payment (optional)</label>
-            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm text-slate-500 hover:bg-slate-100">
-              <FiUpload size={14} />
-              {fileName ?? "Upload receipt or screenshot"}
-              <input
-                type="file"
-                accept="image/*,.pdf"
-                className="hidden"
-                onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
-              />
-            </label>
-          </div>
-
           <p className="rounded-md bg-amber-50 px-3 py-2.5 text-xs text-amber-700">
-            This entry will be marked pending until reconciled by an admin.
+            This immediately credits your wallet — only submit after you've confirmed the transfer was actually
+            received. There is no separate review step.
           </p>
         </div>
 
-        {/* Footer */}
         <div className="flex items-center gap-3 border-t border-slate-100 px-6 py-4">
-          <button
-            onClick={onBack}
-            className="flex-1 rounded-md border border-slate-200 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50"
-          >
+          <button onClick={onBack} className="flex-1 rounded-md border border-slate-200 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50">
             Back
           </button>
           <button
-            onClick={() => isValid && onSubmit(form)}
-            disabled={!isValid}
+            onClick={handleSubmit}
+            disabled={!isValid || submitting}
             className="flex-1 rounded-md bg-sky-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-300"
           >
-            Submit Entry
+            {submitting ? "Submitting..." : "Submit Entry"}
           </button>
         </div>
       </div>

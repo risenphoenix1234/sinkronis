@@ -101,7 +101,9 @@ export default function PersonalDetails({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function pickEditable(source: PersonalDetailsData): Record<EditableKey, string> {
+  function pickEditable(
+    source: PersonalDetailsData,
+  ): Record<EditableKey, string> {
     const result = {} as Record<EditableKey, string>;
     for (const key of EDITABLE_KEYS) {
       result[key] = (source[key] as string) || "";

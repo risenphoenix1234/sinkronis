@@ -1,10 +1,27 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import axios from "axios";
-import { Search, RotateCcw, ChevronLeft, ChevronRight, Filter } from "lucide-react";
-import { getAppraisalCycles, getAppraisalReviews } from "@/lib/api/hris";
-import type { AppraisalCycleSummary, AppraisalReview } from "@/lib/api/types/hrisTypes";
+import { toast } from "react-toastify";
+import {
+  Search,
+  RotateCcw,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
+  AlertCircle,
+} from "lucide-react";
+import {
+  getAppraisalCycles,
+  getAppraisals,
+  getAppraisalReviews,
+  getAppraisalCycleReviews,
+} from "@/lib/api/hris";
+import type {
+  AppraisalCycleSummary,
+  AppraisalReview,
+} from "@/lib/api/types/hrisTypes";
 import ReviewsTable from "@/components/hris/ReviewsTable";
 
 const STAGE_OPTIONS = [
@@ -18,14 +35,18 @@ const STAGE_OPTIONS = [
 ] as const;
 
 export default function AppraisalReviewPage() {
+  const searchParams = useSearchParams();
+  const urlCycleId = searchParams.get("cycleId");
+
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedStage, setSelectedStage] = useState("");
-  const [selectedCycleId, setSelectedCycleId] = useState("");
+  const [selectedCycleId, setSelectedCycleId] = useState(urlCycleId || "");
   const [cycles, setCycles] = useState<AppraisalCycleSummary[]>([]);
 
   const [reviews, setReviews] = useState<AppraisalReview[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [pagination, setPagination] = useState({
@@ -36,6 +57,13 @@ export default function AppraisalReviewPage() {
     hasNextPage: false,
     hasPreviousPage: false,
   });
+
+  // Sync cycleId from query params if changed externally
+  useEffect(() => {
+    if (urlCycleId && urlCycleId !== selectedCycleId) {
+      setSelectedCycleId(urlCycleId);
+    }
+  }, [urlCycleId]);
 
   // Debounce search so it doesn't fire a request per keystroke
   useEffect(() => {
@@ -59,23 +87,43 @@ export default function AppraisalReviewPage() {
           "Failed to load appraisal cycles:",
           axios.isAxiosError(err) ? err.response?.data : err,
         );
+        toast.error("Failed to load appraisal cycles filter options.");
       });
   }, []);
 
   const fetchReviews = useCallback(() => {
     setLoading(true);
-    getAppraisalReviews({
-      search: debouncedSearch || undefined,
-      status: selectedStage || undefined,
-      cycleId: selectedCycleId || undefined,
-      page,
-      limit,
-    })
+    setError(null);
+
+    const request = selectedCycleId
+      ? getAppraisalCycleReviews(selectedCycleId, {
+          search: debouncedSearch || undefined,
+          status: selectedStage || undefined,
+          page,
+          limit,
+        })
+      : getAppraisals({
+          search: debouncedSearch || undefined,
+          status: selectedStage || undefined,
+          page,
+          limit,
+        });
+
+    request
       .then((res) => {
-        const list = Array.isArray(res?.data) ? res.data : [];
+        const list = Array.isArray(res?.data)
+          ? (res.data as AppraisalReview[])
+          : [];
         setReviews(list);
         if (res?.pagination) {
-          setPagination(res.pagination);
+          setPagination({
+            page: res.pagination.page,
+            limit: res.pagination.limit,
+            total: res.pagination.total,
+            totalPages: res.pagination.totalPages,
+            hasNextPage: Boolean(res.pagination.hasNextPage),
+            hasPreviousPage: Boolean(res.pagination.hasPreviousPage),
+          });
         } else {
           setPagination((prev) => ({
             ...prev,
@@ -89,6 +137,16 @@ export default function AppraisalReviewPage() {
           "Appraisal reviews failed:",
           axios.isAxiosError(err) ? err.response?.data : err,
         );
+        const apiMsg = axios.isAxiosError(err)
+          ? err.response?.data?.message
+          : null;
+        const msg =
+          apiMsg ||
+          (err instanceof Error
+            ? err.message
+            : "Failed to load appraisal reviews.");
+        setError(msg);
+        toast.error(msg);
         setReviews([]);
       })
       .finally(() => setLoading(false));
@@ -111,7 +169,7 @@ export default function AppraisalReviewPage() {
   );
 
   return (
-    <div className="min-h-screen space-y-5 bg-[#F9FAFB]">
+    <div className="w-full space-y-5">
       {/* Header & Filter Bar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 flex-wrap items-center gap-3">
@@ -131,7 +189,7 @@ export default function AppraisalReviewPage() {
           </div>
 
           {/* Stage / Status Filter */}
-          <div className="relative">
+          {/* <div className="relative">
             <select
               value={selectedStage}
               onChange={(e) => {
@@ -146,10 +204,10 @@ export default function AppraisalReviewPage() {
                 </option>
               ))}
             </select>
-          </div>
+          </div> */}
 
           {/* Cycle Filter */}
-          <div className="relative">
+          {/* <div className="relative">
             <select
               value={selectedCycleId}
               onChange={(e) => {
@@ -165,10 +223,10 @@ export default function AppraisalReviewPage() {
                 </option>
               ))}
             </select>
-          </div>
+          </div> */}
 
           {/* Clear Filters Button */}
-          {hasActiveFilters && (
+          {/* {hasActiveFilters && (
             <button
               type="button"
               onClick={handleClearFilters}
@@ -177,14 +235,15 @@ export default function AppraisalReviewPage() {
               <RotateCcw size={13} />
               Reset
             </button>
-          )}
+          )} */}
         </div>
 
         {/* Count and Refresh */}
         <div className="flex items-center gap-3">
           {!loading && (
             <span className="text-xs font-medium text-slate-500">
-              {pagination.total} {pagination.total === 1 ? "review" : "reviews"} found
+              {pagination.total} {pagination.total === 1 ? "review" : "reviews"}{" "}
+              found
             </span>
           )}
           <button
@@ -194,10 +253,30 @@ export default function AppraisalReviewPage() {
             title="Refresh reviews"
             className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-sky-600 disabled:opacity-50"
           >
-            <RotateCcw size={15} className={loading ? "animate-spin text-sky-600" : ""} />
+            <RotateCcw
+              size={15}
+              className={loading ? "animate-spin text-sky-600" : ""}
+            />
           </button>
         </div>
       </div>
+
+      {/* Error State Banner */}
+      {error && (
+        <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 p-4 text-xs text-red-700">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={16} className="shrink-0 text-red-600" />
+            <span>{error}</span>
+          </div>
+          <button
+            type="button"
+            onClick={fetchReviews}
+            className="font-semibold underline hover:text-red-900"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Reviews Table with Empty State */}
       <ReviewsTable
@@ -211,10 +290,19 @@ export default function AppraisalReviewPage() {
       {!loading && reviews.length > 0 && (
         <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-200/80 pt-4 sm:flex-row">
           <p className="text-xs text-slate-500">
-            Showing Page <span className="font-semibold text-slate-700">{pagination.page}</span> of{" "}
-            <span className="font-semibold text-slate-700">{pagination.totalPages || 1}</span>
+            Showing Page{" "}
+            <span className="font-semibold text-slate-700">
+              {pagination.page}
+            </span>{" "}
+            of{" "}
+            <span className="font-semibold text-slate-700">
+              {pagination.totalPages || 1}
+            </span>
             {" · "}
-            <span className="font-medium text-slate-600">{pagination.total}</span> total records
+            <span className="font-medium text-slate-600">
+              {pagination.total}
+            </span>{" "}
+            total records
           </p>
 
           <div className="flex items-center gap-2">

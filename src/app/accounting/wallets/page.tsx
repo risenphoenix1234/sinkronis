@@ -1,39 +1,146 @@
-// app/wallet/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FiUploadCloud, FiFileText } from "react-icons/fi";
-import { walletTransactions, naira, getWalletSummary } from "@/lib/wallet-data";
 import FundWalletModal from "@/components/modals/FundWalletModal";
 import PayViaGatewayModal from "@/components/modals/PayViaGatewayModal";
 import ManualEntryModal, { ManualEntryData } from "@/components/modals/ManualEntryModal";
+import WalletReceiptModal from "@/components/modals/WalletReceiptModal";
+import {
+  getWalletSummary,
+  getWalletTransactions,
+  createWalletAccount,
+  fundWalletManually,
+  initializePaystackFunding,
+  verifyPaystackFunding,
+  getWalletReceipt,
+} from "@/lib/api/accounting";
+import { WalletSummary, WalletTransactionItem } from "@/lib/api/types/accounting.types";
+import Link from "next/link";
+
 
 type ModalStep = "closed" | "method" | "gateway" | "manual";
 type TxnFilter = "all" | "inflow" | "outflow";
+
+function naira(value: number) {
+  return `₦${value.toLocaleString()}`;
+}
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
+const emptySummary: WalletSummary = { availableBalance: 0, totalInflow: 0, totalOutflow: 0, transactionCount: 0, wallets: [] };
 
 export default function WalletPage() {
   const [step, setStep] = useState<ModalStep>("closed");
   const [filter, setFilter] = useState<TxnFilter>("all");
 
-  const { availableBalance, totalInflow, totalOutflow, count } = getWalletSummary();
+  const [summary, setSummary] = useState<WalletSummary>(emptySummary);
+  const [transactions, setTransactions] = useState<WalletTransactionItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredTxns = walletTransactions.filter((t) => {
-    if (filter === "inflow") return t.amount > 0;
-    if (filter === "outflow") return t.amount < 0;
+  const [receiptOpen, setReceiptOpen] = useState(false);
+  const [receiptTxn, setReceiptTxn] = useState<WalletTransactionItem | null>(null);
+  const [receiptLoading, setReceiptLoading] = useState(false);
+
+  const [paystackWaiting, setPaystackWaiting] = useState(false);
+
+  const fetchAll = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [summaryRes, txnRes] = await Promise.all([getWalletSummary(), getWalletTransactions()]);
+      setSummary(summaryRes.data);
+      setTransactions(txnRes.data.transactions);
+    } catch (err) {
+      setError("Failed to load wallet data.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAll();
+  }, []);
+
+  const filteredTxns = transactions.filter((t) => {
+    if (filter === "inflow") return t.direction === "CREDIT";
+    if (filter === "outflow") return t.direction === "DEBIT";
     return true;
   });
 
-  const handleGatewayProceed = (provider: string, amount: string) => {
-    // Hook up to actual gateway redirect (Paystack/Flutterwave) or bank transfer instructions here.
-    console.log("Proceeding to gateway:", provider, amount);
-    setStep("closed");
+  // Wallet may not exist yet on first use — create one lazily rather than
+  // forcing a separate setup step in the UI.
+  const ensureWalletAccountId = async (): Promise<string> => {
+    if (summary.wallets.length > 0) return summary.wallets[0].id;
+    const res = await createWalletAccount({ name: "Main Wallet" });
+    await fetchAll();
+    return res.data.id;
   };
 
-  const handleManualSubmit = (data: ManualEntryData) => {
-    // Hook up to API call to log the pending manual entry here.
-    console.log("Manual entry submitted:", data);
+  const handleGatewayProceed = async (amount: string) => {
+    const walletAccountId = await ensureWalletAccountId();
+    const res = await initializePaystackFunding({ walletAccountId, amount });
+    const { authorizationUrl, reference } = res.data;
+
+    window.open(authorizationUrl, "_blank", "noopener,noreferrer");
     setStep("closed");
+    setPaystackWaiting(true);
+
+    // No callback route wired up in this app yet, so we poll verify from
+    // here instead of relying on a redirect back into the app.
+    const maxAttempts = 30; // ~2.5 minutes at 5s intervals
+    let attempts = 0;
+    const poll = setInterval(async () => {
+      attempts++;
+      try {
+        const verifyRes = await verifyPaystackFunding(reference);
+        if (verifyRes.data.status === "COMPLETED") {
+          clearInterval(poll);
+          setPaystackWaiting(false);
+          await fetchAll();
+        } else if (attempts >= maxAttempts) {
+          clearInterval(poll);
+          setPaystackWaiting(false);
+        }
+      } catch {
+        if (attempts >= maxAttempts) {
+          clearInterval(poll);
+          setPaystackWaiting(false);
+        }
+      }
+    }, 5000);
   };
+
+  const handleManualSubmit = async (data: ManualEntryData) => {
+    const walletAccountId = await ensureWalletAccountId();
+    const descriptionParts = [data.bankName, data.accountPaidInto, data.note].filter(Boolean);
+    await fundWalletManually({
+      walletAccountId,
+      amount: data.amount,
+      externalReference: data.reference,
+      description: descriptionParts.length > 0 ? descriptionParts.join(" — ") : undefined,
+    });
+    setStep("closed");
+    await fetchAll();
+  };
+
+  const handleViewReceipt = async (txn: WalletTransactionItem) => {
+    setReceiptLoading(true);
+    setReceiptOpen(true);
+    try {
+      const res = await getWalletReceipt(txn.id);
+      setReceiptTxn(res.data);
+    } catch {
+      setReceiptTxn(txn); // fall back to what we already have if the receipt call fails
+    } finally {
+      setReceiptLoading(false);
+    }
+  };
+
+  const primaryWallet = summary.wallets[0];
 
   return (
     <section className="space-y-6 p-6">
@@ -46,9 +153,12 @@ export default function WalletPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 whitespace-nowrap">
-            <FiUploadCloud size={14} /> Disburse Payment
-          </button>
+         <Link
+  href="/accounting/payment-requests"
+  className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 whitespace-nowrap"
+>
+  <FiUploadCloud size={14} /> Disburse Payment
+</Link>
           <button
             onClick={() => setStep("method")}
             className="rounded-md bg-sky-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-sky-700 whitespace-nowrap"
@@ -58,26 +168,32 @@ export default function WalletPage() {
         </div>
       </div>
 
+      {paystackWaiting && (
+        <div className="rounded-md bg-sky-50 px-4 py-3 text-sm text-sky-700">
+          Waiting for payment confirmation from Paystack — this page will update automatically once it's confirmed.
+        </div>
+      )}
+
       {/* Stat cards */}
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-xl border border-slate-200 bg-white px-5 py-4">
           <p className="text-sm text-slate-500">Available Balance</p>
-          <p className="mt-1 text-2xl font-semibold text-sky-600">{naira(availableBalance)}</p>
-          <p className="mt-1 text-xs text-slate-400">{count} total transactions</p>
+          <p className="mt-1 text-2xl font-semibold text-sky-600">{naira(summary.availableBalance)}</p>
+          <p className="mt-1 text-xs text-slate-400">{summary.transactionCount} total transactions</p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white px-5 py-4">
           <div className="flex items-center gap-1.5">
             <span className="text-emerald-500">↙</span>
             <p className="text-sm text-slate-500">Total Inflow</p>
           </div>
-          <p className="mt-1 text-2xl font-semibold text-emerald-600">{naira(totalInflow)}</p>
+          <p className="mt-1 text-2xl font-semibold text-emerald-600">{naira(summary.totalInflow)}</p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white px-5 py-4">
           <div className="flex items-center gap-1.5">
             <span className="text-rose-500">↗</span>
             <p className="text-sm text-slate-500">Total Outflow</p>
           </div>
-          <p className="mt-1 text-2xl font-semibold text-rose-600">{naira(totalOutflow)}</p>
+          <p className="mt-1 text-2xl font-semibold text-rose-600">{naira(summary.totalOutflow)}</p>
         </div>
       </div>
 
@@ -92,9 +208,7 @@ export default function WalletPage() {
             key={tab.id}
             onClick={() => setFilter(tab.id)}
             className={`px-4 py-2.5 text-sm font-medium ${
-              filter === tab.id
-                ? "border-b-2 border-sky-600 text-sky-600"
-                : "text-slate-500 hover:text-slate-700"
+              filter === tab.id ? "border-b-2 border-sky-600 text-sky-600" : "text-slate-500 hover:text-slate-700"
             }`}
           >
             {tab.label}
@@ -115,34 +229,26 @@ export default function WalletPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {filteredTxns.map((t) => (
-              <tr key={t.refId} className="hover:bg-slate-50">
-                <td className="px-6 py-3 text-sm font-medium text-sky-600 whitespace-nowrap">
-                  {t.refId}
-                </td>
-                <td className="px-6 py-3 text-sm text-slate-600 whitespace-nowrap">
-                  {t.description}
-                </td>
-                <td className="px-6 py-3 text-sm text-slate-500 whitespace-nowrap">{t.date}</td>
-                <td
-                  className={`px-6 py-3 text-sm tabular-nums font-medium whitespace-nowrap ${
-                    t.amount > 0 ? "text-emerald-600" : "text-rose-600"
-                  }`}
-                >
-                  {t.amount > 0 ? "+" : "-"}
-                  {naira(t.amount)}
+            {loading && <tr><td colSpan={5} className="px-6 py-8 text-center text-sm text-slate-400">Loading transactions...</td></tr>}
+            {!loading && error && <tr><td colSpan={5} className="px-6 py-8 text-center text-sm text-red-500">{error}</td></tr>}
+            {!loading && !error && filteredTxns.map((t) => (
+              <tr key={t.id} className="hover:bg-slate-50">
+                <td className="px-6 py-3 text-sm font-medium text-sky-600 whitespace-nowrap">{t.reference}</td>
+                <td className="px-6 py-3 text-sm text-slate-600 whitespace-nowrap">{t.description ?? t.type}</td>
+                <td className="px-6 py-3 text-sm text-slate-500 whitespace-nowrap">{formatDate(t.createdAt)}</td>
+                <td className={`px-6 py-3 text-sm tabular-nums font-medium whitespace-nowrap ${t.direction === "CREDIT" ? "text-emerald-600" : "text-rose-600"}`}>
+                  {t.direction === "CREDIT" ? "+" : "-"}{naira(t.amount)}
                 </td>
                 <td className="px-6 py-3 text-right whitespace-nowrap">
-                  {t.hasReceipt ? (
-                    <button className="inline-flex items-center gap-1.5 text-sm text-sky-600 hover:underline">
-                      <FiFileText size={13} /> Receipt
-                    </button>
-                  ) : (
-                    <span className="text-sm text-slate-300">—</span>
-                  )}
+                  <button onClick={() => handleViewReceipt(t)} className="inline-flex items-center gap-1.5 text-sm text-sky-600 hover:underline">
+                    <FiFileText size={13} /> Receipt
+                  </button>
                 </td>
               </tr>
             ))}
+            {!loading && !error && filteredTxns.length === 0 && (
+              <tr><td colSpan={5} className="px-6 py-8 text-center text-sm text-slate-400">No transactions yet.</td></tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -164,6 +270,13 @@ export default function WalletPage() {
         onClose={() => setStep("closed")}
         onBack={() => setStep("method")}
         onSubmit={handleManualSubmit}
+      />
+      <WalletReceiptModal
+        open={receiptOpen}
+        onClose={() => { setReceiptOpen(false); setReceiptTxn(null); }}
+        transaction={receiptLoading ? null : receiptTxn}
+        walletName={primaryWallet?.name}
+        walletCurrency={primaryWallet?.currency}
       />
     </section>
   );

@@ -63,28 +63,7 @@ export default function ReportsPage() {
             type="button"
             onClick={() => exportReport(activeTab)}
             aria-label={`Export ${activeTab} for ${CURRENT_PERIOD} as CSV`}
-            className="
-              flex
-              w-fit
-              shrink-0
-              items-center
-              gap-2
-              rounded-lg
-              border
-              border-gray-200
-              bg-white
-              px-5
-              py-2.5
-              text-sm
-              font-medium
-              text-gray-900
-              shadow-sm
-              transition
-              hover:bg-gray-50
-              focus-visible:outline-none
-              focus-visible:ring-2
-              focus-visible:ring-blue-500/40
-            "
+            className="flex w-fit shrink-0 items-center gap-2 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-900 shadow-sm transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
           >
             <Download className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
             Export

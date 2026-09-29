@@ -1,9 +1,13 @@
+"use client";
+
+import { useState } from "react";
 import { AttendanceRecord } from "@/types/hris/attendance";
 import RateBar from "../../hris/attendance/RateBar";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface AttendanceTableProps {
   data: AttendanceRecord[];
+  onMonthChange?: (monthStr: string) => void;
 }
 
 const columns = [
@@ -18,21 +22,81 @@ const columns = [
   "Rate",
 ];
 
-export default function AttendanceTable({ data }: AttendanceTableProps) {
+function getWorkingDays(year: number, month: number): number {
+  let count = 0;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dayOfWeek = new Date(year, month, day).getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      count++;
+    }
+  }
+  return count;
+}
+
+export default function AttendanceTable({
+  data,
+  onMonthChange,
+}: AttendanceTableProps) {
+  const [currentDate, setCurrentDate] = useState(() => new Date());
+
+  const monthYear = currentDate.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+
+  const workingDays = getWorkingDays(
+    currentDate.getFullYear(),
+    currentDate.getMonth(),
+  );
+
+  const handlePrevMonth = () => {
+    setCurrentDate((prev) => {
+      const next = new Date(prev.getFullYear(), prev.getMonth() - 1, 1);
+      const isoMonth = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`;
+      onMonthChange?.(isoMonth);
+      return next;
+    });
+  };
+
+  const handleNextMonth = () => {
+    setCurrentDate((prev) => {
+      const next = new Date(prev.getFullYear(), prev.getMonth() + 1, 1);
+      const isoMonth = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`;
+      onMonthChange?.(isoMonth);
+      return next;
+    });
+  };
+
   return (
     <section className="mt-6">
       {/* Header */}
-      <div className="mb-4 justify-between flex items center">
+      <div className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-900">
-          Monthly Report — May 2026 (21 working days)
+          Monthly Report — {monthYear} ({workingDays} working days)
         </h2>
 
-        <p className="text-xs text-slate-500"></p>
-        <button className="border rounded-md px-3 flex items-center gap-2">
-          <ChevronLeft size={16} />
-          <span className="text-sm">1 May 2026</span>
-          <ChevronRight size={16} />
-        </button>
+        <div className="flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 shadow-xs">
+          <button
+            type="button"
+            onClick={handlePrevMonth}
+            aria-label="Previous month"
+            className="rounded p-1 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <span className="select-none px-2 text-sm font-medium text-slate-700">
+            {monthYear}
+          </span>
+          <button
+            type="button"
+            onClick={handleNextMonth}
+            aria-label="Next month"
+            className="rounded p-1 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Table Card */}

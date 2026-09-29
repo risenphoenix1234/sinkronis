@@ -4,6 +4,7 @@ import { MessageSquare, X } from "lucide-react";
 import { Attendance } from "@/types/hris/attendance";
 import { useState } from "react";
 import axios from "axios";
+import { toast } from "react-toastify";
 import { raiseAttendanceDispute } from "@/lib/api/hris";
 
 interface RaiseAttendanceDisputeModalProps {
@@ -66,17 +67,22 @@ export default function RaiseAttendanceDisputeModal({
         description: "",
       });
 
+      toast.success("Attendance dispute raised successfully.");
       onSubmitted?.();
       onClose();
     } catch (err) {
-      console.error("Raise dispute failed:", axios.isAxiosError(err) ? err.response?.data : err);
+      console.error(
+        "Raise dispute failed:",
+        axios.isAxiosError(err) ? err.response?.data : err,
+      );
+      let errMsg = "Couldn't submit this dispute.";
       if (axios.isAxiosError(err) && err.response?.status === 409) {
-        setError("There's already a pending dispute for this attendance record.");
-      } else {
-        setError(
-          axios.isAxiosError(err) ? err.response?.data?.message ?? "Couldn't submit this dispute." : "Couldn't submit this dispute.",
-        );
+        errMsg = "There's already a pending dispute for this attendance record.";
+      } else if (axios.isAxiosError(err)) {
+        errMsg = err.response?.data?.message ?? "Couldn't submit this dispute.";
       }
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setSubmitting(false);
     }

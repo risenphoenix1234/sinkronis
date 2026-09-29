@@ -18,18 +18,17 @@ export default function StatsCard({
   iconColor,
 }: Props) {
   return (
-    <div className="rounded-lg border bg-white p-5">
-      <div className="flex justify-between">
-        <span className="text-sm text-slate-500">{title}</span>
-
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-xs">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-normal text-gray-500">{title}</span>
         <div
-          className={`flex h-9 w-9 items-center justify-center rounded-md ${iconBg} ${iconColor}`}
+          className={`flex h-8 w-8 items-center justify-center rounded-lg ${iconBg} ${iconColor}`}
         >
           {icon}
         </div>
       </div>
 
-      <h2 className="mt-4 text-4xl font-bold text-slate-800">{value}</h2>
+      <h2 className="mt-3 text-3xl font-bold text-gray-900">{value}</h2>
     </div>
   );
 }

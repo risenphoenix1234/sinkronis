@@ -121,32 +121,14 @@ export default function HrisSettingsPage() {
     Number(payroll.transportPercent || 0);
 
   return (
-    <main
-      className="
-        min-h-screen
-        bg-[#f8fafc]
-        px-6
-        py-7
-        text-[#263447]
-        lg:px-8
-        lg:py-8
-      "
-    >
+    <main className="min-h-screen bg-[#f8fafc] px-6 py-7 text-[#263447] lg:px-8 lg:py-8">
       {/* ===================================================
           HEADER
       ================================================== */}
 
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1
-            className="
-              text-[34px]
-              font-bold
-              leading-tight
-              tracking-[-0.8px]
-              text-[#263447]
-            "
-          >
+          <h1 className="text-[34px] font-bold leading-tight tracking-[-0.8px] text-[#263447]">
             Settings
           </h1>
 
@@ -166,22 +148,7 @@ export default function HrisSettingsPage() {
             type="button"
             onClick={handleSave}
             disabled={!isDirty || isSaving}
-            className="
-              flex
-              h-11
-              items-center
-              gap-2
-              rounded-md
-              bg-[#1683d8]
-              px-5
-              text-[14px]
-              font-semibold
-              text-white
-              transition
-              hover:bg-[#1274c2]
-              disabled:cursor-not-allowed
-              disabled:bg-[#a9c9e0]
-            "
+            className="flex h-11 items-center gap-2 rounded-md bg-[#1683d8] px-5 text-[14px] font-semibold text-white transition hover:bg-[#1274c2] disabled:cursor-not-allowed disabled:bg-[#a9c9e0]"
           >
             <Save size={16} strokeWidth={2} />
             <span>{isSaving ? "Saving..." : "Save Changes"}</span>
@@ -193,20 +160,7 @@ export default function HrisSettingsPage() {
           TABS
       ================================================== */}
 
-      <div
-        className="
-          mt-6
-          flex
-          w-fit
-          items-center
-          gap-1
-          rounded-lg
-          border
-          border-[#dce2e8]
-          bg-white
-          p-1
-        "
-      >
+      <div className="mt-6 flex w-fit items-center gap-1 rounded-lg border border-[#dce2e8] bg-white p-1">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = tab.key === activeTab;
@@ -216,22 +170,11 @@ export default function HrisSettingsPage() {
               key={tab.key}
               type="button"
               onClick={() => setActiveTab(tab.key)}
-              className={`
-                flex
-                items-center
-                gap-2
-                rounded-md
-                px-4
-                py-2
-                text-[13.5px]
-                font-semibold
-                transition
-                ${
-                  isActive
-                    ? "bg-[#1683d8] text-white"
-                    : "text-[#617287] hover:bg-[#f1f5f9]"
-                }
-              `}
+              className={`flex items-center gap-2 rounded-md px-4 py-2 text-[13.5px] font-semibold transition ${
+                isActive
+                  ? "bg-[#1683d8] text-white"
+                  : "text-[#617287] hover:bg-[#f1f5f9]"
+              }`}
             >
               <Icon size={15} strokeWidth={2} />
               <span>{tab.label}</span>
@@ -244,16 +187,7 @@ export default function HrisSettingsPage() {
           TAB PANELS
       ================================================== */}
 
-      <section
-        className="
-          mt-5
-          overflow-hidden
-          rounded-lg
-          border
-          border-[#dce2e8]
-          bg-white
-        "
-      >
+      <section className="mt-5 overflow-hidden rounded-lg border border-[#dce2e8] bg-white">
         {activeTab === "company" && (
           <SectionPanel
             title="Company Profile"
@@ -538,24 +472,7 @@ function Field({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="
-          mt-1.5
-          h-10
-          w-full
-          rounded-md
-          border
-          border-[#dce2e8]
-          bg-white
-          px-3
-          text-[13.5px]
-          text-[#263447]
-          outline-none
-          transition
-          placeholder:text-[#a9b4c0]
-          focus:border-[#1683d8]
-          focus:ring-2
-          focus:ring-[#1683d8]/15
-        "
+        className="mt-1.5 h-10 w-full rounded-md border border-[#dce2e8] bg-white px-3 text-[13.5px] text-[#263447] outline-none transition placeholder:text-[#a9b4c0] focus:border-[#1683d8] focus:ring-2 focus:ring-[#1683d8]/15"
       />
     </label>
   );
@@ -580,23 +497,7 @@ function SelectField({ label, value, options, onChange }: SelectFieldProps) {
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="
-          mt-1.5
-          h-10
-          w-full
-          rounded-md
-          border
-          border-[#dce2e8]
-          bg-white
-          px-3
-          text-[13.5px]
-          text-[#263447]
-          outline-none
-          transition
-          focus:border-[#1683d8]
-          focus:ring-2
-          focus:ring-[#1683d8]/15
-        "
+        className="mt-1.5 h-10 w-full rounded-md border border-[#dce2e8] bg-white px-3 text-[13.5px] text-[#263447] outline-none transition focus:border-[#1683d8] focus:ring-2 focus:ring-[#1683d8]/15"
       >
         {options.map((option) => (
           <option key={option} value={option}>

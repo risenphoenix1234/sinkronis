@@ -1,71 +1,77 @@
 import axios from "axios";
+import { logoutAndRedirectToLogin } from "@/utils/authSession";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
-  headers: { "Content-Type": "application/json" },
+  timeout: 10000,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+  if (token && token !== "undefined" && token !== "null") {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
-let isRefreshing = false;
-let refreshQueue: ((token: string) => void)[] = [];
+let refreshing: Promise<string> | null = null;
+
+export async function refreshAccessToken(): Promise<string> {
+  const refreshToken = localStorage.getItem("refreshToken");
+  if (!refreshToken) throw new Error("No refresh token");
+
+  const { data } = await axios.post(
+    `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
+    { refreshToken },
+    { timeout: 30000 }
+  );
+
+  localStorage.setItem("accessToken", data.tokens.accessToken);
+  localStorage.setItem("refreshToken", data.tokens.refreshToken);
+  return data.tokens.accessToken;
+}
 
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
+    const original = error.config;
+    const url = original?.url || "";
+    const isAuthCall = url.includes("/auth/login") || url.includes("/auth/refresh");
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      if (originalRequest.url?.includes("/auth/refresh") || originalRequest.url?.includes("/auth/login")) {
-        return Promise.reject(error);
-      }
 
-      if (isRefreshing) {
-        return new Promise((resolve) => {
-          refreshQueue.push((newToken: string) => {
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
-            resolve(api(originalRequest));
-          });
-        });
-      }
-
-      originalRequest._retry = true;
-      isRefreshing = true;
-
+if (!error.response && original && !original._coldStartRetry) {
+      original._coldStartRetry = true;
       try {
-        const storedRefreshToken = localStorage.getItem("refreshToken");
-        if (!storedRefreshToken) throw new Error("No refresh token");
-
-        const res = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
-          { refreshToken: storedRefreshToken }
-        );
-
-        const { accessToken, refreshToken: newRefreshToken } = res.data.tokens;
-        localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("refreshToken", newRefreshToken);
-
-        refreshQueue.forEach((cb) => cb(accessToken));
-        refreshQueue = [];
-
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        return api(originalRequest);
-      } catch (refreshError) {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        if (typeof window !== "undefined") {
-          window.location.href = "/login";
-        }
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
+        return await api(original);
+      } catch (retryError) {
+        return Promise.reject(retryError);
       }
     }
 
+
+    if (error.response?.status === 401 && original && !isAuthCall && !original._retry) {
+      original._retry = true;
+      try {
+        refreshing ??= refreshAccessToken().finally(() => {
+          refreshing = null;
+        });
+        const token = await refreshing;
+        original.headers.Authorization = `Bearer ${token}`;
+        return api(original);
+      } catch {
+        const latest = localStorage.getItem("accessToken");
+        const sent = String(original.headers?.Authorization ?? "").replace("Bearer ", "");
+        if (latest && latest !== sent) {
+          original.headers.Authorization = `Bearer ${latest}`;
+          return api(original);
+        }
+        logoutAndRedirectToLogin("refresh_failed");
+      }
+    }
     return Promise.reject(error);
   }
 );

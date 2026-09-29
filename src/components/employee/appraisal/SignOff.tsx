@@ -6,25 +6,34 @@ interface SignOffItem {
   signature: string;
 }
 
-const signOffData: SignOffItem[] = [
-  {
-    role: "Appraisee (Employee)",
-    name: "Amara Nwosu",
-    signature: "Signed on submission",
-  },
-  {
-    role: "Line Manager / MD",
-    name: "Pending sign-off",
-    signature: "Pending",
-  },
-  {
-    role: "HR Representative",
-    name: "Pending sign-off",
-    signature: "Pending",
-  },
-];
+interface SignOffProps {
+  employeeName?: string;
+  managerName?: string;
+  hrName?: string;
+}
 
-export default function SignOff() {
+export default function SignOff({
+  employeeName,
+  managerName,
+  hrName,
+}: SignOffProps = {}) {
+  const signOffData: SignOffItem[] = [
+    {
+      role: "Appraisee (Employee)",
+      name: employeeName?.trim() || "—",
+      signature: "Signed on submission",
+    },
+    {
+      role: "Line Manager / MD",
+      name: managerName?.trim() || "—",
+      signature: "Pending",
+    },
+    {
+      role: "HR Representative",
+      name: hrName?.trim() || "—",
+      signature: "Pending",
+    },
+  ];
   return (
     <section className="overflow-hidden rounded-md border border-gray-200 bg-white">
       {/* Header */}

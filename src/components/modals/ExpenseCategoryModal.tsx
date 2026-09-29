@@ -3,14 +3,14 @@
 
 import { useEffect, useState } from "react";
 import { FiX } from "react-icons/fi";
-import { ExpenseCategory } from "@/lib/settings-data";
+import { ExpenseCategory } from "@/lib/api/types/accounting.types";
 
 type ExpenseCategoryModalProps = {
   open: boolean;
   mode: "edit" | "create";
   category: ExpenseCategory | null;
   onClose: () => void;
-  onSave: (data: Omit<ExpenseCategory, "id">, id?: string) => void;
+  onSave: (data: { name: string; description?: string }, id?: string) => void;
 };
 
 const emptyForm = { name: "", description: "" };
@@ -26,7 +26,7 @@ export default function ExpenseCategoryModal({
 
   useEffect(() => {
     if (mode === "edit" && category) {
-      setForm({ name: category.name, description: category.description });
+      setForm({ name: category.name, description: category.description ?? "" });
     } else {
       setForm(emptyForm);
     }

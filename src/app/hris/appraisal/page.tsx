@@ -10,6 +10,7 @@ import AppraisalSettingPage from "@/components/modals/Hris/AppraisalSettingPage"
 import {
   getActiveAppraisalCycle,
   getAppraisalsOverview,
+  getAppraisals,
   getAppraisalReviews,
 } from "@/lib/api/hris";
 import {
@@ -18,7 +19,8 @@ import {
   AppraisalReview,
 } from "@/lib/api/types/hrisTypes";
 import axios from "axios";
-import { Users, CheckCircle2, Clock3, Shield } from "lucide-react";
+import { toast } from "react-toastify";
+import { Users, CheckCircle2, Clock3, Shield, AlertCircle, Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 export default function AppraisalPage() {
@@ -29,16 +31,20 @@ export default function AppraisalPage() {
 
   const [overview, setOverview] = useState<AppraisalsOverviewData | null>(null);
   const [overviewLoading, setOverviewLoading] = useState(true);
+  const [overviewError, setOverviewError] = useState<string | null>(null);
   const [activeCycle, setActiveCycle] = useState<ActiveAppraisalCycle | null>(
     null,
   );
   const [cycleLoading, setCycleLoading] = useState(true);
+  const [cycleError, setCycleError] = useState<string | null>(null);
   const [overviewReviews, setOverviewReviews] = useState<AppraisalReview[]>([]);
   const [overviewReviewsLoading, setOverviewReviewsLoading] = useState(true);
 
   const fetchOverviewAndCycle = useCallback(() => {
     setOverviewLoading(true);
+    setOverviewError(null);
     setCycleLoading(true);
+    setCycleError(null);
     setOverviewReviewsLoading(true);
 
     getAppraisalsOverview()
@@ -48,22 +54,46 @@ export default function AppraisalPage() {
           "Appraisals overview failed:",
           axios.isAxiosError(err) ? err.response?.data : err,
         );
+        const apiMsg = axios.isAxiosError(err)
+          ? err.response?.data?.message
+          : null;
+        const msg =
+          apiMsg ||
+          (err instanceof Error
+            ? err.message
+            : "Failed to load appraisal overview.");
+        setOverviewError(msg);
+        toast.error(msg);
       })
       .finally(() => setOverviewLoading(false));
 
     getActiveAppraisalCycle()
-      .then((res) => setActiveCycle(res))
+      .then((res) => {
+        setActiveCycle(res);
+        setCycleError(null);
+      })
       .catch((err) => {
         console.error("Active cycle failed:", err);
+        const apiMsg = axios.isAxiosError(err)
+          ? err.response?.data?.message
+          : null;
+        const msg =
+          apiMsg ||
+          (err instanceof Error
+            ? err.message
+            : "Failed to load active appraisal cycle.");
+        setCycleError(msg);
+        toast.error(msg);
       })
       .finally(() => setCycleLoading(false));
 
-    getAppraisalReviews({ limit: 5 })
+    getAppraisals({ limit: 5 })
       .then((res) => {
         setOverviewReviews(Array.isArray(res?.data) ? res.data : []);
       })
       .catch((err) => {
         console.error("Overview reviews failed:", err);
+        toast.error("Failed to load recent appraisal reviews.");
         setOverviewReviews([]);
       })
       .finally(() => setOverviewReviewsLoading(false));
@@ -73,25 +103,34 @@ export default function AppraisalPage() {
     fetchOverviewAndCycle();
   }, [fetchOverviewAndCycle]);
 
+  const reviewsBadgeCount =
+    overview?.analytics?.pendingHR && overview.analytics.pendingHR > 0
+      ? overview.analytics.pendingHR
+      : 1;
+
+  const currentCycleName =
+    activeCycle?.name ?? overview?.activeCycle?.name ?? null;
+
   return (
     <section className="space-y-6 p-6">
-      <div className="flex justify-between items-center">
-         <div>
-          <h1 className="text-2xl font-semibold">Appraisal</h1>
-          <p className="text-sm text-slate-500">
-             Manage performance reviews Cycles, template and employee appraisals.
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Appraisal</h1>
+          <p className="mt-1 text-xs text-slate-500">
+            Manage performance review cycles, templates, and employee appraisals.
           </p>
-         </div>
-          
-          <div> 
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpen(true);
-              }}
-              className="rounded-md  bg-[#2388D0] flex px-4 py-2 text-white"
-            >
-              New Cycle
+        </div>
+
+        <div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpen(true);
+            }}
+            className="flex items-center gap-1.5 rounded-lg bg-[#2183C6] px-4 py-2 text-sm font-semibold text-white shadow-xs hover:bg-[#1a6fa8] transition"
+          >
+            <Plus size={16} />
+            <span>New Cycle</span>
           </button>
 
           <AppraisalModal
@@ -100,136 +139,161 @@ export default function AppraisalPage() {
             onSuccess={fetchOverviewAndCycle}
           />
         </div>
-
-         
       </div>
 
-        {/* Tabs */}
-        <div className="mt-8 flex gap-8 border-b">
-          <button
-            onClick={() => setView("overview")}
-            className={`pb-3 text-sm ${
-              view === "overview"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-500"
-            }`}
-          >
-            Overview
-          </button>
+      {/* Tabs */}
+      <div className="mt-6 flex gap-8 border-b border-gray-200">
+        <button
+          onClick={() => setView("overview")}
+          className={`pb-3 text-sm font-medium transition ${
+            view === "overview"
+              ? "border-b-2 border-[#2183C6] text-[#2183C6]"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Overview
+        </button>
 
-          <button
-            onClick={() => setView("reviews")}
-            className={`pb-3 text-sm ${
-              view === "reviews"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-500"
-            }`}
-          >
-            Reviews
-          </button>
+        <button
+          onClick={() => setView("reviews")}
+          className={`flex items-center gap-1.5 pb-3 text-sm font-medium transition ${
+            view === "reviews"
+              ? "border-b-2 border-[#2183C6] text-[#2183C6]"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          <span>Reviews</span>
+          {reviewsBadgeCount > 0 && (
+            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+              {reviewsBadgeCount}
+            </span>
+          )}
+        </button>
 
-          <button
-            onClick={() => setView("cycles")}
-            className={`pb-3 text-sm ${
-              view === "cycles"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-500"
-            }`}
-          >
-            Cycles
-          </button>
+        <button
+          onClick={() => setView("cycles")}
+          className={`pb-3 text-sm font-medium transition ${
+            view === "cycles"
+              ? "border-b-2 border-[#2183C6] text-[#2183C6]"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Cycles
+        </button>
 
-          <button
-            onClick={() => setView("settings")}
-            className={`pb-3 text-sm ${
-              view === "settings"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-500"
-            }`}
-          >
-            Settings
-          </button>
-        </div>
+        <button
+          onClick={() => setView("settings")}
+          className={`pb-3 text-sm font-medium transition ${
+            view === "settings"
+              ? "border-b-2 border-[#2183C6] text-[#2183C6]"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Settings
+        </button>
+      </div>
 
-        {/* Stats */}
-        {view === "overview" && (
-          <>
-            <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-4">
-              <StatsCard
-                title="Total Employees"
-                value={
-                  overviewLoading
-                    ? "—"
-                    : String(overview?.analytics.totalEmployees ?? 0)
-                }
-                icon={<Users size={18} />}
-                iconBg="bg-blue-100"
-                iconColor="text-blue-600"
-              />
-
-              <StatsCard
-                title="Completed"
-                value={
-                  overviewLoading
-                    ? "—"
-                    : String(overview?.analytics.completed ?? 0)
-                }
-                icon={<CheckCircle2 size={18} />}
-                iconBg="bg-green-100"
-                iconColor="text-green-600"
-              />
-
-              <StatsCard
-                title="In Progress"
-                value={
-                  overviewLoading
-                    ? "—"
-                    : String(overview?.analytics.inProgress ?? 0)
-                }
-                icon={<Clock3 size={18} />}
-                iconBg="bg-yellow-100"
-                iconColor="text-yellow-600"
-              />
-
-              <StatsCard
-                title="Pending HR"
-                value={
-                  overviewLoading
-                    ? "—"
-                    : String(overview?.analytics.pendingHR ?? 0)
-                }
-                icon={<Shield size={18} />}
-                iconBg="bg-purple-100"
-                iconColor="text-purple-600"
-              />
+      {/* Stats */}
+      {view === "overview" && (
+        <>
+          {overviewError && (
+            <div className="mt-4 flex items-center justify-between rounded-xl border border-red-200 bg-red-50 p-4 text-xs text-red-700">
+              <div className="flex items-center gap-2">
+                <AlertCircle size={16} className="shrink-0 text-red-600" />
+                <span>{overviewError}</span>
+              </div>
+              <button
+                type="button"
+                onClick={fetchOverviewAndCycle}
+                className="font-semibold underline hover:text-red-900"
+              >
+                Retry
+              </button>
             </div>
-            <CycleOverview
-              cycle={activeCycle}
-              loading={cycleLoading}
-              onCreateCycle={() => setOpen(true)}
+          )}
+
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatsCard
+              title="Total Employees"
+              value={
+                overviewLoading
+                  ? "—"
+                  : String(overview?.analytics.totalEmployees ?? 0)
+              }
+              icon={<Users size={16} />}
+              iconBg="bg-sky-50"
+              iconColor="text-sky-500"
             />
 
-            <EmployeeTable
-              reviews={overviewReviews}
-              loading={overviewReviewsLoading}
+            <StatsCard
+              title="Completed"
+              value={
+                overviewLoading
+                  ? "—"
+                  : String(overview?.analytics.completed ?? 0)
+              }
+              icon={<CheckCircle2 size={16} />}
+              iconBg="bg-emerald-50"
+              iconColor="text-emerald-500"
             />
-          </>
-        )}
-        {view === "reviews" && (
-          <div className="mt-6">
-            <AppraisalReviewPage />
+
+            <StatsCard
+              title="In Progress"
+              value={
+                overviewLoading
+                  ? "—"
+                  : String(overview?.analytics.inProgress ?? 0)
+              }
+              icon={<Clock3 size={16} />}
+              iconBg="bg-amber-50"
+              iconColor="text-amber-500"
+            />
+
+            <StatsCard
+              title="Pending HR"
+              value={
+                overviewLoading
+                  ? "—"
+                  : String(overview?.analytics.pendingHR ?? 0)
+              }
+              icon={<Shield size={16} />}
+              iconBg="bg-purple-50"
+              iconColor="text-purple-500"
+            />
           </div>
-        )}
-        {view === "cycles" && (
-          <div className="mt-6">
-            <AppraisalCyclePage />
-          </div>
-        )}
-        {view === "settings" && (
-          <div className="mt-6">
-            <AppraisalSettingPage />
-          </div>
-        )}
+
+          <CycleOverview
+            cycle={activeCycle ?? overview?.activeCycle ?? null}
+            overview={overview}
+            loading={cycleLoading}
+            error={cycleError}
+            onRetry={fetchOverviewAndCycle}
+            onCreateCycle={() => setOpen(true)}
+            onViewAll={() => setView("cycles")}
+          />
+
+          <EmployeeTable
+            reviews={overviewReviews}
+            loading={overviewReviewsLoading}
+            cycleName={currentCycleName}
+          />
+        </>
+      )}
+      {view === "reviews" && (
+        <div className="mt-6">
+          <AppraisalReviewPage />
+        </div>
+      )}
+      {view === "cycles" && (
+        <div className="mt-6">
+          <AppraisalCyclePage />
+        </div>
+      )}
+      {view === "settings" && (
+        <div className="mt-6">
+          <AppraisalSettingPage />
+        </div>
+      )}
     </section>
   );
 }

@@ -27,8 +27,7 @@ export default function InboxPage() {
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
-        const msg =
-          err.response?.data?.message || err.response?.data?.error;
+        const msg = err.response?.data?.message || err.response?.data?.error;
 
         if (status === 401) {
           setError("Your session has expired. Please log in again.");
@@ -70,8 +69,8 @@ export default function InboxPage() {
             item === "All"
               ? counts?.all
               : item === "Pending"
-              ? counts?.pending
-              : counts?.done;
+                ? counts?.pending
+                : counts?.done;
 
           return (
             <button
@@ -162,8 +161,8 @@ export default function InboxPage() {
               {tab === "All"
                 ? "You don't have any pending or completed tasks at the moment."
                 : tab === "Pending"
-                ? "Great job! You have no pending action items requiring your attention."
-                : "No completed inbox items yet."}
+                  ? "Great job! You have no pending action items requiring your attention."
+                  : "No completed inbox items yet."}
             </p>
           </div>
         )}

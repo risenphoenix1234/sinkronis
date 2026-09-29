@@ -10,8 +10,7 @@ export default function ProgressStep({ title, completed, active }: Props) {
   return (
     <div className="flex flex-col items-center gap-2">
       <div
-        className={`flex h-9 w-9 items-center justify-center rounded-full border-2 text-sm font-semibold
-        ${
+        className={`flex h-9 w-9 items-center justify-center rounded-full border-2 text-sm font-semibold ${
           completed
             ? "border-blue-600 bg-blue-600 text-white"
             : active

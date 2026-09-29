@@ -79,7 +79,11 @@ const STATUS_DOT_COLORS: Record<string, string> = {
   EXITED: "bg-rose-500",
 };
 
-const AVAILABLE_STATUSES: { value: EmployeeStatus; label: string; dotColor: string }[] = [
+const AVAILABLE_STATUSES: {
+  value: EmployeeStatus;
+  label: string;
+  dotColor: string;
+}[] = [
   { value: "ACTIVE", label: "Active", dotColor: "bg-emerald-500" },
   { value: "CONFIRMED", label: "Confirmed", dotColor: "bg-emerald-500" },
   { value: "PROBATION", label: "Probation", dotColor: "bg-amber-500" },
@@ -141,11 +145,11 @@ const emptyBankDetailsForm: BankDetailsFormState = {
   monthlySalary: "",
 };
 
-function getInitialBankFormState(emp: GetEmployeeDetail | null): BankDetailsFormState {
+function getInitialBankFormState(
+  emp: GetEmployeeDetail | null,
+): BankDetailsFormState {
   if (!emp) return emptyBankDetailsForm;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const bank = (emp.bankDetails || {}) as Record<string, any>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const personal = (emp.personalInformation || {}) as Record<string, any>;
   const header = emp.header || {};
 
@@ -182,9 +186,10 @@ const emptyNextOfKinForm: NextOfKinFormState = {
   address: "",
 };
 
-function getInitialNextOfKinFormState(emp: GetEmployeeDetail | null): NextOfKinFormState {
+function getInitialNextOfKinFormState(
+  emp: GetEmployeeDetail | null,
+): NextOfKinFormState {
   if (!emp) return emptyNextOfKinForm;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nok = (emp.nextOfKin || {}) as Record<string, any>;
 
   let first = nok.firstName || "";
@@ -220,9 +225,10 @@ const emptyGuarantorForm: GuarantorFormState = {
   address: "",
 };
 
-function getInitialGuarantorFormState(emp: GetEmployeeDetail | null): GuarantorFormState {
+function getInitialGuarantorFormState(
+  emp: GetEmployeeDetail | null,
+): GuarantorFormState {
   if (!emp) return emptyGuarantorForm;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const guar = (emp.guarantor || {}) as Record<string, any>;
 
   let first = guar.firstName || "";
@@ -274,13 +280,13 @@ function formatFileSize(bytes?: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function getInitialFormState(emp: GetEmployeeDetail | null): WorkDetailsFormState {
+function getInitialFormState(
+  emp: GetEmployeeDetail | null,
+): WorkDetailsFormState {
   if (!emp) return emptyWorkDetailsForm;
 
   const header = emp.header || {};
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const personal = (emp.personalInformation || {}) as Record<string, any>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const bank = (emp.bankDetails || {}) as Record<string, any>;
 
   let first = personal.firstName || "";
@@ -294,7 +300,9 @@ function getInitialFormState(emp: GetEmployeeDetail | null): WorkDetailsFormStat
 
   const deptId =
     header.department?.id ||
-    (typeof personal.department === "object" ? personal.department?.id : personal.department) ||
+    (typeof personal.department === "object"
+      ? personal.department?.id
+      : personal.department) ||
     "";
 
   const pos = header.role || personal.role || personal.position || "";
@@ -330,13 +338,9 @@ function getInitialFormState(emp: GetEmployeeDetail | null): WorkDetailsFormStat
     personalEmail: personal.emailAddress || personal.personalEmail || "",
     nationality: personal.nationality || "",
     dateOfBirth: dob,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     maritalStatus: (personal.maritalStatus as any) || "",
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     gender: (personal.gender as any) || "",
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     workMode: (wm as any) || "",
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     employmentType: (empType as any) || "",
     address: personal.address || "",
     earnings: earn,
@@ -358,39 +362,48 @@ export default function EmployeeProfilePage({
   const [downloadingDocId, setDownloadingDocId] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
-  const [initialStatusForModal, setInitialStatusForModal] = useState<EmployeeStatus | undefined>(undefined);
+  const [initialStatusForModal, setInitialStatusForModal] = useState<
+    EmployeeStatus | undefined
+  >(undefined);
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const statusDropdownRef = useRef<HTMLDivElement | null>(null);
 
   // In-card Edit Mode for Work Details
   const [isEditingWorkDetails, setIsEditingWorkDetails] = useState(false);
-  const [editForm, setEditForm] = useState<WorkDetailsFormState>(emptyWorkDetailsForm);
+  const [editForm, setEditForm] =
+    useState<WorkDetailsFormState>(emptyWorkDetailsForm);
   const [submittingEdit, setSubmittingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
-  const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
+  const [departments, setDepartments] = useState<
+    { id: string; name: string }[]
+  >([]);
   const [loadingDepartments, setLoadingDepartments] = useState(false);
 
   // In-card Edit Mode for Bank Details
   const [isEditingBankDetails, setIsEditingBankDetails] = useState(false);
-  const [bankForm, setBankForm] = useState<BankDetailsFormState>(emptyBankDetailsForm);
+  const [bankForm, setBankForm] =
+    useState<BankDetailsFormState>(emptyBankDetailsForm);
   const [submittingBank, setSubmittingBank] = useState(false);
   const [bankError, setBankError] = useState<string | null>(null);
 
   // In-card Edit Mode for Next of Kin
   const [isEditingNextOfKin, setIsEditingNextOfKin] = useState(false);
-  const [nokForm, setNokForm] = useState<NextOfKinFormState>(emptyNextOfKinForm);
+  const [nokForm, setNokForm] =
+    useState<NextOfKinFormState>(emptyNextOfKinForm);
   const [submittingNok, setSubmittingNok] = useState(false);
   const [nokError, setNokError] = useState<string | null>(null);
 
   // In-card Edit Mode for Guarantor
   const [isEditingGuarantor, setIsEditingGuarantor] = useState(false);
-  const [guarForm, setGuarForm] = useState<GuarantorFormState>(emptyGuarantorForm);
+  const [guarForm, setGuarForm] =
+    useState<GuarantorFormState>(emptyGuarantorForm);
   const [submittingGuar, setSubmittingGuar] = useState(false);
   const [guarError, setGuarError] = useState<string | null>(null);
 
   // In-card Edit Mode for Documents
   const [isEditingDocuments, setIsEditingDocuments] = useState(false);
-  const [docForm, setDocForm] = useState<DocumentsFormState>(emptyDocumentsForm);
+  const [docForm, setDocForm] =
+    useState<DocumentsFormState>(emptyDocumentsForm);
   const [submittingDoc, setSubmittingDoc] = useState(false);
   const [docError, setDocError] = useState<string | null>(null);
 
@@ -400,9 +413,13 @@ export default function EmployeeProfilePage({
     try {
       const [detail, activityRes] = await Promise.all([
         getEmployee(params.id),
-        getEmployeeActivity(params.id).catch(() => ({
-          data: [] as EmployeeActivityRecord[],
-        })),
+        getEmployeeActivity(params.id).catch((err) => {
+          console.error("getEmployeeActivity failed:", err);
+          toast.error("Failed to load employee activity history.");
+          return {
+            data: [] as EmployeeActivityRecord[],
+          };
+        }),
       ]);
       setEmployee(detail);
       setActivity(activityRes.data ?? []);
@@ -412,11 +429,11 @@ export default function EmployeeProfilePage({
       setGuarForm(getInitialGuarantorFormState(detail));
     } catch (error) {
       console.error("getEmployee failed:", error);
-      setLoadError(
-        axios.isAxiosError(error)
-          ? (error.response?.data?.message ?? "Couldn't load this employee.")
-          : "Couldn't load this employee.",
-      );
+      const errMsg = axios.isAxiosError(error)
+        ? (error.response?.data?.message ?? "Couldn't load this employee.")
+        : "Couldn't load this employee.";
+      setLoadError(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }
@@ -432,10 +449,8 @@ export default function EmployeeProfilePage({
     let isMounted = true;
     setLoadingDepartments(true);
     getDepartmentsTable({ limit: 100 })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .then((res: any) => {
         if (isMounted && res?.data && Array.isArray(res.data)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const formatted = res.data.map((d: any) => ({
             id: d.id,
             name: d.departmentName || d.name || "Unnamed Department",
@@ -444,7 +459,8 @@ export default function EmployeeProfilePage({
         }
       })
       .catch((err) => {
-        console.warn("Could not load departments:", err);
+        console.error("Could not load departments:", err);
+        toast.error("Could not load departments list.");
       })
       .finally(() => {
         if (isMounted) setLoadingDepartments(false);
@@ -487,7 +503,8 @@ export default function EmployeeProfilePage({
   const handleSelectStatus = async (newStatus: EmployeeStatus) => {
     setIsStatusDropdownOpen(false);
     if (!employee) return;
-    const currentStatus = employee.header.lifecycleStatus || employee.header.status || "ACTIVE";
+    const currentStatus =
+      employee.header.lifecycleStatus || employee.header.status || "ACTIVE";
     if (newStatus === currentStatus) return;
 
     setUpdatingStatus(true);
@@ -499,7 +516,7 @@ export default function EmployeeProfilePage({
       });
 
       toast.success(
-        `Employee status updated to ${STATUS_LABEL[newStatus] || newStatus} successfully!`
+        `Employee status updated to ${STATUS_LABEL[newStatus] || newStatus} successfully!`,
       );
       await load();
     } catch (err: unknown) {
@@ -507,9 +524,14 @@ export default function EmployeeProfilePage({
       let errMsg = "Failed to update employee status. Please try again.";
       if (axios.isAxiosError(err)) {
         const resData = err.response?.data;
-        if (resData?.validationErrors && Array.isArray(resData.validationErrors)) {
+        if (
+          resData?.validationErrors &&
+          Array.isArray(resData.validationErrors)
+        ) {
           errMsg = resData.validationErrors
-            .map((v: { field?: string; message?: string }) => v.message || v.field)
+            .map(
+              (v: { field?: string; message?: string }) => v.message || v.field,
+            )
             .join(", ");
         } else if (resData?.message) {
           errMsg = resData.message;
@@ -536,7 +558,10 @@ export default function EmployeeProfilePage({
     setIsEditingWorkDetails(false);
   };
 
-  const updateField = <K extends keyof WorkDetailsFormState>(key: K, value: WorkDetailsFormState[K]) => {
+  const updateField = <K extends keyof WorkDetailsFormState>(
+    key: K,
+    value: WorkDetailsFormState[K],
+  ) => {
     setEditForm((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -559,7 +584,8 @@ export default function EmployeeProfilePage({
         maritalStatus: (editForm.maritalStatus as MaritalStatus) || undefined,
         gender: (editForm.gender as Gender) || undefined,
         workMode: (editForm.workMode as WorkMode) || undefined,
-        employmentType: (editForm.employmentType as EmploymentType) || undefined,
+        employmentType:
+          (editForm.employmentType as EmploymentType) || undefined,
         address: editForm.address.trim() || undefined,
         earnings:
           editForm.earnings !== "" && !isNaN(Number(editForm.earnings))
@@ -577,9 +603,13 @@ export default function EmployeeProfilePage({
       let msg = "Failed to save changes. Please try again.";
       if (axios.isAxiosError(err)) {
         const resData = err.response?.data;
-        if (resData?.validationErrors && Array.isArray(resData.validationErrors)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          msg = resData.validationErrors.map((v: any) => v.message || v.field).join(", ");
+        if (
+          resData?.validationErrors &&
+          Array.isArray(resData.validationErrors)
+        ) {
+          msg = resData.validationErrors
+            .map((v: any) => v.message || v.field)
+            .join(", ");
         } else if (resData?.message) {
           msg = resData.message;
         }
@@ -609,7 +639,7 @@ export default function EmployeeProfilePage({
 
   const updateBankField = <K extends keyof BankDetailsFormState>(
     key: K,
-    value: BankDetailsFormState[K]
+    value: BankDetailsFormState[K],
   ) => {
     setBankForm((prev) => ({ ...prev, [key]: value }));
   };
@@ -629,7 +659,8 @@ export default function EmployeeProfilePage({
         bankCode: bankForm.bankCode.trim() || undefined,
         accountType: (bankForm.accountType as AccountType) || undefined,
         earnings:
-          bankForm.monthlySalary !== "" && !isNaN(Number(bankForm.monthlySalary))
+          bankForm.monthlySalary !== "" &&
+          !isNaN(Number(bankForm.monthlySalary))
             ? Number(bankForm.monthlySalary)
             : undefined,
       };
@@ -643,9 +674,13 @@ export default function EmployeeProfilePage({
       let msg = "Failed to update bank details. Please try again.";
       if (axios.isAxiosError(err)) {
         const resData = err.response?.data;
-        if (resData?.validationErrors && Array.isArray(resData.validationErrors)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          msg = resData.validationErrors.map((v: any) => v.message || v.field).join(", ");
+        if (
+          resData?.validationErrors &&
+          Array.isArray(resData.validationErrors)
+        ) {
+          msg = resData.validationErrors
+            .map((v: any) => v.message || v.field)
+            .join(", ");
         } else if (resData?.message) {
           msg = resData.message;
         }
@@ -675,7 +710,7 @@ export default function EmployeeProfilePage({
 
   const updateNokField = <K extends keyof NextOfKinFormState>(
     key: K,
-    value: NextOfKinFormState[K]
+    value: NextOfKinFormState[K],
   ) => {
     setNokForm((prev) => ({ ...prev, [key]: value }));
   };
@@ -704,9 +739,13 @@ export default function EmployeeProfilePage({
       let msg = "Failed to update next of kin. Please try again.";
       if (axios.isAxiosError(err)) {
         const resData = err.response?.data;
-        if (resData?.validationErrors && Array.isArray(resData.validationErrors)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          msg = resData.validationErrors.map((v: any) => v.message || v.field).join(", ");
+        if (
+          resData?.validationErrors &&
+          Array.isArray(resData.validationErrors)
+        ) {
+          msg = resData.validationErrors
+            .map((v: any) => v.message || v.field)
+            .join(", ");
         } else if (resData?.message) {
           msg = resData.message;
         }
@@ -736,7 +775,7 @@ export default function EmployeeProfilePage({
 
   const updateGuarField = <K extends keyof GuarantorFormState>(
     key: K,
-    value: GuarantorFormState[K]
+    value: GuarantorFormState[K],
   ) => {
     setGuarForm((prev) => ({ ...prev, [key]: value }));
   };
@@ -766,9 +805,13 @@ export default function EmployeeProfilePage({
       let msg = "Failed to update guarantor information. Please try again.";
       if (axios.isAxiosError(err)) {
         const resData = err.response?.data;
-        if (resData?.validationErrors && Array.isArray(resData.validationErrors)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          msg = resData.validationErrors.map((v: any) => v.message || v.field).join(", ");
+        if (
+          resData?.validationErrors &&
+          Array.isArray(resData.validationErrors)
+        ) {
+          msg = resData.validationErrors
+            .map((v: any) => v.message || v.field)
+            .join(", ");
         } else if (resData?.message) {
           msg = resData.message;
         }
@@ -796,7 +839,7 @@ export default function EmployeeProfilePage({
 
   const updateDocField = <K extends keyof DocumentsFormState>(
     key: K,
-    value: DocumentsFormState[K]
+    value: DocumentsFormState[K],
   ) => {
     setDocForm((prev) => ({ ...prev, [key]: value }));
   };
@@ -822,9 +865,13 @@ export default function EmployeeProfilePage({
       let msg = "Failed to update documents. Please try again.";
       if (axios.isAxiosError(err)) {
         const resData = err.response?.data;
-        if (resData?.validationErrors && Array.isArray(resData.validationErrors)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          msg = resData.validationErrors.map((v: any) => v.message || v.field).join(", ");
+        if (
+          resData?.validationErrors &&
+          Array.isArray(resData.validationErrors)
+        ) {
+          msg = resData.validationErrors
+            .map((v: any) => v.message || v.field)
+            .join(", ");
         } else if (resData?.message) {
           msg = resData.message;
         }
@@ -879,7 +926,9 @@ export default function EmployeeProfilePage({
           <FiArrowLeft size={16} /> Back to Employees
         </button>
         <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
-          <p className="text-base font-semibold text-red-700">Unable to load employee profile</p>
+          <p className="text-base font-semibold text-red-700">
+            Unable to load employee profile
+          </p>
           <p className="mt-1 text-sm text-red-600">{loadError}</p>
           <button
             onClick={load}
@@ -902,7 +951,9 @@ export default function EmployeeProfilePage({
           <FiArrowLeft size={16} /> Back to Employees
         </button>
         <div className="rounded-xl border border-slate-200 bg-white p-12 text-center shadow-sm">
-          <p className="text-lg font-semibold text-slate-700">Employee not found</p>
+          <p className="text-lg font-semibold text-slate-700">
+            Employee not found
+          </p>
           <p className="mt-1 text-sm text-slate-500">
             The requested employee record does not exist or has been removed.
           </p>
@@ -921,15 +972,10 @@ export default function EmployeeProfilePage({
     attendanceOverview = {},
   } = employee;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const personal = (personalInformation || {}) as Record<string, any>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const bank = (bankDetails || {}) as Record<string, any>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nok = (nextOfKin || {}) as Record<string, any>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const guar = (guarantor || {}) as Record<string, any>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const attendance = (attendanceOverview || {}) as Record<string, any>;
 
   const statusKey = header.lifecycleStatus || header.status || "ACTIVE";
@@ -943,7 +989,8 @@ export default function EmployeeProfilePage({
         : "—");
 
   const personalEmail = personal.emailAddress || personal.personalEmail || "—";
-  const roleDisplay = header.role || personal.role || personal.position || "Employee";
+  const roleDisplay =
+    header.role || personal.role || personal.position || "Employee";
 
   const salaryDisplay =
     bank.monthlySalary !== undefined && bank.monthlySalary !== null
@@ -958,7 +1005,12 @@ export default function EmployeeProfilePage({
 
   // Build department dropdown options, ensuring current department is included
   const departmentOptions = [
-    { value: "", label: loadingDepartments ? "Loading departments..." : "Select Department" },
+    {
+      value: "",
+      label: loadingDepartments
+        ? "Loading departments..."
+        : "Select Department",
+    },
     ...departments.map((d) => ({ value: d.id, label: d.name })),
   ];
   if (
@@ -967,7 +1019,10 @@ export default function EmployeeProfilePage({
   ) {
     departmentOptions.push({
       value: editForm.departmentId,
-      label: departmentName && departmentName !== "—" ? departmentName : editForm.departmentId,
+      label:
+        departmentName && departmentName !== "—"
+          ? departmentName
+          : editForm.departmentId,
     });
   }
 
@@ -1012,12 +1067,14 @@ export default function EmployeeProfilePage({
                   {header.name}
                 </h1>
                 <p className="mt-0.5 text-sm text-slate-500">
-                  {isEditingWorkDetails && editForm.position ? editForm.position : roleDisplay}
+                  {isEditingWorkDetails && editForm.position
+                    ? editForm.position
+                    : roleDisplay}
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5">
+            {/* <div className="flex flex-wrap items-center gap-2.5">
               {statusKey === "PROBATION" && (
                 <button
                   type="button"
@@ -1033,7 +1090,7 @@ export default function EmployeeProfilePage({
                   <span>Confirm Employee</span>
                 </button>
               )}
-            </div>
+            </div> */}
           </div>
 
           {/* Overview & stats */}
@@ -1056,11 +1113,14 @@ export default function EmployeeProfilePage({
                   Attendance
                 </p>
                 <p className="mt-2 text-2xl font-semibold text-slate-900">
-                  {attendance.presentDays !== undefined && attendance.presentDays !== null
+                  {attendance.presentDays !== undefined &&
+                  attendance.presentDays !== null
                     ? `${attendance.presentDays} Days`
                     : "0 Days"}
                 </p>
-                <p className="mt-1 text-xs text-sky-600">Present days recorded</p>
+                <p className="mt-1 text-xs text-sky-600">
+                  Present days recorded
+                </p>
               </div>
 
               <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4">
@@ -1070,7 +1130,9 @@ export default function EmployeeProfilePage({
                 <p className="mt-2 text-2xl font-semibold text-slate-900">
                   {attendance.lateArrivals ?? 0}
                 </p>
-                <p className="mt-1 text-xs text-slate-400">Late arrivals logged</p>
+                <p className="mt-1 text-xs text-slate-400">
+                  Late arrivals logged
+                </p>
               </div>
 
               <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4">
@@ -1092,8 +1154,11 @@ export default function EmployeeProfilePage({
         {/* ========================================================= */}
         <div
           id="work-details-section"
-          className={`rounded-xl border bg-white p-6 shadow-sm transition-all ${isEditingWorkDetails ? "border-sky-300 ring-2 ring-sky-500/10" : "border-slate-200"
-            }`}
+          className={`rounded-xl border bg-white p-6 shadow-sm transition-all ${
+            isEditingWorkDetails
+              ? "border-sky-300 ring-2 ring-sky-500/10"
+              : "border-slate-200"
+          }`}
         >
           {/* Card Header */}
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
@@ -1106,21 +1171,29 @@ export default function EmployeeProfilePage({
               <div className="relative inline-block" ref={statusDropdownRef}>
                 <button
                   type="button"
-                  onClick={() => !updatingStatus && setIsStatusDropdownOpen((prev) => !prev)}
+                  onClick={() =>
+                    !updatingStatus && setIsStatusDropdownOpen((prev) => !prev)
+                  }
                   disabled={updatingStatus}
                   title="Click to change employee status"
                   className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500/20 shadow-xs ${
-                    STATUS_STYLES[statusKey] ?? "border-slate-200 bg-slate-100 text-slate-600"
+                    STATUS_STYLES[statusKey] ??
+                    "border-slate-200 bg-slate-100 text-slate-600"
                   } hover:brightness-95 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed`}
                 >
                   {updatingStatus ? (
                     <>
-                      <FiLoader size={12} className="animate-spin text-current" />
+                      <FiLoader
+                        size={12}
+                        className="animate-spin text-current"
+                      />
                       <span>Updating...</span>
                     </>
                   ) : (
                     <>
-                      <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT_COLORS[statusKey] || "bg-slate-400"}`} />
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT_COLORS[statusKey] || "bg-slate-400"}`}
+                      />
                       <span>{STATUS_LABEL[statusKey] ?? statusKey}</span>
                       <FiChevronDown
                         size={12}
@@ -1152,11 +1225,16 @@ export default function EmployeeProfilePage({
                             }`}
                           >
                             <span className="flex items-center gap-2">
-                              <span className={`h-2 w-2 rounded-full ${option.dotColor}`} />
+                              <span
+                                className={`h-2 w-2 rounded-full ${option.dotColor}`}
+                              />
                               <span>{option.label}</span>
                             </span>
                             {isCurrent && (
-                              <FiCheck size={13} className="text-sky-600 shrink-0" />
+                              <FiCheck
+                                size={13}
+                                className="text-sky-600 shrink-0"
+                              />
                             )}
                           </button>
                         );
@@ -1199,7 +1277,11 @@ export default function EmployeeProfilePage({
                   className="flex items-center gap-1 rounded border border-slate-200 px-2 py-0.5 text-xs text-slate-600 transition hover:bg-slate-50"
                   title={showEmployeeId ? "Hide ID" : "Show ID"}
                 >
-                  {showEmployeeId ? <FiEyeOff size={12} /> : <FiEye size={12} />}
+                  {showEmployeeId ? (
+                    <FiEyeOff size={12} />
+                  ) : (
+                    <FiEye size={12} />
+                  )}
                   <span>{showEmployeeId ? "Hide" : "Show"}</span>
                 </button>
               </div>
@@ -1268,7 +1350,9 @@ export default function EmployeeProfilePage({
                 <FormSelect
                   label="Marital Status"
                   value={editForm.maritalStatus}
-                  onChange={(v) => updateField("maritalStatus", v as MaritalStatus | "")}
+                  onChange={(v) =>
+                    updateField("maritalStatus", v as MaritalStatus | "")
+                  }
                   disabled={submittingEdit}
                   options={[
                     { value: "", label: "Select marital status" },
@@ -1311,7 +1395,9 @@ export default function EmployeeProfilePage({
                 <FormSelect
                   label="Employment Type"
                   value={editForm.employmentType}
-                  onChange={(v) => updateField("employmentType", v as EmploymentType | "")}
+                  onChange={(v) =>
+                    updateField("employmentType", v as EmploymentType | "")
+                  }
                   disabled={submittingEdit}
                   options={[
                     { value: "", label: "Select employment type" },
@@ -1391,7 +1477,10 @@ export default function EmployeeProfilePage({
                   label: "Date of Birth",
                   value: formatDisplayDate(personal.dateOfBirth),
                 },
-                { label: "Marital Status", value: personal.maritalStatus || "—" },
+                {
+                  label: "Marital Status",
+                  value: personal.maritalStatus || "—",
+                },
                 { label: "Gender", value: personal.gender || "—" },
                 { label: "Work Mode", value: personal.workMode || "—" },
                 {
@@ -1484,7 +1573,9 @@ export default function EmployeeProfilePage({
                 <FormSelect
                   label="Account Type"
                   value={bankForm.accountType}
-                  onChange={(v) => updateBankField("accountType", v as AccountType | "")}
+                  onChange={(v) =>
+                    updateBankField("accountType", v as AccountType | "")
+                  }
                   disabled={submittingBank}
                   options={[
                     { value: "", label: "Select account type" },
@@ -1539,7 +1630,8 @@ export default function EmployeeProfilePage({
                 { label: "Account Number", value: bank.accountNumber || "—" },
                 {
                   label: "Account Name",
-                  value: bank.accountName || personal.fullName || header.name || "—",
+                  value:
+                    bank.accountName || personal.fullName || header.name || "—",
                 },
                 { label: "Bank Code", value: bank.bankCode || "—" },
                 { label: "Account Type", value: bank.accountType || "—" },
@@ -1897,11 +1989,19 @@ export default function EmployeeProfilePage({
                 <FormSelect
                   label="Primary Document Type"
                   value={docForm.documentType}
-                  onChange={(v) => updateDocField("documentType", v as DocumentType | "")}
+                  onChange={(v) =>
+                    updateDocField("documentType", v as DocumentType | "")
+                  }
                   disabled={submittingDoc}
                   options={[
-                    { value: "IDENTIFICATION", label: "Identification (ID Card, Passport)" },
-                    { value: "CERTIFICATE", label: "Certificate (Degree, Diploma)" },
+                    {
+                      value: "IDENTIFICATION",
+                      label: "Identification (ID Card, Passport)",
+                    },
+                    {
+                      value: "CERTIFICATE",
+                      label: "Certificate (Degree, Diploma)",
+                    },
                     { value: "CONTRACT", label: "Employment Contract" },
                     { value: "TAX_DOCUMENT", label: "Tax Document" },
                     { value: "PENSION_DOCUMENT", label: "Pension Document" },
@@ -1916,7 +2016,9 @@ export default function EmployeeProfilePage({
                   <label className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 text-sm text-slate-600 transition hover:border-sky-500 hover:bg-sky-50/50">
                     <FiUploadCloud size={16} className="text-sky-600" />
                     <span className="truncate">
-                      {docForm.selectedFile ? docForm.selectedFile.name : "Choose file (PDF, PNG, JPG)"}
+                      {docForm.selectedFile
+                        ? docForm.selectedFile.name
+                        : "Choose file (PDF, PNG, JPG)"}
                     </span>
                     <input
                       type="file"
@@ -1944,7 +2046,8 @@ export default function EmployeeProfilePage({
                 ) : (
                   <div className="space-y-2">
                     {documents.map((doc) => {
-                      const name = doc.fileName || doc.originalName || "Document";
+                      const name =
+                        doc.fileName || doc.originalName || "Document";
                       const isDownloading = downloadingDocId === doc.id;
                       return (
                         <div
@@ -1960,8 +2063,12 @@ export default function EmployeeProfilePage({
                                 {name}
                               </p>
                               <p className="text-xs text-slate-400">
-                                {doc.type ? doc.type.replace("_", " ") : "Document"}
-                                {doc.size ? ` • ${formatFileSize(doc.size)}` : ""}
+                                {doc.type
+                                  ? doc.type.replace("_", " ")
+                                  : "Document"}
+                                {doc.size
+                                  ? ` • ${formatFileSize(doc.size)}`
+                                  : ""}
                               </p>
                             </div>
                           </div>
@@ -1973,7 +2080,9 @@ export default function EmployeeProfilePage({
                             className="flex shrink-0 items-center gap-1.5 rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
                           >
                             <FiDownload size={14} />
-                            <span>{isDownloading ? "Downloading..." : "Download"}</span>
+                            <span>
+                              {isDownloading ? "Downloading..." : "Download"}
+                            </span>
                           </button>
                         </div>
                       );
@@ -2010,50 +2119,50 @@ export default function EmployeeProfilePage({
                 </button>
               </div>
             </form>
+          ) : documents.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/50 py-8 text-center text-sm text-slate-400">
+              No documents uploaded for this employee.
+            </div>
           ) : (
-            documents.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/50 py-8 text-center text-sm text-slate-400">
-                No documents uploaded for this employee.
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {documents.map((doc) => {
-                  const name = doc.fileName || doc.originalName || "Document";
-                  const isDownloading = downloadingDocId === doc.id;
-                  return (
-                    <div
-                      key={doc.id}
-                      className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-3 text-sm transition hover:border-slate-300"
-                    >
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-600">
-                          <FiFileText size={18} />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="truncate font-medium text-slate-800">
-                            {name}
-                          </p>
-                          <p className="text-xs text-slate-400">
-                            {doc.type ? doc.type.replace("_", " ") : "Document"}
-                            {doc.size ? ` • ${formatFileSize(doc.size)}` : ""}
-                          </p>
-                        </div>
+            <div className="space-y-2">
+              {documents.map((doc) => {
+                const name = doc.fileName || doc.originalName || "Document";
+                const isDownloading = downloadingDocId === doc.id;
+                return (
+                  <div
+                    key={doc.id}
+                    className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-3 text-sm transition hover:border-slate-300"
+                  >
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-600">
+                        <FiFileText size={18} />
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={() => handleDownloadDoc(doc.id, name)}
-                        disabled={isDownloading}
-                        className="flex shrink-0 items-center gap-1.5 rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
-                      >
-                        <FiDownload size={14} />
-                        <span>{isDownloading ? "Downloading..." : "Download"}</span>
-                      </button>
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-slate-800">
+                          {name}
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          {doc.type ? doc.type.replace("_", " ") : "Document"}
+                          {doc.size ? ` • ${formatFileSize(doc.size)}` : ""}
+                        </p>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            )
+
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadDoc(doc.id, name)}
+                      disabled={isDownloading}
+                      className="flex shrink-0 items-center gap-1.5 rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      <FiDownload size={14} />
+                      <span>
+                        {isDownloading ? "Downloading..." : "Download"}
+                      </span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
 
@@ -2071,8 +2180,9 @@ export default function EmployeeProfilePage({
               {activity.map((entry) => (
                 <div key={entry.id} className="flex items-start gap-3">
                   <span className="mt-0.5 rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-semibold text-sky-600">
-                    {entry.action?.replace("HRIS_EMPLOYEE_", "")?.replace(/_/g, " ") ||
-                      "ACTIVITY"}
+                    {entry.action
+                      ?.replace("HRIS_EMPLOYEE_", "")
+                      ?.replace(/_/g, " ") || "ACTIVITY"}
                   </span>
                   <div>
                     <p className="text-xs text-slate-400">
@@ -2144,8 +2254,9 @@ function FormInput({
           disabled={disabled}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`h-11 w-full rounded-lg border border-slate-200 bg-white text-sm text-slate-800 transition outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 disabled:bg-slate-50 disabled:text-slate-400 ${prefix ? "pl-8 pr-3" : "px-3"
-            }`}
+          className={`h-11 w-full rounded-lg border border-slate-200 bg-white text-sm text-slate-800 transition outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 disabled:bg-slate-50 disabled:text-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-inner-spin-button]:m-0 ${
+            prefix ? "pl-8 pr-3" : "px-3"
+          }`}
         />
       </div>
     </div>
@@ -2186,8 +2297,18 @@ function FormSelect({
           ))}
         </select>
         <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M19 9l-7 7-7-7"
+            />
           </svg>
         </div>
       </div>

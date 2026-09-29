@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { toast } from "react-toastify";
-import { FormField } from "../../hris/conduct/FormField";
-import { issueConductQuery } from "@/lib/api/hris";
+import { ChevronDown, X, Loader2 } from "lucide-react";
+import { getEmployees, issueConductQuery } from "@/lib/api/hris";
+import type { EmployeeListItem } from "@/lib/api/types/hrisTypes";
+import { resolveDepartmentName } from "@/utils/department";
 
 type AddQueryModalProps = {
   open: boolean;
@@ -13,140 +15,494 @@ type AddQueryModalProps = {
 
 type FormData = {
   employeeId: string;
+  employeeName: string;
+  role: string;
+  department: string;
   queryType: string;
+  status: string;
   notes: string;
 };
 
-const initialFormData: FormData = {
-  employeeId: "",
-  queryType: "PERFORMANCE",
-  notes: "",
-};
-
 const QUERY_TYPES = [
-  { value: "PERFORMANCE_RELATED", label: "Performance Related" },
+  { value: "PERFORMANCE_RELATED", label: "Performance-Related" },
   { value: "INSUBORDINATION", label: "Insubordination" },
   { value: "ATTENDANCE", label: "Attendance" },
   { value: "GROSS_MISCONDUCT", label: "Gross Misconduct" },
 ];
 
-const inputClassName =
-  "h-11 w-full rounded-md border border-[#D9DEE7] bg-white px-3 text-sm text-[#344054] outline-none transition placeholder:text-[#98A2B3] focus:border-[#2388D0] focus:ring-1 focus:ring-[#2388D0]";
+const STATUS_OPTIONS = [
+  { value: "IN_PROGRESS", label: "In Progress" },
+  { value: "PENDING", label: "Pending" },
+  { value: "RESOLVED", label: "Resolved" },
+  { value: "ACTIVE", label: "Active" },
+];
 
-export default function AddQueryModal({ open, onClose, onSuccess }: AddQueryModalProps) {
+const initialFormData: FormData = {
+  employeeId: "",
+  employeeName: "",
+  role: "",
+  department: "",
+  queryType: QUERY_TYPES[0].value,
+  status: STATUS_OPTIONS[0].value,
+  notes: "",
+};
+
+export default function AddQueryModal({
+  open,
+  onClose,
+  onSuccess,
+}: AddQueryModalProps) {
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [submitting, setSubmitting] = useState(false);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  // Real employee directory from backend
+  const [employees, setEmployees] = useState<EmployeeListItem[]>([]);
+  const [loadingEmployees, setLoadingEmployees] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] =
+    useState<EmployeeListItem | null>(null);
+
+  // Autocomplete dropdown states
+  const [showIdSuggestions, setShowIdSuggestions] = useState(false);
+  const [showNameSuggestions, setShowNameSuggestions] = useState(false);
+  const idRef = useRef<HTMLDivElement>(null);
+  const nameRef = useRef<HTMLDivElement>(null);
+
+  // Fetch employees on open
+  useEffect(() => {
+    if (open) {
+      setLoadingEmployees(true);
+      getEmployees({ limit: 100 })
+        .then((res) => {
+          setEmployees(Array.isArray(res) ? res : []);
+        })
+        .catch((err) => {
+          console.error("Failed to load employees for query modal:", err);
+        })
+        .finally(() => setLoadingEmployees(false));
+    } else {
+      setFormData(initialFormData);
+      setSelectedEmployee(null);
+      setShowIdSuggestions(false);
+      setShowNameSuggestions(false);
+    }
+  }, [open]);
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (idRef.current && !idRef.current.contains(e.target as Node)) {
+        setShowIdSuggestions(false);
+      }
+      if (nameRef.current && !nameRef.current.contains(e.target as Node)) {
+        setShowNameSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
+  // Filtered employee suggestions (shows all available employees)
+  const employeeIdSuggestions = useMemo(() => {
+    const query = formData.employeeId.toLowerCase().trim();
+    if (!query) return employees;
+    return employees.filter((emp) => {
+      const id = (emp.employeeId || emp.id || "").toLowerCase();
+      const name = (emp.name || "").toLowerCase();
+      return id.includes(query) || name.includes(query);
+    });
+  }, [employees, formData.employeeId]);
+
+  const employeeNameSuggestions = useMemo(() => {
+    const query = formData.employeeName.toLowerCase().trim();
+    if (!query) return employees;
+    return employees.filter((emp) => {
+      const name = (emp.name || "").toLowerCase();
+      const id = (emp.employeeId || emp.id || "").toLowerCase();
+      return name.includes(query) || id.includes(query);
+    });
+  }, [employees, formData.employeeName]);
+
+  // Derived list of departments strictly from loaded employees
+  const departmentOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        employees
+          .map((e) => resolveDepartmentName(e.department))
+          .filter((d): d is string => Boolean(d && d !== "—")),
+      ),
+    );
+  }, [employees]);
+
+  // When an employee is chosen from the suggestions
+  const handleSelectEmployee = (emp: EmployeeListItem) => {
+    setSelectedEmployee(emp);
+    const deptName = resolveDepartmentName(emp.department);
+
+    setFormData((prev) => ({
+      ...prev,
+      employeeId: emp.employeeId || emp.id,
+      employeeName: emp.name || "",
+      role: emp.role || "",
+      department: deptName !== "—" ? deptName : prev.department,
+    }));
+    setShowIdSuggestions(false);
+    setShowNameSuggestions(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setFormData((prev) => ({ ...prev, employeeId: val }));
+    setShowIdSuggestions(true);
+
+    // Auto-match if exact match found
+    const matched = employees.find(
+      (emp) =>
+        emp.employeeId?.toLowerCase() === val.toLowerCase() ||
+        emp.id.toLowerCase() === val.toLowerCase(),
+    );
+    if (matched) {
+      setSelectedEmployee(matched);
+      const deptName = resolveDepartmentName(matched.department);
+      setFormData((prev) => ({
+        ...prev,
+        employeeName: matched.name || prev.employeeName,
+        role: matched.role || prev.role,
+        department: deptName !== "—" ? deptName : prev.department,
+      }));
+    }
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setFormData((prev) => ({ ...prev, employeeName: val }));
+    setShowNameSuggestions(true);
+
+    // Auto-match if exact name match found
+    const matched = employees.find(
+      (emp) => emp.name?.toLowerCase() === val.toLowerCase(),
+    );
+    if (matched) {
+      setSelectedEmployee(matched);
+      const deptName = resolveDepartmentName(matched.department);
+      setFormData((prev) => ({
+        ...prev,
+        employeeId: matched.employeeId || matched.id || prev.employeeId,
+        role: matched.role || prev.role,
+        department: deptName !== "—" ? deptName : prev.department,
+      }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.employeeId.trim() && !selectedEmployee) {
+      toast.error("Please enter or select a valid Employee ID");
+      return;
+    }
+
+    if (!formData.notes.trim()) {
+      toast.error("Please provide a note or reason for the query");
+      return;
+    }
+
+    // Connect the right employee ID:
+    // Prefer database UUID if matched, otherwise fallback to the entered employeeId
+    const targetEmployeeId =
+      selectedEmployee?.id ||
+      selectedEmployee?.employeeId ||
+      formData.employeeId.trim();
+
     setSubmitting(true);
     try {
       await issueConductQuery({
-        employeeId: formData.employeeId,
+        employeeId: targetEmployeeId,
         queryType: formData.queryType,
-        notes: formData.notes,
+        notes: formData.notes.trim(),
       });
       toast.success("Query issued successfully");
       setFormData(initialFormData);
+      setSelectedEmployee(null);
       onSuccess?.();
       onClose();
     } catch (err: unknown) {
-      const msg =
-        err && typeof err === "object" && "response" in err
-          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-          : undefined;
-      toast.error(msg ?? "Failed to issue query");
+      console.error("Failed to issue query:", err);
+      let msg = "Failed to issue query. Please check your inputs and try again.";
+      if (err && typeof err === "object") {
+        const axiosErr = err as {
+          response?: { data?: { message?: string; error?: string } };
+          message?: string;
+        };
+        msg =
+          axiosErr.response?.data?.message ||
+          axiosErr.response?.data?.error ||
+          axiosErr.message ||
+          msg;
+      }
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (!open) {
-    return null;
-  }
+  if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 sm:p-6">
-      {/* Modal */}
-      <div className="flex max-h-[90vh] w-full max-w-[600px] flex-col overflow-hidden rounded-lg bg-white shadow-2xl">
-        {/* Header / Content */}
-        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-          <div className="flex-1 overflow-y-auto px-6 py-7 sm:px-8 sm:py-8 lg:px-10">
-            <h1 className="text-2xl font-bold leading-tight text-[#1F2937] sm:text-3xl">
-              Issue New Query
-            </h1>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 sm:p-6 overflow-y-auto">
+      {/* Modal Card */}
+      <div className="relative w-full max-w-[760px] rounded-2xl bg-white p-6 sm:p-10 shadow-2xl transition-all">
+        {/* Close Button */}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute right-6 top-6 rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+        >
+          <X size={20} />
+        </button>
 
-            {/* Form */}
-            <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5">
-              {/* Employee ID */}
-              <FormField label="Employee ID">
+        {/* Title matching Figma */}
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1E293B]">
+          Add New Query
+        </h1>
+
+        {/* Form Grid */}
+        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+          <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
+            {/* 1. Employee ID */}
+            <div ref={idRef} className="relative">
+              <div className="relative rounded-lg border border-[#E2E8F0] bg-white transition focus-within:border-[#2183C6] focus-within:ring-1 focus-within:ring-[#2183C6]">
+                <label className="absolute -top-2.5 left-3 bg-white px-1.5 text-xs text-[#94A3B8] font-normal select-none pointer-events-none">
+                  Employee ID
+                </label>
                 <input
                   type="text"
-                  name="employeeId"
-                  value={formData.employeeId}
-                  onChange={handleChange}
                   placeholder="e.g. EMP-001"
+                  value={formData.employeeId}
+                  onChange={handleIdChange}
+                  onFocus={() => setShowIdSuggestions(true)}
                   required
-                  className={inputClassName}
+                  className="h-12 w-full rounded-lg bg-transparent px-4 text-sm text-[#1E293B] placeholder:text-[#94A3B8] outline-none"
                 />
-              </FormField>
+              </div>
 
-              {/* Query Type */}
-              <FormField label="Query Type">
-                <select
-                  name="queryType"
-                  value={formData.queryType}
-                  onChange={handleChange}
-                  required
-                  className={`${inputClassName} cursor-pointer appearance-auto`}
-                >
-                  {QUERY_TYPES.map((qt) => (
-                    <option key={qt.value} value={qt.value}>
-                      {qt.label}
-                    </option>
+              {/* Suggestions dropdown */}
+              {showIdSuggestions && employeeIdSuggestions.length > 0 && (
+                <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-52 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+                  {loadingEmployees ? (
+                    <div className="flex items-center gap-2 px-3 py-2 text-xs text-slate-400">
+                      <Loader2 size={12} className="animate-spin" />
+                      Loading employees…
+                    </div>
+                  ) : (
+                    employeeIdSuggestions.map((emp) => (
+                      <button
+                        key={emp.id}
+                        type="button"
+                        onClick={() => handleSelectEmployee(emp)}
+                        className="flex w-full items-center justify-between px-3 py-2 text-left text-xs hover:bg-blue-50 transition"
+                      >
+                        <div>
+                          <p className="font-semibold text-slate-800">
+                            {emp.employeeId || emp.id}
+                          </p>
+                          <p className="text-slate-500">{emp.name}</p>
+                        </div>
+                        <span className="text-[11px] text-slate-400">
+                          {emp.role}
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div ref={nameRef} className="relative">
+              <div className="relative rounded-lg border border-[#E2E8F0] bg-white transition focus-within:border-[#2183C6] focus-within:ring-1 focus-within:ring-[#2183C6]">
+                <label className="absolute -top-2.5 left-3 bg-white px-1.5 text-xs text-[#94A3B8] font-normal select-none pointer-events-none">
+                  Employee Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="Employee Name"
+                  value={formData.employeeName}
+                  onChange={handleNameChange}
+                  onFocus={() => setShowNameSuggestions(true)}
+                  className="h-12 w-full rounded-lg bg-transparent px-4 text-sm text-[#1E293B] placeholder:text-[#94A3B8] outline-none"
+                />
+              </div>
+
+              {/* Suggestions dropdown */}
+              {showNameSuggestions && employeeNameSuggestions.length > 0 && (
+                <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-52 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+                  {employeeNameSuggestions.map((emp) => (
+                    <button
+                      key={emp.id}
+                      type="button"
+                      onClick={() => handleSelectEmployee(emp)}
+                      className="flex w-full items-center justify-between px-3 py-2 text-left text-xs hover:bg-blue-50 transition"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-[10px] font-bold text-blue-700">
+                          {emp.name
+                            ? emp.name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                                .slice(0, 2)
+                                .toUpperCase()
+                            : "EM"}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-800">
+                            {emp.name}
+                          </p>
+                          <p className="text-[11px] text-slate-400">
+                            {emp.employeeId || emp.id}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[11px] text-slate-400">
+                        {emp.role}
+                      </span>
+                    </button>
                   ))}
-                </select>
-              </FormField>
+                </div>
+              )}
+            </div>
 
-              {/* Notes */}
-              <FormField label="Notes">
-                <textarea
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleChange}
-                  placeholder="Describe the query reason..."
-                  required
-                  rows={4}
-                  className={`${inputClassName} h-auto py-2 resize-none`}
-                />
-              </FormField>
+            <div className="relative rounded-lg border border-[#E2E8F0] bg-white transition focus-within:border-[#2183C6] focus-within:ring-1 focus-within:ring-[#2183C6]">
+              <label className="absolute -top-2.5 left-3 bg-white px-1.5 text-xs text-[#94A3B8] font-normal select-none pointer-events-none">
+                Role
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Software Engineer"
+                value={formData.role}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, role: e.target.value }))
+                }
+                className="h-12 w-full rounded-lg bg-transparent px-4 text-sm text-[#1E293B] placeholder:text-[#94A3B8] outline-none"
+              />
+            </div>
+
+            <div className="relative rounded-lg border border-[#E2E8F0] bg-white transition focus-within:border-[#2183C6] focus-within:ring-1 focus-within:ring-[#2183C6]">
+              <label className="absolute -top-2.5 left-3 bg-white px-1.5 text-xs text-[#94A3B8] font-normal select-none pointer-events-none">
+                Department
+              </label>
+              <select
+                value={formData.department}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, department: e.target.value }))
+                }
+                className="h-12 w-full appearance-none rounded-lg bg-transparent px-4 pr-10 text-sm text-[#1E293B] outline-none cursor-pointer"
+              >
+                <option value="">Select Department</option>
+                {formData.department &&
+                  !departmentOptions.includes(formData.department) && (
+                    <option value={formData.department}>
+                      {formData.department}
+                    </option>
+                  )}
+                {departmentOptions.map((dept) => (
+                  <option key={dept} value={dept}>
+                    {dept}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8]"
+                size={18}
+              />
+            </div>
+
+            <div className="relative rounded-lg border border-[#E2E8F0] bg-white transition focus-within:border-[#2183C6] focus-within:ring-1 focus-within:ring-[#2183C6]">
+              <label className="absolute -top-2.5 left-3 bg-white px-1.5 text-xs text-[#94A3B8] font-normal select-none pointer-events-none">
+                Query Type
+              </label>
+              <select
+                value={formData.queryType}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, queryType: e.target.value }))
+                }
+                className="h-12 w-full appearance-none rounded-lg bg-transparent px-4 pr-10 text-sm text-[#1E293B] outline-none cursor-pointer"
+              >
+                {QUERY_TYPES.map((qt) => (
+                  <option key={qt.value} value={qt.value}>
+                    {qt.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8]"
+                size={18}
+              />
+            </div>
+
+            <div className="relative rounded-lg border border-[#E2E8F0] bg-white transition focus-within:border-[#2183C6] focus-within:ring-1 focus-within:ring-[#2183C6]">
+              <label className="absolute -top-2.5 left-3 bg-white px-1.5 text-xs text-[#94A3B8] font-normal select-none pointer-events-none">
+                Status
+              </label>
+              <select
+                value={formData.status}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, status: e.target.value }))
+                }
+                className="h-12 w-full appearance-none rounded-lg bg-transparent px-4 pr-10 text-sm text-[#1E293B] outline-none cursor-pointer"
+              >
+                {STATUS_OPTIONS.map((st) => (
+                  <option key={st.value} value={st.value}>
+                    {st.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8]"
+                size={18}
+              />
+            </div>
+
+            <div className="relative rounded-lg border border-[#E2E8F0] bg-white transition focus-within:border-[#2183C6] focus-within:ring-1 focus-within:ring-[#2183C6] sm:col-span-1">
+              <label className="absolute -top-2.5 left-3 bg-white px-1.5 text-xs text-[#94A3B8] font-normal select-none pointer-events-none">
+                Notes
+              </label>
+              <input
+                type="text"
+                placeholder="Add Note"
+                value={formData.notes}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, notes: e.target.value }))
+                }
+                required
+                className="h-12 w-full rounded-lg bg-transparent px-4 text-sm text-[#1E293B] placeholder:text-[#94A3B8] outline-none"
+              />
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="flex shrink-0 items-center justify-end gap-3 border-t border-[#E5E9EF] bg-white px-6 py-4 sm:px-8 lg:px-10">
+          {/* Action Buttons */}
+          <div className="flex items-center justify-end gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
               disabled={submitting}
-              className="h-10 rounded-md border border-[#D9DEE7] bg-white px-5 text-sm font-medium text-[#344054] transition hover:bg-[#F9FAFB] disabled:opacity-60"
+              className="h-11 rounded-lg border border-[#E2E8F0] bg-white px-5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
             >
               Cancel
             </button>
-
             <button
               type="submit"
               disabled={submitting}
-              className="h-10 rounded-md bg-[#1683D8] px-6 text-sm font-medium text-white transition hover:bg-[#0F74C2] disabled:opacity-60"
+              className="flex h-11 items-center gap-2 rounded-lg bg-[#2183C6] px-6 text-sm font-medium text-white shadow-xs transition hover:bg-[#1b6aa2] disabled:opacity-50"
             >
-              {submitting ? "Saving…" : "Issue Query"}
+              {submitting ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Adding…
+                </>
+              ) : (
+                "Add Query"
+              )}
             </button>
           </div>
         </form>

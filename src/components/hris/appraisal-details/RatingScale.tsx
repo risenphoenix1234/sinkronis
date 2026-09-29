@@ -15,8 +15,7 @@ export default function RatingScale({ selected, title, subtitle }: Props) {
         {[1, 2, 3, 4, 5].map((number) => (
           <div
             key={number}
-            className={`flex h-10 w-10 items-center justify-center rounded-md font-semibold
-            ${
+            className={`flex h-10 w-10 items-center justify-center rounded-md font-semibold ${
               number <= selected ? "bg-[#1677C8] text-white" : "bg-white border"
             }`}
           >

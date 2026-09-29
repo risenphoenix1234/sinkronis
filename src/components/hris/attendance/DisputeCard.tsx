@@ -1,21 +1,80 @@
-import { AttendanceDispute } from "@/types/hris/attendance";
+"use client";
+
 import { useState } from "react";
 import axios from "axios";
+import { toast } from "react-toastify";
+import { Ban, Check, CornerDownRight } from "lucide-react";
+import type { AttendanceDispute } from "@/lib/api/types/hrisTypes";
 import ApproveDisputeModal from "../../modals/Hris/ApproveDisputeModal";
-import StatusBadge from "@/components/ui/StatusBadge";
+import DisputeDetailModal from "../../modals/Hris/DisputeDetailModal";
 import { resolveDispute } from "@/lib/api/hris";
 
 interface CardProps {
   dispute: AttendanceDispute;
-  onResolved?: () => void; // lets the parent refetch the list after a successful resolve
+  onResolved?: () => void;
+}
+
+function formatTime(val?: string | null): string {
+  if (!val) return "";
+  if (/^\d{1,2}:\d{2}$/.test(val)) return val;
+  try {
+    const d = new Date(val);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+    }
+  } catch {}
+  return val;
+}
+
+function formatDate(val?: string | null): string {
+  if (!val) return "—";
+  try {
+    const d = new Date(val);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+    }
+  } catch {}
+  return val;
+}
+
+function formatDateTime(val?: string | null): string {
+  if (!val) return "";
+  try {
+    const d = new Date(val);
+    if (!isNaN(d.getTime())) {
+      const datePart = d.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+      const timePart = d.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+      return `${datePart} • ${timePart}`;
+    }
+  } catch {}
+  return val;
 }
 
 export function DisputeCard({ dispute, onResolved }: CardProps) {
   const [showModal, setShowModal] = useState(false);
-  const [rejecting, setRejecting] = useState(false);
+  const [modalAction, setModalAction] = useState<"Approved" | "Rejected">(
+    "Approved",
+  );
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleApprove = async (data: {
+  const handleResolve = async (data: {
     action: "Approved" | "Rejected";
     resolution: string;
   }) => {
@@ -28,117 +87,195 @@ export function DisputeCard({ dispute, onResolved }: CardProps) {
       setShowModal(false);
       onResolved?.();
     } catch (err) {
-      console.error("Approve failed:", axios.isAxiosError(err) ? err.response?.data : err);
-      setError(
-        axios.isAxiosError(err) ? err.response?.data?.message ?? "Couldn't resolve this dispute." : "Couldn't resolve this dispute.",
+      console.error(
+        "Resolve failed:",
+        axios.isAxiosError(err) ? err.response?.data : err,
       );
+      const msg =
+        axios.isAxiosError(err)
+          ? (err.response?.data?.message ?? "Couldn't resolve this dispute.")
+          : "Couldn't resolve this dispute.";
+      setError(msg);
+      toast.error(msg);
     }
   };
 
-  const handleReject = async () => {
-    // ⚠️ Placeholder — using window.prompt since there's no RejectDisputeModal
-    // yet. Replace with a proper modal (matching ApproveDisputeModal's UX)
-    // once you want a nicer reject flow.
-    const note = window.prompt("Reason for rejecting this dispute:");
-    if (note === null) return; // user cancelled
+  const anyDispute = dispute as any;
+  const displayId = anyDispute.disputeId || anyDispute.disputeNo || dispute.id;
+  const employeeName =
+    anyDispute.employee?.name ||
+    dispute.employeeName ||
+    (anyDispute.employee?.firstName && anyDispute.employee?.lastName
+      ? `${anyDispute.employee.firstName} ${anyDispute.employee.lastName}`
+      : "—");
+  const employeeCode =
+    anyDispute.employee?.employeeId ||
+    anyDispute.employee?.employeeNo ||
+    dispute.employeeId ||
+    "—";
+  const departmentName =
+    (typeof anyDispute.employee?.department === "string"
+      ? anyDispute.employee.department
+      : anyDispute.employee?.department?.name) ||
+    dispute.department ||
+    "—";
+  const issue = (anyDispute.issueType || dispute.issue || "")
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (c: string) => c.toUpperCase());
+  const disputeDate = formatDate(dispute.date || dispute.createdAt);
+  const timestamp = formatDateTime(dispute.createdAt || dispute.date);
+  const resolution = anyDispute.resolutionNote || dispute.resolution;
+  const isPending = dispute.status?.toUpperCase() === "PENDING";
+  const isApproved = dispute.status?.toUpperCase() === "APPROVED";
+  const isRejected = dispute.status?.toUpperCase() === "REJECTED";
 
-    setRejecting(true);
-    setError(null);
-    try {
-      await resolveDispute(dispute.id, {
-        status: "REJECTED",
-        resolutionNote: note,
-      });
-      onResolved?.();
-    } catch (err) {
-      console.error("Reject failed:", axios.isAxiosError(err) ? err.response?.data : err);
-      setError(
-        axios.isAxiosError(err) ? err.response?.data?.message ?? "Couldn't reject this dispute." : "Couldn't reject this dispute.",
-      );
-    } finally {
-      setRejecting(false);
-    }
-  };
+  const claimedIn = formatTime(dispute.claimedClockIn);
+  const claimedOut = formatTime(dispute.claimedClockOut);
 
   return (
-    <div className="bg-white border rounded-lg p-5">
-      <div className="flex justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="font-semibold">{dispute.id}</h3>
-            <StatusBadge status={dispute.status} />
+    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs transition hover:shadow-sm">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+        <div className="flex-1">
+          {/* Top row: ID, Status, Issue Type, Date */}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowDetailModal(true)}
+              className="text-left font-bold text-slate-800 transition hover:text-blue-600 hover:underline"
+            >
+              {displayId}
+            </button>
 
-            <span className="px-2 py-1 text-xs rounded bg-slate-100">
-              {dispute.issue}
-            </span>
-            <span className="px-2 py-1 text-xs rounded bg-blue-100 text-blue-700">
-              {dispute.date}
+            {/* Status Pill */}
+            {isPending && (
+              <span className="rounded-full bg-[#FEF3C7] px-2.5 py-0.5 text-xs font-medium text-[#92400E]">
+                Pending
+              </span>
+            )}
+            {isApproved && (
+              <span className="rounded-full bg-[#DCFCE7] px-2.5 py-0.5 text-xs font-medium text-[#166534]">
+                Approved
+              </span>
+            )}
+            {isRejected && (
+              <span className="rounded-full bg-[#FEE2E2] px-2.5 py-0.5 text-xs font-medium text-[#991B1B]">
+                Rejected
+              </span>
+            )}
+
+            {/* Issue Pill */}
+            {issue && (
+              <span className="rounded-md bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                {issue}
+              </span>
+            )}
+
+            {/* Date Pill */}
+            <span className="rounded-md bg-[#E0F2FE] px-2.5 py-0.5 text-xs font-medium text-[#0369A1]">
+              {disputeDate}
             </span>
           </div>
 
-          <p className="mt-3 font-medium">
-            {dispute.employeeName}
-            <span className="text-slate-500 text-sm ml-1">
-              ({dispute.employeeId} · {dispute.department})
+          {/* Employee row */}
+          <p className="mt-2.5 text-sm font-semibold text-slate-900">
+            {employeeName}
+            <span className="ml-1 text-xs font-normal text-slate-500">
+              ({employeeCode} · {departmentName})
             </span>
           </p>
 
-          <p className="text-sm text-slate-600 mt-2">{dispute.description}</p>
+          {/* Description */}
+          <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
+            {dispute.description}
+          </p>
 
-          <div className="flex gap-6 mt-4 text-sm">
-            {dispute.claimedClockIn && (
-              <span className="text-green-600">
-                ↳ Claimed In: {dispute.claimedClockIn}
-              </span>
-            )}
-
-            {dispute.claimedClockOut && (
-              <span className="text-red-500">
-                ↳ Claimed Out: {dispute.claimedClockOut}
-              </span>
-            )}
-          </div>
-
-          {dispute.resolution && (
-            <div className="mt-4 border-t pt-3">
-              <p className="text-sm">
-                <strong>Resolution:</strong> {dispute.resolution}
-              </p>
+          {/* Claimed Times */}
+          {(claimedIn || claimedOut) && (
+            <div className="mt-3 flex flex-wrap items-center gap-4 text-xs font-medium">
+              {claimedIn && (
+                <span className="flex items-center gap-1 text-[#16A34A]">
+                  <CornerDownRight size={13} className="stroke-[2.5]" />
+                  Claimed In: {claimedIn}
+                </span>
+              )}
+              {claimedOut && (
+                <span className="flex items-center gap-1 text-[#DC2626]">
+                  <CornerDownRight size={13} className="stroke-[2.5]" />
+                  Claimed Out: {claimedOut}
+                </span>
+              )}
             </div>
           )}
 
-          {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+          {/* Resolution block */}
+          {resolution && (
+            <div className="mt-3 border-t border-slate-100 pt-2.5 text-xs text-slate-600">
+              <p>
+                <strong className="font-semibold text-slate-700">
+                  Resolution:
+                </strong>{" "}
+                {resolution}
+              </p>
+              {anyDispute.resolvedAt && (
+                <p className="mt-0.5 text-[11px] text-slate-400">
+                  {formatDateTime(anyDispute.resolvedAt)}
+                </p>
+              )}
+            </div>
+          )}
+
+          {error && <p className="mt-2 text-xs text-rose-600">{error}</p>}
         </div>
 
-        <div className="text-right">
-          <p className="text-xs text-slate-400">{dispute.createdAt}</p>
+        {/* Right side: Timestamp & Action Buttons */}
+        <div className="flex flex-row items-center justify-between sm:flex-col sm:items-end sm:justify-between">
+          <p className="text-xs text-slate-400">{timestamp}</p>
 
-          {dispute.status === "Pending" && (
-            <div className="flex gap-2 mt-6">
+          {isPending && (
+            <div className="mt-4 flex items-center gap-2">
               <button
-                onClick={handleReject}
-                disabled={rejecting}
-                className="px-4 py-2 rounded bg-red-50 text-red-600 border disabled:opacity-50"
+                type="button"
+                onClick={() => {
+                  setModalAction("Rejected");
+                  setShowModal(true);
+                }}
+                className="flex items-center gap-1 rounded-lg border border-red-200 bg-[#FEE2E2]/60 px-3.5 py-1.5 text-xs font-medium text-red-600 transition hover:bg-[#FEE2E2]"
               >
-                {rejecting ? "Rejecting…" : "Reject"}
+                <Ban size={13} />
+                Reject
               </button>
 
               <button
-                className="px-4 py-2 rounded bg-green-50 text-green-600 border"
-                onClick={() => setShowModal(true)}
+                type="button"
+                onClick={() => {
+                  setModalAction("Approved");
+                  setShowModal(true);
+                }}
+                className="flex items-center gap-1 rounded-lg border border-emerald-300 bg-[#DCFCE7]/70 px-3.5 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-[#DCFCE7]"
               >
+                <Check size={14} className="stroke-[2.5]" />
                 Approve
               </button>
             </div>
           )}
-          <ApproveDisputeModal
-            isOpen={showModal}
-            dispute={dispute}
-            onClose={() => setShowModal(false)}
-            onSubmit={handleApprove}
-          />
         </div>
       </div>
+
+      <ApproveDisputeModal
+        isOpen={showModal}
+        dispute={dispute}
+        initialAction={modalAction}
+        onClose={() => setShowModal(false)}
+        onSubmit={handleResolve}
+      />
+
+      <DisputeDetailModal
+        isOpen={showDetailModal}
+        disputeId={dispute.id}
+        onClose={() => setShowDetailModal(false)}
+        onResolved={onResolved}
+      />
     </div>
   );
 }

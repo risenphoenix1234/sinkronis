@@ -13,12 +13,15 @@ export interface DisputeModalProps {
   onSubmitSuccess?: () => void;
 }
 
-const ISSUE_TYPE_OPTIONS: { label: string; value: AttendanceDisputeIssueType }[] = [
+const ISSUE_TYPE_OPTIONS: {
+  label: string;
+  value: AttendanceDisputeIssueType;
+}[] = [
   { label: "Missing Clock In", value: "MISSING_CLOCK_IN" },
   { label: "Missing Clock Out", value: "MISSING_CLOCK_OUT" },
-  { label: "Incorrect Hours", value: "INCORRECT_HOURS" },
-  { label: "Wrong Shift", value: "WRONG_SHIFT" },
-  { label: "Overtime Missing", value: "OVERTIME_MISSING" },
+  { label: "System Error", value: "SYSTEM_ERROR" },
+  { label: "Wrong Status", value: "WRONG_STATUS" },
+  { label: "Other", value: "OTHER" },
 ];
 
 export default function DisputeModal({
@@ -28,7 +31,8 @@ export default function DisputeModal({
   onClose,
   onSubmitSuccess,
 }: DisputeModalProps) {
-  const [issueType, setIssueType] = useState<AttendanceDisputeIssueType>("MISSING_CLOCK_IN");
+  const [issueType, setIssueType] =
+    useState<AttendanceDisputeIssueType>("MISSING_CLOCK_IN");
   const [claimedClockIn, setClaimedClockIn] = useState("");
   const [claimedClockOut, setClaimedClockOut] = useState("");
   const [notes, setNotes] = useState("");
@@ -58,7 +62,9 @@ export default function DisputeModal({
         claimedClockIn: claimedClockIn || null,
         claimedClockOut: claimedClockOut || null,
       });
-      toast.success(res?.message || `Dispute submitted successfully for ${date}`);
+      toast.success(
+        res?.message || `Dispute submitted successfully for ${date}`,
+      );
       onSubmitSuccess?.();
       onClose();
     } catch (err: unknown) {

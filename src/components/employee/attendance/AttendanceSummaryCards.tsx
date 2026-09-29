@@ -1,4 +1,7 @@
-import { AttendanceSummary, AttendanceSummaryData } from "@/types/employee/attendance";
+import {
+  AttendanceSummary,
+  AttendanceSummaryData,
+} from "@/types/employee/attendance";
 
 interface Props {
   summary?: AttendanceSummaryData | AttendanceSummary | null;

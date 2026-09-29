@@ -37,7 +37,7 @@ export default function EntityReportDetail({ detail }: { detail: EntityDetail })
     <section className="space-y-6 p-6">
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-sm text-slate-400">
-        <Link href="/reports" className="hover:text-slate-600">
+        <Link href="/accounting/reports" className="hover:text-slate-600">
           Reports
         </Link>
         <span>/</span>

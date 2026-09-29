@@ -1,273 +1,258 @@
-// app/reports/page.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FiChevronRight, FiFilter } from "react-icons/fi";
-import { LuLayoutGrid, LuTable } from "react-icons/lu";
+import { FiTrendingUp, FiTrendingDown, FiFilter, FiGrid, FiList, FiBriefcase, FiUser, FiFolder } from "react-icons/fi";
+import {
+  getReports,
+  getCustomers,
+  getAgents,
+  getProjects,
+  getCatalogueItems,
+  groupInvoicesByClient,
+  groupInvoicesByAgent,
+  groupInvoicesByProject,
+  naira,
+} from "@/lib/api/accounting";
+import { ReportSummary, DrillEntry, Invoice } from "@/lib/api/types/accounting.types";
 
-type DrillRow = {
-  type: "Client" | "Agent" | "Project";
-  name: string;
-  detail: string;
-  totalValue: number;
-  sharePct: number;
-  href: string;
-};
+interface Option {
+  id: string;
+  label: string;
+}
 
-const drillData: DrillRow[] = [
-  { type: "Client", name: "Zenith Technologies Ltd", detail: "2 invoices", totalValue: 612750, sharePct: 100, href: "/reports/client/zenith-technologies" },
-  { type: "Project", name: "Zenith HRIS Deployment", detail: "Zenith Technologies Ltd", totalValue: 612750, sharePct: 100, href: "/reports/project/zenith-hris-deployment" },
-  { type: "Agent", name: "Emeka Okafor", detail: "3 invoices", totalValue: 526750, sharePct: 86, href: "/reports/agent/emeka-okafor" },
-  { type: "Client", name: "BlueStar Logistics", detail: "1 invoice", totalValue: 129000, sharePct: 21, href: "/reports/client/bluestar-logistics" },
-  { type: "Project", name: "BlueStar Annual Contract", detail: "BlueStar Logistics", totalValue: 129000, sharePct: 21, href: "/reports/project/bluestar-annual-contract" },
-  { type: "Client", name: "Prestige Global Services", detail: "1 invoice", totalValue: 15250, sharePct: 2, href: "/reports/client/prestige-global-services" },
+const STATUS_OPTIONS: Option[] = [
+  { id: "ALL", label: "All statuses" },
+  { id: "PAID", label: "Paid" },
+  { id: "SENT", label: "Sent" },
+  { id: "OVERDUE", label: "Overdue" },
+  { id: "DRAFT", label: "Draft" },
 ];
 
-const typeStyles: Record<DrillRow["type"], { badge: string; bar: string }> = {
-  Client: { badge: "bg-sky-50 text-sky-700", bar: "bg-sky-500" },
-  Agent: { badge: "bg-emerald-50 text-emerald-700", bar: "bg-emerald-500" },
-  Project: { badge: "bg-amber-50 text-amber-700", bar: "bg-amber-500" },
-};
+function SummaryCard({ label, value, hint, trend, valueClassName = "text-slate-900" }: {
+  label: string; value: string; hint: string; trend: "up" | "down"; valueClassName?: string;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-5">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-slate-500">{label}</p>
+        <span className={`flex h-7 w-7 items-center justify-center rounded-full ${trend === "up" ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>
+          {trend === "up" ? <FiTrendingUp size={14} /> : <FiTrendingDown size={14} />}
+        </span>
+      </div>
+      <p className={`mt-3 text-2xl font-semibold ${valueClassName}`}>{value}</p>
+      <p className="mt-1 text-xs text-slate-400">{hint}</p>
+    </div>
+  );
+}
 
-const naira = (n: number) => `₦${n.toLocaleString()}`;
+function DrillColumn({ title, icon, entries, basePath }: {
+  title: string; icon: React.ReactNode; entries: DrillEntry[]; basePath: string;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className="mb-3 flex items-center gap-2 text-sm font-medium text-slate-700">{icon}{title}</div>
+      <div className="space-y-3">
+        {entries.length === 0 && <p className="text-sm text-slate-400">No data yet.</p>}
+        {entries.map((entry) => (
+          <div key={entry.id} className="flex items-center justify-between border-b border-slate-100 pb-3 last:border-0 last:pb-0">
+            <div>
+              <p className="text-sm font-medium text-slate-800">{entry.name}</p>
+              <p className="text-xs text-slate-400">{entry.invoiceCount} invoices</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-slate-800">{naira(entry.invoiceValue)}</span>
+              <Link href={`${basePath}/${entry.id}`} className="rounded-md border border-slate-200 px-2.5 py-1 text-xs text-sky-600 hover:bg-sky-50">
+                Drill In &gt;
+              </Link>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function ReportsPage() {
-  const [view, setView] = useState<"cards" | "table">("table");
+  const router = useRouter();
+  const [summary, setSummary] = useState<ReportSummary | null>(null);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState<"cards" | "table">("cards");
 
-  const [client, setClient] = useState("");
-  const [agent, setAgent] = useState("");
-  const [itemService, setItemService] = useState("");
-  const [project, setProject] = useState("");
-  const [status, setStatus] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [clientOptions, setClientOptions] = useState<Option[]>([]);
+  const [agentOptions, setAgentOptions] = useState<Option[]>([]);
+  const [projectOptions, setProjectOptions] = useState<Option[]>([]);
+  const [itemOptions, setItemOptions] = useState<Option[]>([]);
 
-  const grouped = useMemo(() => {
-    return {
-      Client: drillData.filter((d) => d.type === "Client"),
-      Agent: drillData.filter((d) => d.type === "Agent"),
-      Project: drillData.filter((d) => d.type === "Project"),
-    };
+  const [filters, setFilters] = useState({
+    clientId: "", agentId: "", projectId: "", catalogueItemId: "", status: "", dateFrom: "", dateTo: "",
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    Promise.all([
+      getReports(),
+      getCustomers({ limit: 100 }),
+      getAgents({ limit: 100 }),
+      getProjects({ limit: 100 }),
+      getCatalogueItems({ limit: 100 }),
+    ])
+      .then(([reportRes, customersRes, agentsRes, projectsRes, itemsRes]) => {
+        if (cancelled) return;
+        setSummary(reportRes.data.summary);
+        setInvoices(reportRes.data.invoices ?? []);
+        setClientOptions(customersRes.data.customers.map((c) => ({ id: c.id, label: c.companyName })));
+        setAgentOptions(agentsRes.data.agents.map((a) => ({ id: a.id, label: a.name })));
+        setProjectOptions(projectsRes.data.projects.map((p) => ({ id: p.id, label: p.name })));
+        setItemOptions(itemsRes.data.items.map((i) => ({ id: i.id, label: i.name })));
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Failed to load reports data");
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, []);
 
-  const handleGenerate = () => {
+  function updateFilter(key: keyof typeof filters, value: string) {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function handleGenerate() {
     const params = new URLSearchParams();
-    if (client) params.set("client", client);
-    if (agent) params.set("agent", agent);
-    if (itemService) params.set("item", itemService);
-    if (project) params.set("project", project);
-    if (status) params.set("status", status);
-    if (dateFrom) params.set("from", dateFrom);
-    if (dateTo) params.set("to", dateTo);
-    window.location.href = `/reports/results?${params.toString()}`;
-  };
+    const withLabel = (key: keyof typeof filters, labelKey: string, options: Option[]) => {
+      const value = filters[key];
+      if (!value) return;
+      params.set(key, value);
+      const label = options.find((o) => o.id === value)?.label;
+      if (label) params.set(labelKey, label);
+    };
+    withLabel("clientId", "clientIdLabel", clientOptions);
+    withLabel("agentId", "agentIdLabel", agentOptions);
+    withLabel("projectId", "projectIdLabel", projectOptions);
+    withLabel("catalogueItemId", "catalogueItemIdLabel", itemOptions);
+    if (filters.status) params.set("status", filters.status);
+    if (filters.dateFrom) params.set("dateFrom", filters.dateFrom);
+    if (filters.dateTo) params.set("dateTo", filters.dateTo);
+    router.push(`/accounting/reports/results?${params.toString()}`);
+  }
+
+  const selectClass = "rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 focus:border-sky-400 focus:outline-none bg-white";
+
+  const byClient = groupInvoicesByClient(invoices);
+  const byAgent = groupInvoicesByAgent(invoices);
+  const byProject = groupInvoicesByProject(invoices);
+
+  const allEntries: (DrillEntry & { type: "Client" | "Agent" | "Project"; basePath: string })[] = [
+    ...byClient.map((e) => ({ ...e, type: "Client" as const, basePath: "/accounting/reports/clients"})),
+    ...byProject.map((e) => ({ ...e, type: "Project" as const, basePath: "/accounting/reports/projects" })),
+    ...byAgent.map((e) => ({ ...e, type: "Agent" as const, basePath: "/accounting/reports/agents" })),
+  ];
+
+  const revenue = summary?.totalRevenue ?? 0;
+  const expenses = summary?.totalExpenses ?? 0;
+  const total = revenue + expenses || 1;
+  const revenuePct = (revenue / total) * 100;
 
   return (
     <section className="space-y-6 p-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">Reports</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Generate, filter, and download reports across all your billing data
-        </p>
+        <p className="text-sm text-slate-500">Generate, filter, and download reports across all your billing data</p>
       </div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-4 gap-4">
-        <div className="rounded-xl border border-slate-200 bg-white px-5 py-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-500">Total Revenue</p>
-            <span className="text-emerald-500">↗</span>
-          </div>
-          <p className="mt-1 text-2xl font-semibold text-slate-900">₦526,750</p>
-          <p className="mt-1 text-xs text-slate-400">From paid invoices</p>
+      {error && (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-600">
+          Couldn&apos;t load reports data: {error}
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white px-5 py-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-500">Outstanding</p>
-            <span className="text-sky-500">↗</span>
+      )}
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <SummaryCard label="Total Revenue" value={summary ? naira(summary.totalRevenue) : "—"} hint="From paid invoices" trend="up" />
+        <SummaryCard label="Outstanding" value={summary ? naira(summary.outstanding) : "—"} hint="Invoices sent, awaiting payment" trend="up" />
+        <SummaryCard label="Overdue" value={summary ? naira(summary.overdue) : "—"} hint="Past due date" trend="down" valueClassName="text-rose-600" />
+        <SummaryCard label="VAT Collected" value={summary ? naira(summary.vatCollected) : "—"} hint="Payment-proportional" trend="up" valueClassName="text-sky-600" />
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-sm font-medium text-slate-700">Profit / Loss</p>
+            <p className="text-xs text-slate-400">Revenue − Expenses = Net Profit</p>
           </div>
-          <p className="mt-1 text-2xl font-semibold text-slate-900">₦15,250</p>
-          <p className="mt-1 text-xs text-slate-400">Invoices sent, awaiting payment</p>
+          <span className={`rounded-full px-3 py-1 text-sm font-medium ${(summary?.netProfit ?? 0) >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>
+            {summary ? `${summary.netProfit >= 0 ? "+" : ""}${naira(summary.netProfit)}` : "—"}
+          </span>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white px-5 py-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-500">Overdue</p>
-            <span className="text-rose-500">⚠</span>
+        <div className="mt-4 flex h-3 w-full overflow-hidden rounded-full bg-slate-100">
+          <div className="flex items-center justify-end bg-emerald-500 px-2 text-[10px] text-white" style={{ width: `${revenuePct}%` }}>
+            {revenuePct > 15 && "Rev"}
           </div>
-          <p className="mt-1 text-2xl font-semibold text-rose-600">₦129,000</p>
-          <p className="mt-1 text-xs text-slate-400">Past due date</p>
+          <div className="flex items-center justify-end bg-rose-500 px-2 text-[10px] text-white" style={{ width: `${100 - revenuePct}%` }}>
+            {100 - revenuePct > 15 && "Exp"}
+          </div>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white px-5 py-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-500">VAT Collected</p>
-            <span className="text-emerald-500">↗</span>
-          </div>
-          <p className="mt-1 text-2xl font-semibold text-slate-900">₦46,500</p>
-          <p className="mt-1 text-xs text-slate-400">7.5% HRIS standard rate</p>
+        <div className="mt-2 flex gap-6 text-xs text-slate-500">
+          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Revenue — {naira(revenue)}</span>
+          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-rose-500" /> Expenses — {naira(expenses)}</span>
         </div>
       </div>
 
-      {/* Filter Reports */}
       <div className="rounded-xl border border-slate-200 bg-white p-5">
         <div className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-700">
-          <FiFilter size={15} className="text-slate-400" />
-          Filter Reports
-          <span className="font-normal text-slate-400">— apply any combination of filters</span>
+          <FiFilter size={14} /> Filter Reports <span className="text-xs font-normal text-slate-400">— apply any combination of filters</span>
         </div>
-
-        <div className="grid grid-cols-4 gap-4">
-          <div>
-            <label className="mb-1 block text-xs text-slate-500">Client</label>
-            <select
-              value={client}
-              onChange={(e) => setClient(e.target.value)}
-              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-600 outline-none"
-            >
-              <option value="">All Clients</option>
-              <option value="zenith-technologies">Zenith Technologies Ltd</option>
-              <option value="bluestar-logistics">BlueStar Logistics</option>
-              <option value="prestige-global-services">Prestige Global Services</option>
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs text-slate-500">Agent</label>
-            <select
-              value={agent}
-              onChange={(e) => setAgent(e.target.value)}
-              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-600 outline-none"
-            >
-              <option value="">All Agents</option>
-              <option value="emeka-okafor">Emeka Okafor</option>
-              <option value="sade-williams">Sade Williams</option>
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs text-slate-500">Item / Service</label>
-            <select
-              value={itemService}
-              onChange={(e) => setItemService(e.target.value)}
-              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-600 outline-none"
-            >
-              <option value="">All Items / Service</option>
-              <option value="hr-software-license">HR Software License</option>
-              <option value="payroll-processing">Payroll Processing</option>
-              <option value="annual-maintenance">Annual Maintenance</option>
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs text-slate-500">Project</label>
-            <select
-              value={project}
-              onChange={(e) => setProject(e.target.value)}
-              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-600 outline-none"
-            >
-              <option value="">All Projects</option>
-              <option value="zenith-hris-deployment">Zenith HRIS Deployment</option>
-              <option value="bluestar-annual-contract">BlueStar Annual Contract</option>
-              <option value="prestige-payroll-setup">Prestige Payroll Setup</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="mt-4 grid grid-cols-4 gap-4">
-          <div>
-            <label className="mb-1 block text-xs text-slate-500">Status</label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-600 outline-none"
-            >
-              <option value="">All Status</option>
-              <option value="paid">Paid</option>
-              <option value="sent">Sent</option>
-              <option value="overdue">Overdue</option>
-              <option value="draft">Draft</option>
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs text-slate-500">Date From</label>
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              placeholder="dd/mm/yyyy"
-              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-600 outline-none"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs text-slate-500">Date To</label>
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              placeholder="dd/mm/yyyy"
-              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-600 outline-none"
-            />
-          </div>
-          <div className="flex items-end">
-            <button
-              onClick={handleGenerate}
-              className="w-full rounded-md bg-sky-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-sky-700"
-            >
-              Generate
-            </button>
-          </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <select className={selectClass} value={filters.clientId} onChange={(e) => updateFilter("clientId", e.target.value)}>
+            <option value="">Client</option>
+            {clientOptions.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+          </select>
+          <select className={selectClass} value={filters.agentId} onChange={(e) => updateFilter("agentId", e.target.value)}>
+            <option value="">Agent</option>
+            {agentOptions.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+          </select>
+          <select className={selectClass} value={filters.catalogueItemId} onChange={(e) => updateFilter("catalogueItemId", e.target.value)}>
+            <option value="">Item / Service</option>
+            {itemOptions.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+          </select>
+          <select className={selectClass} value={filters.projectId} onChange={(e) => updateFilter("projectId", e.target.value)}>
+            <option value="">Project</option>
+            {projectOptions.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+          </select>
+          <select className={selectClass} value={filters.status} onChange={(e) => updateFilter("status", e.target.value)}>
+            {STATUS_OPTIONS.map((o) => <option key={o.id} value={o.id === "ALL" ? "" : o.id}>{o.label}</option>)}
+          </select>
+          <input type="date" value={filters.dateFrom} onChange={(e) => updateFilter("dateFrom", e.target.value)} className="rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 focus:border-sky-400 focus:outline-none" />
+          <input type="date" value={filters.dateTo} onChange={(e) => updateFilter("dateTo", e.target.value)} className="rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 focus:border-sky-400 focus:outline-none" />
+          <button type="button" onClick={handleGenerate} className="rounded-md bg-sky-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-sky-700">
+            Generate
+          </button>
         </div>
       </div>
 
-      {/* Drill Into */}
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-medium text-slate-700">Drill Into</h2>
-          <div className="flex items-center rounded-md border border-slate-200 bg-white p-0.5">
-            <button
-              onClick={() => setView("cards")}
-              className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-medium ${
-                view === "cards" ? "bg-slate-100 text-slate-900" : "text-slate-500 hover:text-slate-700"
-              }`}
-            >
-              <LuLayoutGrid size={14} /> Cards
+          <h3 className="text-sm font-medium text-slate-700">Drill Into</h3>
+          <div className="flex overflow-hidden rounded-md border border-slate-200">
+            <button onClick={() => setView("cards")} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs ${view === "cards" ? "bg-sky-600 text-white" : "bg-white text-slate-500 hover:bg-slate-50"}`}>
+              <FiGrid size={12} /> Cards
             </button>
-            <button
-              onClick={() => setView("table")}
-              className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-medium ${
-                view === "table" ? "bg-slate-100 text-slate-900" : "text-slate-500 hover:text-slate-700"
-              }`}
-            >
-              <LuTable size={14} /> Table
+            <button onClick={() => setView("table")} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs ${view === "table" ? "bg-sky-600 text-white" : "bg-white text-slate-500 hover:bg-slate-50"}`}>
+              <FiList size={12} /> Table
             </button>
           </div>
         </div>
 
         {view === "cards" ? (
-          <div className="grid grid-cols-3 gap-4">
-            {(["Client", "Agent", "Project"] as const).map((type) => (
-              <div key={type} className="rounded-xl border border-slate-200 bg-white p-4">
-                <p className="mb-3 text-sm font-medium text-slate-700">By {type}</p>
-                <div className="space-y-3">
-                  {grouped[type].map((row) => (
-                    <Link
-                      key={row.name}
-                      href={row.href}
-                      className="flex items-center justify-between border-b border-slate-100 pb-3 last:border-0 last:pb-0"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-slate-800">{row.name}</p>
-                        <p className="text-xs text-slate-400">{row.detail}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium tabular-nums text-slate-800">
-                          {naira(row.totalValue)}
-                        </p>
-                        <FiChevronRight size={14} className="text-slate-400" />
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <DrillColumn title="By Client" icon={<FiBriefcase size={14} />} entries={byClient} basePath="/accounting/reports/clients"/>
+            <DrillColumn title="By Agent" icon={<FiUser size={14} />} entries={byAgent} basePath="/accounting/reports/agents"/>
+            <DrillColumn title="By Project" icon={<FiFolder size={14} />} entries={byProject} basePath="/accounting/reports/projects" />
           </div>
         ) : (
           <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
@@ -278,48 +263,20 @@ export default function ReportsPage() {
                   <th className="px-6 py-3 font-medium">Name</th>
                   <th className="px-6 py-3 font-medium">Details</th>
                   <th className="px-6 py-3 font-medium">Total Value</th>
-                  <th className="px-6 py-3 font-medium">Share</th>
-                  <th className="px-6 py-3 font-medium text-right">Drill In</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {drillData.map((row) => (
-                  <tr key={row.name} className="hover:bg-slate-50">
-                    <td className="px-6 py-3 whitespace-nowrap">
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${typeStyles[row.type].badge}`}
-                      >
-                        {row.type}
-                      </span>
+                {allEntries.length === 0 && (
+                  <tr><td colSpan={4} className="px-6 py-10 text-center text-sm text-slate-400">No data yet.</td></tr>
+                )}
+                {allEntries.map((entry) => (
+                  <tr key={`${entry.type}-${entry.id}`} className="hover:bg-slate-50">
+                    <td className="px-6 py-3 text-sm text-slate-500">{entry.type}</td>
+                    <td className="px-6 py-3 text-sm font-medium text-slate-800">
+                      <Link href={`${entry.basePath}/${entry.id}`} className="text-sky-600 hover:underline">{entry.name}</Link>
                     </td>
-                    <td className="px-6 py-3 text-sm font-medium text-slate-800 whitespace-nowrap">
-                      {row.name}
-                    </td>
-                    <td className="px-6 py-3 text-sm text-slate-500 whitespace-nowrap">
-                      {row.detail}
-                    </td>
-                    <td className="px-6 py-3 text-sm tabular-nums font-medium text-slate-800 whitespace-nowrap">
-                      {naira(row.totalValue)}
-                    </td>
-                    <td className="px-6 py-3 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-24 overflow-hidden rounded-full bg-slate-100">
-                          <div
-                            className={`h-full rounded-full ${typeStyles[row.type].bar}`}
-                            style={{ width: `${row.sharePct}%` }}
-                          />
-                        </div>
-                        <span className="text-xs text-slate-400">{row.sharePct}%</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-3 text-right whitespace-nowrap">
-                      <Link
-                        href={row.href}
-                        className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-100"
-                      >
-                        Drill In <FiChevronRight size={12} />
-                      </Link>
-                    </td>
+                    <td className="px-6 py-3 text-sm text-slate-500">{entry.invoiceCount} invoices</td>
+                    <td className="px-6 py-3 text-sm tabular-nums font-medium text-slate-800">{naira(entry.invoiceValue)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -327,6 +284,8 @@ export default function ReportsPage() {
           </div>
         )}
       </div>
+
+      {loading && <p className="text-center text-sm text-slate-400">Loading reports…</p>}
     </section>
   );
 }

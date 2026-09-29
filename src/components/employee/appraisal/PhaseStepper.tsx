@@ -59,13 +59,7 @@ export function PhaseStepper() {
           </div>
         );
       })}
-
-
-
-
-      
     </div>
-    
   );
 }
 export function RatingBadge({ score }: { score: number }) {
@@ -77,7 +71,9 @@ export function RatingBadge({ score }: { score: number }) {
         : "bg-red-100 text-red-700";
 
   return (
-    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>
+    <span
+      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${color}`}
+    >
       {score}/5
     </span>
   );

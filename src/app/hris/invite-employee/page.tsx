@@ -4,11 +4,14 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { FiDownload, FiUploadCloud, FiCheckCircle, FiAlertCircle, FiFileText } from "react-icons/fi";
 import {
-  downloadEmployeeTemplate,
-  importEmployees,
-} from "@/lib/api/hris";
+  FiDownload,
+  FiUploadCloud,
+  FiCheckCircle,
+  FiAlertCircle,
+  FiFileText,
+} from "react-icons/fi";
+import { downloadEmployeeTemplate, importEmployees } from "@/lib/api/hris";
 import type { ImportEmployeesData } from "@/lib/api/types/hrisTypes";
 
 export default function InviteEmployeePage() {
@@ -19,7 +22,8 @@ export default function InviteEmployeePage() {
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [successResult, setSuccessResult] = useState<ImportEmployeesData | null>(null);
+  const [successResult, setSuccessResult] =
+    useState<ImportEmployeesData | null>(null);
   const [downloadingTemplate, setDownloadingTemplate] = useState(false);
 
   const handleDownloadTemplate = async () => {
@@ -83,7 +87,8 @@ export default function InviteEmployeePage() {
 
       const importedCount = response.data?.imported ?? 1;
       toast.success(
-        response.message || `Successfully imported ${importedCount} employee(s)!`
+        response.message ||
+          `Successfully imported ${importedCount} employee(s)!`,
       );
 
       // Clear selected file and file input
@@ -98,7 +103,8 @@ export default function InviteEmployeePage() {
       }, 1200);
     } catch (err: unknown) {
       console.error("IMPORT FAILED:", err);
-      let errMsg = "Failed to import employees. Please verify your CSV format and try again.";
+      let errMsg =
+        "Failed to import employees. Please verify your CSV format and try again.";
 
       if (axios.isAxiosError(err)) {
         const resData = err.response?.data;
@@ -107,7 +113,8 @@ export default function InviteEmployeePage() {
         } else if (err.response?.status === 409) {
           errMsg = "Duplicate or invalid employee records found in CSV.";
         } else if (err.response?.status === 400) {
-          errMsg = "Invalid CSV structure. Please ensure columns match the bulk template.";
+          errMsg =
+            "Invalid CSV structure. Please ensure columns match the bulk template.";
         }
       }
 
@@ -172,7 +179,8 @@ export default function InviteEmployeePage() {
             Invite Employee
           </h1>
           <p className="mt-1 text-xs text-slate-500">
-            Bulk-import employee profiles from CSV or invite individual employees.
+            Bulk-import employee profiles from CSV or invite individual
+            employees.
           </p>
         </div>
 
@@ -233,7 +241,8 @@ export default function InviteEmployeePage() {
             <div className="flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-medium text-emerald-800">
               <FiCheckCircle className="h-4 w-4 shrink-0 text-emerald-600" />
               <span>
-                Successfully imported {successResult.imported} employee record(s)! Redirecting to employee directory...
+                Successfully imported {successResult.imported} employee
+                record(s)! Redirecting to employee directory...
               </span>
             </div>
           )}
@@ -248,8 +257,8 @@ export default function InviteEmployeePage() {
               loading
                 ? "cursor-not-allowed border-slate-200 bg-slate-50 opacity-60"
                 : isDragging
-                ? "cursor-copy border-sky-500 bg-sky-50/60 ring-2 ring-sky-200"
-                : "cursor-pointer border-slate-200 bg-white hover:border-sky-300 hover:bg-sky-50/30"
+                  ? "cursor-copy border-sky-500 bg-sky-50/60 ring-2 ring-sky-200"
+                  : "cursor-pointer border-slate-200 bg-white hover:border-sky-300 hover:bg-sky-50/30"
             }`}
           >
             <input
@@ -350,13 +359,17 @@ export default function InviteEmployeePage() {
               handleUploadClick();
             }
           }}
-          title={loading ? "Importing employees..." : "Click or drop CSV here to import employees"}
+          title={
+            loading
+              ? "Importing employees..."
+              : "Click or drop CSV here to import employees"
+          }
           className={`hidden w-80 shrink-0 items-center justify-center rounded-xl border p-6 transition md:flex ${
             loading
               ? "cursor-not-allowed border-slate-200 bg-slate-50 opacity-70"
               : isDragging
-              ? "cursor-pointer border-sky-400 bg-sky-50 shadow-inner"
-              : "cursor-pointer border-slate-100 bg-slate-50 hover:border-sky-300 hover:bg-sky-50/20 hover:shadow-sm"
+                ? "cursor-pointer border-sky-400 bg-sky-50 shadow-inner"
+                : "cursor-pointer border-slate-100 bg-slate-50 hover:border-sky-300 hover:bg-sky-50/20 hover:shadow-sm"
           }`}
         >
           <div className="flex flex-col items-center justify-center text-center">
@@ -373,7 +386,9 @@ export default function InviteEmployeePage() {
               Bulk employee onboarding
             </p>
             <span className="mt-1 text-[11px] font-medium text-sky-600">
-              {loading ? "Importing in progress..." : "Click or drag CSV here to import"}
+              {loading
+                ? "Importing in progress..."
+                : "Click or drag CSV here to import"}
             </span>
           </div>
         </div>

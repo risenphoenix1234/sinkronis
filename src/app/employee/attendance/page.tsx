@@ -11,8 +11,11 @@ import { getEmployeeAttendance } from "@/lib/api/employee";
 import { EmployeeAttendanceData } from "@/lib/api/types/employeeTypes";
 
 export default function EmployeeAttendancePage() {
-  // Default to July 2026 to match Figma view
-  const [selectedMonth, setSelectedMonth] = useState("2026-07");
+  // Default to present month in YYYY-MM format
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  });
   const [data, setData] = useState<EmployeeAttendanceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,14 +54,18 @@ export default function EmployeeAttendancePage() {
   }, [selectedMonth, fetchAttendance]);
 
   const [yearStr, monthStr] = selectedMonth.split("-");
-  const monthDate = new Date(parseInt(yearStr, 10), parseInt(monthStr, 10) - 1, 1);
+  const monthDate = new Date(
+    parseInt(yearStr, 10),
+    parseInt(monthStr, 10) - 1,
+    1,
+  );
   const formattedMonthLabel = monthDate.toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
   });
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8FAFC] p-6">
       <div className="space-y-6">
         {/* Page Header */}
         <div>

@@ -1,4 +1,3 @@
-
 import { DetailPanel } from "@/components/employee/conduct/DetailPanel";
 import { QueryTable } from "@/components/employee/conduct/QueryTable";
 import { SuspensionTable } from "@/components/employee/conduct/SuspensionTable";

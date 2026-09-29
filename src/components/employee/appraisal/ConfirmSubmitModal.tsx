@@ -7,12 +7,14 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  loading?: boolean;
 }
 
 export default function ConfirmSubmitModal({
   open,
   onClose,
   onConfirm,
+  loading = false,
 }: Props) {
   if (!open) return null;
 
@@ -28,13 +30,16 @@ export default function ConfirmSubmitModal({
 
         <div className="mt-6 flex justify-end gap-3">
           <Button
-            className="bg-slate-200 text-slate-800 hover:bg-slate-300"
+            className="bg-slate-200 text-slate-800 hover:bg-slate-300 disabled:opacity-50"
             onClick={onClose}
+            disabled={loading}
           >
             Cancel
           </Button>
 
-          <Button onClick={onConfirm}>Submit</Button>
+          <Button loading={loading} disabled={loading} onClick={onConfirm}>
+            {loading ? "Submitting..." : "Submit"}
+          </Button>
         </div>
       </Card>
     </div>

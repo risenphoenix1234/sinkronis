@@ -72,13 +72,14 @@ export default function EmployeeLoginPage() {
       localStorage.setItem("user", JSON.stringify(res.user));
 
       if (res.user.accountType === "PLATFORM_ADMIN") {
-        router.push("/platform-admin/tenants");
+        window.location.href = "/platform-admin/tenants";
       } else {
-        router.push("/employee/dashboard");
+        window.location.href = "/employee/dashboard";
       }
     } catch (err: any) {
       setError(
-        err?.response?.data?.message || "Invalid credentials. Please try again."
+        err?.response?.data?.message ||
+          "Invalid credentials. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -94,7 +95,8 @@ export default function EmployeeLoginPage() {
           </span>
           <h1 className="mt-2 text-[28px] font-bold text-[#1F2937]">Sign in</h1>
           <p className="mt-1 text-[14px] text-[#667085]">
-            Sign in to your employee account to view your dashboard, attendance, and payslips.
+            Sign in to your employee account to view your dashboard, attendance,
+            and payslips.
           </p>
         </div>
 
@@ -119,10 +121,11 @@ export default function EmployeeLoginPage() {
               disabled={loading}
               placeholder="you@company.com"
               autoComplete="email"
-              className={`w-full rounded-lg border px-4 py-3 text-[15px] text-[#1F2937] outline-none transition focus:ring-2 disabled:bg-gray-50 disabled:cursor-not-allowed ${emailError
+              className={`w-full rounded-lg border px-4 py-3 text-[15px] text-[#1F2937] outline-none transition focus:ring-2 disabled:bg-gray-50 disabled:cursor-not-allowed ${
+                emailError
                   ? "border-red-400 focus:border-red-500 focus:ring-red-500/15"
                   : "border-[#E5E9F0] focus:border-[#2388D0] focus:ring-[#2388D0]/15"
-                }`}
+              }`}
             />
             {emailError && (
               <p className="mt-1 text-[12px] text-red-500">{emailError}</p>
@@ -144,10 +147,11 @@ export default function EmployeeLoginPage() {
                 disabled={loading}
                 placeholder="••••••••"
                 autoComplete="current-password"
-                className={`w-full rounded-lg border px-4 py-3 pr-11 text-[15px] text-[#1F2937] outline-none transition focus:ring-2 disabled:bg-gray-50 disabled:cursor-not-allowed ${passwordError
+                className={`w-full rounded-lg border px-4 py-3 pr-11 text-[15px] text-[#1F2937] outline-none transition focus:ring-2 disabled:bg-gray-50 disabled:cursor-not-allowed ${
+                  passwordError
                     ? "border-red-400 focus:border-red-500 focus:ring-red-500/15"
                     : "border-[#E5E9F0] focus:border-[#2388D0] focus:ring-[#2388D0]/15"
-                  }`}
+                }`}
               />
               <button
                 type="button"

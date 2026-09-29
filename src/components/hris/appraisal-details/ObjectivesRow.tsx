@@ -46,7 +46,7 @@ export function ObjectiveRow({
           onChange={(event) =>
             onUpdateObjective(objective.id, "weight", event.target.value)
           }
-          className="h-7 w-10 rounded border border-[#D9E2EC] px-1 text-center text-[9px]"
+          className="h-7 w-10 rounded border border-[#D9E2EC] px-1 text-center text-[9px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-inner-spin-button]:m-0"
         />
 
         <div className="text-[8px] text-[#8492A6]">

@@ -106,23 +106,24 @@ export default function ReviewsTable({
                   review.role ??
                   review.employee?.employeeId ??
                   "—";
-                const initials = employeeName
-                  .split(" ")
-                  .filter(Boolean)
-                  .map((n) => n[0])
-                  .slice(0, 2)
-                  .join("")
-                  .toUpperCase() || "EP";
+                const initials =
+                  employeeName
+                    .split(" ")
+                    .filter(Boolean)
+                    .map((n) => n[0])
+                    .slice(0, 2)
+                    .join("")
+                    .toUpperCase() || "EP";
 
                 const departmentName =
                   typeof review.department === "object"
-                    ? review.department?.name ?? "—"
-                    : review.department ?? "—";
+                    ? (review.department?.name ?? "—")
+                    : (review.department ?? "—");
 
                 const cycleName =
                   typeof review.cycle === "object"
-                    ? review.cycle?.name ?? "—"
-                    : review.cycle ?? "—";
+                    ? (review.cycle?.name ?? "—")
+                    : (review.cycle ?? "—");
 
                 const rawStage = review.stage || review.status || "";
                 const displayStage = STAGE_LABELS[rawStage] || rawStage || "—";
@@ -134,7 +135,8 @@ export default function ReviewsTable({
 
                 const ratingDisplay =
                   review.rating ??
-                  (review.ratingValue !== null && review.ratingValue !== undefined
+                  (review.ratingValue !== null &&
+                  review.ratingValue !== undefined
                     ? `${review.ratingValue}/5`
                     : "—");
 

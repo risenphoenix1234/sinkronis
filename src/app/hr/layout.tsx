@@ -13,10 +13,7 @@ const sidebarItems = [
 
 export default function HRLayout({ children }: { children: React.ReactNode }) {
   return (
-    <DashboardLayout
-      sidebarTitle="HR"
-      sidebarItems={sidebarItems}
-    >
+    <DashboardLayout sidebarTitle="HR" sidebarItems={sidebarItems}>
       {children}
     </DashboardLayout>
   );

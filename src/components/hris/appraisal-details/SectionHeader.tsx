@@ -11,9 +11,7 @@ export default function SectionHeader({
 }: Props) {
   return (
     <div
-      className={`flex items-center justify-between px-6 py-3 text-white
-
-      ${color === "blue" ? "bg-[#1677C8]" : "bg-[#8B26B4]"}`}
+      className={`flex items-center justify-between px-6 py-3 text-white ${color === "blue" ? "bg-[#1677C8]" : "bg-[#8B26B4]"}`}
     >
       <h2 className="text-sm font-semibold uppercase tracking-wide">{title}</h2>
 

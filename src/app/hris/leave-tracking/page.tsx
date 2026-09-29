@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { toast } from "react-toastify";
 import ApplyForLeaveModal from "@/components/modals/Hris/ApplyForLeaveModal";
 import LeaveSummaryCard from "@/components/hris/Leave/LeaveSummaryCard";
 import LeaveTable from "@/components/hris/Leave/LeaveTable";
@@ -37,6 +38,7 @@ export default function LeaveManagementPage() {
       setOverview(await getLeaveOverview());
     } catch (err) {
       console.error("Failed to load leave overview:", err);
+      toast.error("Failed to load leave overview");
     } finally {
       setOverviewLoading(false);
     }
@@ -57,6 +59,7 @@ export default function LeaveManagementPage() {
       });
     } catch (err) {
       console.error("Failed to load leave requests:", err);
+      toast.error("Failed to load leave requests");
       setRequests([]);
     } finally {
       setRequestsLoading(false);

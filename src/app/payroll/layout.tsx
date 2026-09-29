@@ -15,17 +15,17 @@ const sidebarItems: SidebarItem[] = [
   {
     label: "Employees",
     href: "/payroll/employees",
-    icon: "employee",
+    icon: "employees",
   },
   {
     label: "Payees",
     href: "/payroll/payees",
-    icon: "payee",
+    icon: "payees",
   },
   {
     label: "Pay Runs",
     href: "/payroll/pay-runs",
-    icon: "payruns",
+    icon: "pay-runs",
   },
   {
     label: "Payslips",
@@ -35,15 +35,15 @@ const sidebarItems: SidebarItem[] = [
   {
     label: "Deductions",
     href: "/payroll/deductions",
-    icon: "deduction",
+    icon: "deductions",
   },
   {
-    label: "Wallets",
+    label: "Wallet",
     href: "/payroll/wallets",
-    icon: "payroll-wallet",
+    icon: "wallets",
   },
   {
-    label: "Tax (PAXE)",
+    label: "Tax (PAYE)",
     href: "/payroll/tax",
     icon: "payroll-tax",
   },
@@ -56,6 +56,11 @@ const sidebarItems: SidebarItem[] = [
     label: "Reports",
     href: "/payroll/reports",
     icon: "payroll-reports",
+  },
+  {
+    label: "Settings",
+    href: "/payroll/settings",
+    icon: "payroll-settings",
   },
 ];
 

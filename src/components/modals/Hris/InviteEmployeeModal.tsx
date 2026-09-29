@@ -13,7 +13,9 @@ export default function InviteEmployeeModal({ open, onClose }: Props) {
       <div className="w-full max-w-lg rounded-xl bg-white p-8 shadow-xl text-center">
         <div className="mb-6 flex items-center justify-between text-left">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">Invite Employee</h2>
+            <h2 className="text-lg font-semibold text-slate-900">
+              Invite Employee
+            </h2>
           </div>
           <div className="flex items-center gap-3">
             <button className="rounded-md border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50">

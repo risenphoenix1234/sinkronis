@@ -46,8 +46,10 @@ const MARITAL_STATUS_OPTIONS: { value: MaritalStatus | ""; label: string }[] = [
   { value: "OTHER", label: "Other" },
 ];
 
-const EMPLOYEE_STATUS_OPTIONS: { value: CreateEmployeeStatus | ""; label: string }[] =
-  [
+const EMPLOYEE_STATUS_OPTIONS: {
+  value: CreateEmployeeStatus | "";
+  label: string;
+}[] = [
     { value: "", label: "Select employee status" },
     { value: "ACTIVE", label: "Active" },
     { value: "INACTIVE", label: "Inactive" },
@@ -176,12 +178,15 @@ function buildPayload(
   if (p.maritalStatus) payload.maritalStatus = p.maritalStatus;
   if (p.address?.trim()) payload.address = p.address.trim();
 
-  if (p.nextOfKinFirstName?.trim()) payload.nextOfKinFirstName = p.nextOfKinFirstName.trim();
-  if (p.nextOfKinLastName?.trim()) payload.nextOfKinLastName = p.nextOfKinLastName.trim();
+  if (p.nextOfKinFirstName?.trim())
+    payload.nextOfKinFirstName = p.nextOfKinFirstName.trim();
+  if (p.nextOfKinLastName?.trim())
+    payload.nextOfKinLastName = p.nextOfKinLastName.trim();
   if (hasValidPhoneDigits(p.nextOfKinContact)) {
     payload.nextOfKinContact = p.nextOfKinContact.trim();
   }
-  if (p.nextOfKinAddress?.trim()) payload.nextOfKinAddress = p.nextOfKinAddress.trim();
+  if (p.nextOfKinAddress?.trim())
+    payload.nextOfKinAddress = p.nextOfKinAddress.trim();
 
   if (p.bankName?.trim()) payload.bankName = p.bankName.trim();
   if (p.bankCode?.trim()) payload.bankCode = p.bankCode.trim();
@@ -201,13 +206,17 @@ function buildPayload(
     payload.earnings = Number(prof.earnings);
   }
 
-  if (prof.guarantorFirstName?.trim()) payload.guarantorFirstName = prof.guarantorFirstName.trim();
-  if (prof.guarantorLastName?.trim()) payload.guarantorLastName = prof.guarantorLastName.trim();
-  if (prof.guarantorRelationship?.trim()) payload.guarantorRelationship = prof.guarantorRelationship.trim();
+  if (prof.guarantorFirstName?.trim())
+    payload.guarantorFirstName = prof.guarantorFirstName.trim();
+  if (prof.guarantorLastName?.trim())
+    payload.guarantorLastName = prof.guarantorLastName.trim();
+  if (prof.guarantorRelationship?.trim())
+    payload.guarantorRelationship = prof.guarantorRelationship.trim();
   if (hasValidPhoneDigits(prof.guarantorPhone)) {
     payload.guarantorPhone = prof.guarantorPhone.trim();
   }
-  if (prof.guarantorAddress?.trim()) payload.guarantorAddress = prof.guarantorAddress.trim();
+  if (prof.guarantorAddress?.trim())
+    payload.guarantorAddress = prof.guarantorAddress.trim();
 
   if (documentType) payload.documentType = documentType;
 
@@ -222,7 +231,9 @@ export default function AddEmployeeForm() {
 
   const [personal, setPersonal] = useState(initialPersonal);
   const [professional, setProfessional] = useState(initialProfessional);
-  const [documentType, setDocumentType] = useState<DocumentType | "">("IDENTIFICATION");
+  const [documentType, setDocumentType] = useState<DocumentType | "">(
+    "IDENTIFICATION",
+  );
 
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [appointmentLetter, setAppointmentLetter] = useState<File | null>(null);
@@ -231,9 +242,10 @@ export default function AddEmployeeForm() {
   >([]);
 
   // Dynamic department list and roles from authenticated tenant
-  const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
+  const [departments, setDepartments] = useState<
+    { id: string; name: string }[]
+  >([]);
   const [loadingDepartments, setLoadingDepartments] = useState(false);
-  const [manualDepartmentInput, setManualDepartmentInput] = useState(false);
   const [roles, setRoles] = useState<Role[]>([]);
 
   useEffect(() => {
@@ -246,10 +258,12 @@ export default function AddEmployeeForm() {
           getRoles().catch(() => null),
         ]);
         if (isMounted && deptRes?.data) {
-          const formatted = deptRes.data.map((d: { id: string; departmentName?: string; name?: string }) => ({
-            id: d.id,
-            name: d.departmentName || d.name || "Unnamed Department",
-          }));
+          const formatted = deptRes.data.map(
+            (d: { id: string; departmentName?: string; name?: string }) => ({
+              id: d.id,
+              name: d.departmentName || d.name || "Unnamed Department",
+            }),
+          );
           setDepartments(formatted);
         }
         if (isMounted && Array.isArray(rolesRes)) {
@@ -274,7 +288,11 @@ export default function AddEmployeeForm() {
   const isDocuments = currentStep === "documents";
 
   const validatePersonal = () => {
-    if (!personal.firstName.trim() || !personal.lastName.trim() || !personal.personalEmail.trim()) {
+    if (
+      !personal.firstName.trim() ||
+      !personal.lastName.trim() ||
+      !personal.personalEmail.trim()
+    ) {
       const msg = "First name, last name, and personal email are required.";
       setSubmitError(msg);
       toast.warning(msg);
@@ -334,7 +352,9 @@ export default function AddEmployeeForm() {
 
   const addDocument = (file: File) => {
     if (additionalDocuments.length >= MAX_ADDITIONAL_DOCUMENTS) {
-      toast.warning(`Maximum of ${MAX_ADDITIONAL_DOCUMENTS} additional documents allowed.`);
+      toast.warning(
+        `Maximum of ${MAX_ADDITIONAL_DOCUMENTS} additional documents allowed.`,
+      );
       return;
     }
     setAdditionalDocuments((prev) => [
@@ -345,7 +365,9 @@ export default function AddEmployeeForm() {
 
   const updateAdditionalDocumentType = (index: number, docType: string) => {
     setAdditionalDocuments((prev) =>
-      prev.map((doc, i) => (i === index ? { ...doc, documentType: docType } : doc)),
+      prev.map((doc, i) =>
+        i === index ? { ...doc, documentType: docType } : doc,
+      ),
     );
   };
 
@@ -400,7 +422,8 @@ export default function AddEmployeeForm() {
         console.warn("Employee created, but invitation failed:", invErr);
         toast.info(
           "Employee created. Invitation could not be sent: " +
-            (invErr?.response?.data?.message || "Check email delivery settings.")
+          (invErr?.response?.data?.message ||
+            "Check email delivery settings."),
         );
       }
 
@@ -411,11 +434,17 @@ export default function AddEmployeeForm() {
 
       if (axios.isAxiosError(error) && error.response?.data) {
         const data = error.response.data;
-        if (Array.isArray(data.validationErrors) && data.validationErrors.length > 0) {
-          message = data.validationErrors
-            .map((v: { message?: string }) => v.message)
-            .filter(Boolean)
-            .join(", ") || data.message || message;
+        if (
+          Array.isArray(data.validationErrors) &&
+          data.validationErrors.length > 0
+        ) {
+          message =
+            data.validationErrors
+              .map((v: { message?: string }) => v.message)
+              .filter(Boolean)
+              .join(", ") ||
+            data.message ||
+            message;
         } else if (data.message) {
           message = data.message;
         }
@@ -448,40 +477,35 @@ export default function AddEmployeeForm() {
                     setCurrentStep(step.key);
                   }
                 }}
-                className={`flex items-start gap-3 ${
-                  index < stepIndex ? "cursor-pointer" : ""
-                }`}
+                className={`flex items-start gap-3 ${index < stepIndex ? "cursor-pointer" : ""
+                  }`}
               >
                 <div className="flex flex-col items-center">
                   <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition ${
-                      isCompleted || isActive
+                    className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition ${isCompleted || isActive
                         ? "bg-sky-600 text-white"
                         : "bg-slate-100 text-slate-400"
-                    }`}
+                      }`}
                   >
                     {isCompleted ? "✓" : index + 1}
                   </div>
                   {index < steps.length - 1 && (
                     <div
-                      className={`mt-1 h-10 w-0.5 ${
-                        isCompleted ? "bg-sky-600" : "bg-slate-200"
-                      }`}
+                      className={`mt-1 h-10 w-0.5 ${isCompleted ? "bg-sky-600" : "bg-slate-200"
+                        }`}
                     />
                   )}
                 </div>
                 <div className="pt-1">
                   <p
-                    className={`text-sm font-medium ${
-                      isActive ? "text-sky-600" : "text-slate-500"
-                    }`}
+                    className={`text-sm font-medium ${isActive ? "text-sky-600" : "text-slate-500"
+                      }`}
                   >
                     Step {index + 1}
                   </p>
                   <p
-                    className={`text-xs ${
-                      isActive ? "font-medium text-slate-800" : "text-slate-400"
-                    }`}
+                    className={`text-xs ${isActive ? "font-medium text-slate-800" : "text-slate-400"
+                      }`}
                   >
                     {step.label}
                   </p>
@@ -516,7 +540,9 @@ export default function AddEmployeeForm() {
                 <span className="text-sm font-medium text-slate-700">
                   {profileImage ? profileImage.name : "Upload photo"}
                 </span>
-                <span className="text-xs text-slate-400">Accepted formats: JPEG, PNG (max 10MB)</span>
+                <span className="text-xs text-slate-400">
+                  Accepted formats: JPEG, PNG (max 10MB)
+                </span>
                 {profileImage && (
                   <button
                     type="button"
@@ -546,7 +572,9 @@ export default function AddEmployeeForm() {
                 label="Personal Email *"
                 type="email"
                 value={personal.personalEmail}
-                onChange={(e) => updatePersonal("personalEmail", e.target.value)}
+                onChange={(e) =>
+                  updatePersonal("personalEmail", e.target.value)
+                }
                 placeholder="e.g. ada.okafor@example.com"
               />
               <PhoneField
@@ -575,7 +603,9 @@ export default function AddEmployeeForm() {
               <TypedSelectField
                 label="Marital Status"
                 value={personal.maritalStatus}
-                onChange={(v) => updatePersonal("maritalStatus", v as MaritalStatus | "")}
+                onChange={(v) =>
+                  updatePersonal("maritalStatus", v as MaritalStatus | "")
+                }
                 options={MARITAL_STATUS_OPTIONS}
               />
             </div>
@@ -596,13 +626,17 @@ export default function AddEmployeeForm() {
                 <InputField
                   label="First Name"
                   value={personal.nextOfKinFirstName}
-                  onChange={(e) => updatePersonal("nextOfKinFirstName", e.target.value)}
+                  onChange={(e) =>
+                    updatePersonal("nextOfKinFirstName", e.target.value)
+                  }
                   placeholder="e.g. Chidi"
                 />
                 <InputField
                   label="Last Name"
                   value={personal.nextOfKinLastName}
-                  onChange={(e) => updatePersonal("nextOfKinLastName", e.target.value)}
+                  onChange={(e) =>
+                    updatePersonal("nextOfKinLastName", e.target.value)
+                  }
                   placeholder="e.g. Okafor"
                 />
                 <PhoneField
@@ -613,7 +647,9 @@ export default function AddEmployeeForm() {
                 <InputField
                   label="Address"
                   value={personal.nextOfKinAddress}
-                  onChange={(e) => updatePersonal("nextOfKinAddress", e.target.value)}
+                  onChange={(e) =>
+                    updatePersonal("nextOfKinAddress", e.target.value)
+                  }
                   placeholder="e.g. 12 Marina Road, Lagos"
                 />
               </div>
@@ -640,19 +676,25 @@ export default function AddEmployeeForm() {
                 <InputField
                   label="Account Number"
                   value={personal.accountNumber}
-                  onChange={(e) => updatePersonal("accountNumber", e.target.value)}
+                  onChange={(e) =>
+                    updatePersonal("accountNumber", e.target.value)
+                  }
                   placeholder="e.g. 0123456789"
                 />
                 <InputField
                   label="Account Name"
                   value={personal.accountName}
-                  onChange={(e) => updatePersonal("accountName", e.target.value)}
+                  onChange={(e) =>
+                    updatePersonal("accountName", e.target.value)
+                  }
                   placeholder="e.g. Ada Okafor"
                 />
                 <TypedSelectField
                   label="Account Type"
                   value={personal.accountType}
-                  onChange={(v) => updatePersonal("accountType", v as AccountType | "")}
+                  onChange={(v) =>
+                    updatePersonal("accountType", v as AccountType | "")
+                  }
                   options={ACCOUNT_TYPE_OPTIONS}
                 />
               </div>
@@ -672,14 +714,19 @@ export default function AddEmployeeForm() {
               <InputField
                 label="Employee ID *"
                 value={professional.employeeID}
-                onChange={(e) => updateProfessional("employeeID", e.target.value)}
+                onChange={(e) =>
+                  updateProfessional("employeeID", e.target.value)
+                }
                 placeholder="e.g. EMP-001"
               />
               <TypedSelectField
                 label="Employee Status"
                 value={professional.employeeStatus}
                 onChange={(v) =>
-                  updateProfessional("employeeStatus", v as CreateEmployeeStatus | "")
+                  updateProfessional(
+                    "employeeStatus",
+                    v as CreateEmployeeStatus | "",
+                  )
                 }
                 options={EMPLOYEE_STATUS_OPTIONS}
               />
@@ -709,40 +756,27 @@ export default function AddEmployeeForm() {
                 label="Date Joined"
                 type="date"
                 value={professional.dateJoined}
-                onChange={(e) => updateProfessional("dateJoined", e.target.value)}
+                onChange={(e) =>
+                  updateProfessional("dateJoined", e.target.value)
+                }
               />
 
               {/* Department selection */}
               <div>
                 <div className="mb-1 flex items-center justify-between">
                   <label className="text-sm text-slate-600">Department</label>
-                  {departments.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setManualDepartmentInput((prev) => !prev)}
-                      className="text-xs text-sky-600 hover:underline"
-                    >
-                      {manualDepartmentInput ? "Pick from list" : "Enter raw ID"}
-                    </button>
-                  )}
                 </div>
                 {loadingDepartments ? (
                   <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-400">
                     <Loader2 size={16} className="animate-spin text-sky-600" />
                     <span>Loading departments...</span>
                   </div>
-                ) : manualDepartmentInput || departments.length === 0 ? (
-                  <input
-                    type="text"
-                    value={professional.department}
-                    onChange={(e) => updateProfessional("department", e.target.value)}
-                    placeholder="Enter department ID"
-                    className={inputClassName}
-                  />
                 ) : (
                   <select
                     value={professional.department}
-                    onChange={(e) => updateProfessional("department", e.target.value)}
+                    onChange={(e) =>
+                      updateProfessional("department", e.target.value)
+                    }
                     className={selectClassName}
                   >
                     <option value="">Select department</option>
@@ -772,7 +806,9 @@ export default function AddEmployeeForm() {
               <InputField
                 label="Pension ID"
                 value={professional.pensionId}
-                onChange={(e) => updateProfessional("pensionId", e.target.value)}
+                onChange={(e) =>
+                  updateProfessional("pensionId", e.target.value)
+                }
                 placeholder="e.g. PEN-012345"
               />
             </div>
@@ -786,13 +822,17 @@ export default function AddEmployeeForm() {
                 <InputField
                   label="First Name"
                   value={professional.guarantorFirstName}
-                  onChange={(e) => updateProfessional("guarantorFirstName", e.target.value)}
+                  onChange={(e) =>
+                    updateProfessional("guarantorFirstName", e.target.value)
+                  }
                   placeholder="e.g. Emeka"
                 />
                 <InputField
                   label="Last Name"
                   value={professional.guarantorLastName}
-                  onChange={(e) => updateProfessional("guarantorLastName", e.target.value)}
+                  onChange={(e) =>
+                    updateProfessional("guarantorLastName", e.target.value)
+                  }
                   placeholder="e.g. Okafor"
                 />
                 <InputField
@@ -813,7 +853,9 @@ export default function AddEmployeeForm() {
                 <InputField
                   label="Guarantor Address"
                   value={professional.guarantorAddress}
-                  onChange={(e) => updateProfessional("guarantorAddress", e.target.value)}
+                  onChange={(e) =>
+                    updateProfessional("guarantorAddress", e.target.value)
+                  }
                   placeholder="e.g. 14 Marina Road, Lagos"
                 />
               </div>
@@ -844,7 +886,9 @@ export default function AddEmployeeForm() {
               <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 py-8 text-center transition hover:border-sky-300">
                 <div className="mb-2 text-2xl text-slate-300">⬆</div>
                 <p className="text-xs font-medium text-slate-600">
-                  {appointmentLetter ? appointmentLetter.name : "Click to select appointment letter"}
+                  {appointmentLetter
+                    ? appointmentLetter.name
+                    : "Click to select appointment letter"}
                 </p>
                 <p className="mt-1 max-w-xs text-xs text-slate-400">
                   Accepted formats: PDF, PNG, JPEG (max 10MB)
@@ -853,7 +897,9 @@ export default function AddEmployeeForm() {
                   type="file"
                   accept=".pdf,.png,.jpg,.jpeg"
                   className="hidden"
-                  onChange={(e) => setAppointmentLetter(e.target.files?.[0] ?? null)}
+                  onChange={(e) =>
+                    setAppointmentLetter(e.target.files?.[0] ?? null)
+                  }
                 />
               </label>
               {appointmentLetter && (
@@ -874,21 +920,23 @@ export default function AddEmployeeForm() {
             <div>
               <div className="mb-2 flex items-center justify-between">
                 <label className="text-sm font-medium text-slate-700">
-                  Additional Documents ({additionalDocuments.length}/{MAX_ADDITIONAL_DOCUMENTS})
+                  Additional Documents ({additionalDocuments.length}/
+                  {MAX_ADDITIONAL_DOCUMENTS})
                 </label>
                 <label
-                  className={`cursor-pointer text-sm font-medium ${
-                    additionalDocuments.length >= MAX_ADDITIONAL_DOCUMENTS
+                  className={`cursor-pointer text-sm font-medium ${additionalDocuments.length >= MAX_ADDITIONAL_DOCUMENTS
                       ? "cursor-not-allowed text-slate-300"
                       : "text-sky-600 hover:text-sky-700"
-                  }`}
+                    }`}
                 >
                   + Add file
                   <input
                     type="file"
                     accept=".pdf,.png,.jpg,.jpeg"
                     className="hidden"
-                    disabled={additionalDocuments.length >= MAX_ADDITIONAL_DOCUMENTS}
+                    disabled={
+                      additionalDocuments.length >= MAX_ADDITIONAL_DOCUMENTS
+                    }
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) addDocument(file);
@@ -914,7 +962,9 @@ export default function AddEmployeeForm() {
                       </span>
                       <select
                         value={doc.documentType}
-                        onChange={(e) => updateAdditionalDocumentType(index, e.target.value)}
+                        onChange={(e) =>
+                          updateAdditionalDocumentType(index, e.target.value)
+                        }
                         className="rounded-lg border border-slate-200 px-2 py-1 text-xs text-slate-600"
                       >
                         {ADDITIONAL_DOCUMENT_TYPE_OPTIONS.map((type) => (
@@ -1028,7 +1078,10 @@ function InputField({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={inputClassName}
+        className={`${inputClassName}${type === "number"
+            ? " [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-inner-spin-button]:m-0"
+            : ""
+          }`}
       />
     </div>
   );

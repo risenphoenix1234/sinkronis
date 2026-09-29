@@ -5,9 +5,18 @@ import { useRouter } from "next/navigation";
 import { getEmployees } from "@/lib/api/hris";
 import type { EmployeeListItem } from "@/lib/api/types/hrisTypes";
 import axios from "axios";
-import { BiSearch, BiPlus, BiFilterAlt, BiSortAlt2, BiPencil, BiUserCheck } from "react-icons/bi";
-import FilterPanel, { type FilterValues } from "@/components/modals/Hris/FilterPanel";
+import { toast } from "react-toastify";
+import {
+  BiSearch,
+  BiPlus,
+  BiFilterAlt,
+  BiSortAlt2,
+  BiPencil,
+} from "react-icons/bi";
+
 import ChangeEmployeeStatusModal from "@/components/modals/Hris/ChangeEmployeeStatusModal";
+import FilterEmployeeModal from "@/components/modals/Hris/FilterEmployeeModal";
+
 interface EmployeeRow {
   id: string;
   employeeId: string;
@@ -18,6 +27,7 @@ interface EmployeeRow {
   contact: string;
   joinedDate: string;
   joinedDateIso: string;
+  exitedDate: string;
 }
 
 function formatJoinedDate(iso: string): string {
@@ -38,25 +48,44 @@ const TAB_TO_STATUS: Record<TabKey, LifecycleStatus> = {
 };
 const TABS: TabKey[] = ["Confirmed", "Probation", "Exited"];
 
-const STATUS_LABEL: Record<LifecycleStatus, string> = {
-  CONFIRMED: "Confirmed",
-  PROBATION: "Probation",
-  EXITED: "Exited",
-};
-
 const STATUS_STYLES: Record<LifecycleStatus, string> = {
   CONFIRMED: "bg-[#ECFDF3] text-[#12B76A]",
   PROBATION: "bg-[#FFFAEB] text-[#B54708]",
   EXITED: "bg-[#FEF3F2] text-[#B42318]",
 };
 
-function toLifecycleStatus(value: string): LifecycleStatus {
-  return value === "CONFIRMED" || value === "PROBATION" || value === "EXITED"
-    ? value
-    : "PROBATION";
+function toLifecycleStatus(value?: string | null): LifecycleStatus {
+  if (!value) {
+    toast.error("Employee is missing status from API. Defaulted to Probation.", {
+      toastId: "missing-emp-status",
+    });
+    return "PROBATION";
+  }
+  const normalized = value.trim().toUpperCase();
+  if (normalized === "CONFIRMED" || normalized === "ACTIVE") {
+    return "CONFIRMED";
+  }
+  if (normalized === "PROBATION") {
+    return "PROBATION";
+  }
+  if (
+    normalized === "EXITED" ||
+    normalized === "TERMINATED" ||
+    normalized === "RESIGNED"
+  ) {
+    return "EXITED";
+  }
+  toast.error(
+    `Unrecognized employee status: "${value}". Defaulting to Probation.`,
+    {
+      toastId: `unknown-status-${normalized}`,
+    },
+  );
+  return "PROBATION";
 }
 
 function toRow(emp: EmployeeListItem): EmployeeRow {
+  const rawExit = emp.exitedDate || emp.exitDate;
   return {
     id: emp.id,
     employeeId: emp.employeeId,
@@ -67,6 +96,7 @@ function toRow(emp: EmployeeListItem): EmployeeRow {
     contact: emp.phoneNumber,
     joinedDate: formatJoinedDate(emp.joinedDate),
     joinedDateIso: emp.joinedDate,
+    exitedDate: rawExit ? formatJoinedDate(rawExit) : "-",
   };
 }
 
@@ -79,16 +109,11 @@ export default function EmployeeListPage() {
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortAsc, setSortAsc] = useState(true);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [filters, setFilters] = useState<FilterValues>({ status: "All Statuses", exitedDate: "" });
+  const [selectedDepartment, setSelectedDepartment] = useState("");
 
   const [rows, setRows] = useState<EmployeeRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [statusModalEmployee, setStatusModalEmployee] = useState<{
-    id: string;
-    name: string;
-    status: LifecycleStatus;
-  } | null>(null);
 
   const loadEmployees = async () => {
     setLoading(true);
@@ -98,11 +123,11 @@ export default function EmployeeListPage() {
       setRows(employees.map(toRow));
     } catch (error) {
       console.error("loadEmployees failed:", error);
-      setLoadError(
-        axios.isAxiosError(error)
-          ? error.response?.data?.message ?? "Failed to load employees."
-          : "Failed to load employees.",
-      );
+      const msg = axios.isAxiosError(error)
+        ? (error.response?.data?.message ?? "Failed to load employees.")
+        : "Failed to load employees.";
+      setLoadError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -118,19 +143,8 @@ export default function EmployeeListPage() {
 
     let filtered = rows.filter((row) => row.lifecycleStatus === status);
 
-    if (filters.status !== "All Statuses") {
-      const statusByLabel: Record<string, LifecycleStatus> = {
-        Confirmed: "CONFIRMED",
-        Probation: "PROBATION",
-        Exited: "EXITED",
-      };
-      filtered = filtered.filter((row) => row.lifecycleStatus === statusByLabel[filters.status]);
-    }
-
-    if (filters.exitedDate) {
-      filtered = filtered.filter(
-        (row) => row.joinedDateIso.slice(0, 10) === filters.exitedDate,
-      );
+    if (selectedDepartment) {
+      filtered = filtered.filter((row) => row.department === selectedDepartment);
     }
 
     if (term) {
@@ -151,7 +165,7 @@ export default function EmployeeListPage() {
     }
 
     return filtered;
-  }, [rows, activeTab, search, sortKey, sortAsc, filters]);
+  }, [rows, activeTab, search, sortKey, sortAsc, selectedDepartment]);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -166,7 +180,9 @@ export default function EmployeeListPage() {
     <main className="min-h-screen bg-white px-8 py-10">
       <div className="mx-auto">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-[28px] font-bold text-[#1F2937]">Employee List</h1>
+          <h1 className="text-[28px] font-bold text-[#1F2937]">
+            Employee List
+          </h1>
           <button
             type="button"
             onClick={() => router.push("/hris/employees/add")}
@@ -198,20 +214,6 @@ export default function EmployeeListPage() {
               <BiFilterAlt className="h-4 w-4" />
               Filters
             </button>
-
-            {filterOpen && (
-              <div className="absolute right-0 top-full z-20 mt-2 w-[min(24rem,calc(100vw-2rem))]">
-                <FilterPanel
-                  initialValues={filters}
-                  statusOptions={["All Statuses", "Confirmed", "Probation", "Exited"]}
-                  onCancel={() => setFilterOpen(false)}
-                  onSave={(values) => {
-                    setFilters(values);
-                    setFilterOpen(false);
-                  }}
-                />
-              </div>
-            )}
           </div>
         </div>
 
@@ -221,7 +223,9 @@ export default function EmployeeListPage() {
               key={tab}
               type="button"
               onClick={() => setActiveTab(tab)}
-              className={`relative pb-3 text-[14px] font-medium transition ${activeTab === tab ? "text-[#2563EB]" : "text-[#98A2B3] hover:text-[#667085]"
+              className={`relative pb-3 text-[14px] font-medium transition ${activeTab === tab
+                ? "text-[#2563EB]"
+                : "text-[#98A2B3] hover:text-[#667085]"
                 }`}
             >
               {tab}
@@ -234,7 +238,9 @@ export default function EmployeeListPage() {
 
         <div className="overflow-x-auto">
           {loading ? (
-            <p className="px-4 py-12 text-center text-[#667085]">Loading employees…</p>
+            <p className="px-4 py-12 text-center text-[#667085]">
+              Loading employees…
+            </p>
           ) : loadError ? (
             <div className="px-4 py-12 text-center">
               <p className="text-[#B42318]">{loadError}</p>
@@ -250,68 +256,85 @@ export default function EmployeeListPage() {
             <table className="w-full text-left text-[14px]">
               <thead>
                 <tr className="text-[12px] text-[#98A2B3]">
-                  <SortableHeader label="Employee ID" sortKey="employeeId" activeKey={sortKey} onSort={toggleSort} />
-                  <SortableHeader label="Name" sortKey="name" activeKey={sortKey} onSort={toggleSort} />
-                  <SortableHeader label="Role" sortKey="role" activeKey={sortKey} onSort={toggleSort} />
-                  <SortableHeader label="Department" sortKey="department" activeKey={sortKey} onSort={toggleSort} />
+                  <SortableHeader
+                    label="Employee ID"
+                    sortKey="employeeId"
+                    activeKey={sortKey}
+                    onSort={toggleSort}
+                  />
+                  <SortableHeader
+                    label="Name"
+                    sortKey="name"
+                    activeKey={sortKey}
+                    onSort={toggleSort}
+                  />
+                  <SortableHeader
+                    label="Role"
+                    sortKey="role"
+                    activeKey={sortKey}
+                    onSort={toggleSort}
+                  />
+                  <SortableHeader
+                    label="Department"
+                    sortKey="department"
+                    activeKey={sortKey}
+                    onSort={toggleSort}
+                  />
                   <th className="px-4 py-3 font-normal">Status</th>
                   <th className="px-4 py-3 font-normal">Contact</th>
-                  <th className="px-4 py-3 font-normal">Joined</th>
+                  <th className="px-4 py-3 font-normal">
+                    {activeTab === "Exited" ? "Exited Date" : "Joined"}
+                  </th>
                   <th className="px-4 py-3 font-normal" />
                 </tr>
               </thead>
               <tbody>
                 {visibleRows.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-12 text-center text-[#667085]">
+                    <td
+                      colSpan={8}
+                      className="px-4 py-12 text-center text-[#667085]"
+                    >
                       No employees match this view.
                     </td>
                   </tr>
                 ) : (
                   visibleRows.map((row, i) => (
-                    <tr key={row.id} className={i % 2 === 1 ? "bg-[#F9FAFB]" : "bg-white"}>
-                      <td className="px-4 py-4 text-[#344054]">{row.employeeId}</td>
-                      <td className="px-4 py-4 font-medium text-[#1F2937]">{row.name}</td>
+                    <tr
+                      key={row.id}
+                      className={i % 2 === 1 ? "bg-[#F9FAFB]" : "bg-white"}
+                    >
+                      <td className="px-4 py-4 text-[#344054]">
+                        {row.employeeId}
+                      </td>
+                      <td className="px-4 py-4 font-medium text-[#1F2937]">
+                        {row.name}
+                      </td>
                       <td className="px-4 py-4 text-[#344054]">{row.role}</td>
-                      <td className="px-4 py-4 text-[#344054]">{row.department}</td>
+                      <td className="px-4 py-4 text-[#344054]">
+                        {row.department}
+                      </td>
                       <td className="px-4 py-4">
                         <span
-                          onClick={() =>
-                            setStatusModalEmployee({
-                              id: row.id,
-                              name: row.name,
-                              status: row.lifecycleStatus,
-                            })
-                          }
-                          title="Click to change status"
                           className={`inline-flex cursor-pointer items-center rounded-full px-2.5 py-1 text-[12px] font-medium transition hover:opacity-80 hover:ring-1 hover:ring-slate-300 ${STATUS_STYLES[row.lifecycleStatus]}`}
                         >
-                          {STATUS_LABEL[row.lifecycleStatus]}
+                          {row.lifecycleStatus}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-[#344054]">{row.contact}</td>
-                      <td className="px-4 py-4 text-[#344054]">{row.joinedDate}</td>
+                      <td className="px-4 py-4 text-[#344054]">
+                        {row.contact}
+                      </td>
+                      <td className="px-4 py-4 text-[#344054]">
+                        {activeTab === "Exited" ? row.exitedDate : row.joinedDate}
+                      </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
-                          {/* <button
-                            type="button"
-                            aria-label={`Change status for ${row.name}`}
-                            title="Change status"
-                            onClick={() =>
-                              setStatusModalEmployee({
-                                id: row.id,
-                                name: row.name,
-                                status: row.lifecycleStatus,
-                              })
-                            }
-                            className="text-[#98A2B3] transition hover:text-[#2388D0]"
-                          >
-                            <BiUserCheck className="h-4 w-4" />
-                          </button> */}
                           <button
                             type="button"
                             aria-label={`Edit ${row.name}`}
-                            onClick={() => router.push(`/hris/employees/${row.id}`)}
+                            onClick={() =>
+                              router.push(`/hris/employees/${row.id}`)
+                            }
                             className="text-[#98A2B3] transition hover:text-[#2388D0]"
                           >
                             <BiPencil className="h-4 w-4" />
@@ -327,16 +350,25 @@ export default function EmployeeListPage() {
         </div>
       </div>
 
-      {statusModalEmployee && (
-        <ChangeEmployeeStatusModal
-          open={!!statusModalEmployee}
-          onClose={() => setStatusModalEmployee(null)}
-          employeeId={statusModalEmployee.id}
-          employeeName={statusModalEmployee.name}
-          currentStatus={statusModalEmployee.status}
-          onSuccess={loadEmployees}
-        />
-      )}
+      <FilterEmployeeModal
+        open={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        onApply={(filters) => {
+          if (filters.status) {
+            const matched = TABS.find(
+              (tab) => tab.toLowerCase() === filters.status.toLowerCase()
+            );
+            if (matched) {
+              setActiveTab(matched);
+            }
+          }
+          if (filters.department) {
+            setSelectedDepartment(filters.department);
+          }
+          setFilterOpen(false);
+        }}
+      />
+
     </main>
   );
 }

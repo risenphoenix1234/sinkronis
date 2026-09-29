@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, X } from "lucide-react";
+import { Plus, X, AlertCircle } from "lucide-react";
 import axios from "axios";
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { toast } from "react-toastify";
@@ -90,10 +90,10 @@ const RATING_SCALE = [
   {
     score: 1,
     label: "Poor Performance",
-    range: "0–59%",
+    range: "<59%",
     bg: "bg-rose-50",
     text: "text-rose-700",
-    subtext: "text-rose-400",
+    subtext: "text-rose-500",
   },
 ] as const;
 
@@ -103,24 +103,24 @@ const SIGNOFF_ROLES = [
   { key: "hr", label: "HR Representative" },
 ] as const;
 
-function objectiveWeight(objective: Objective): number {
-  return objective.keyResults.reduce(
-    (sum, kr) => sum + (Number(kr.weight) || 0),
-    0,
-  );
-}
-
-export default function OkrKraTemplateBuilder({
-  isOpen,
-  onClose,
-  onCreated,
-}: {
+interface NewTemplateFormProps {
   isOpen: boolean;
   onClose: () => void;
   onCreated?: () => void;
-}) {
+}
+
+const objectiveWeight = (o: Objective) =>
+  o.keyResults.reduce((sum, kr) => sum + (Number(kr.weight) || 0), 0);
+
+export default function NewTemplateForm({
+  isOpen,
+  onClose,
+  onCreated,
+}: NewTemplateFormProps) {
   const [templateName, setTemplateName] = useState("");
   const [description, setDescription] = useState("");
+  const [isDefault, setIsDefault] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<SectionKey>("A");
   const [activeQuarter, setActiveQuarter] = useState<Quarter>("Q1");
 
@@ -135,6 +135,8 @@ export default function OkrKraTemplateBuilder({
     if (!isOpen) return;
     setTemplateName("");
     setDescription("");
+    setIsDefault(false);
+    setSaveError(null);
     setActiveSection("A");
     setActiveQuarter("Q1");
     setObjectivesA([makeObjective(0)]);
@@ -224,7 +226,7 @@ export default function OkrKraTemplateBuilder({
     const payload: CreateAppraisalTemplatePayload = {
       name: templateName.trim(),
       description: description.trim(),
-      isDefault: false,
+      isDefault,
       sections: [
         toSection("KRA", objectivesA),
         toSection("BEHAVIOURAL", objectivesB),
@@ -236,18 +238,25 @@ export default function OkrKraTemplateBuilder({
     };
 
     setSaving(true);
+    setSaveError(null);
     try {
       await createAppraisalTemplate(payload);
       toast.success("Appraisal template created successfully");
       setTemplateName("");
       setDescription("");
+      setIsDefault(false);
       setObjectivesA([makeObjective(0)]);
       setObjectivesB([makeObjective(0)]);
       onCreated?.();
     } catch (err) {
       const message = axios.isAxiosError(err)
-        ? (err.response?.data?.message ?? err.message)
+        ? err.response?.data?.message ||
+          (Array.isArray(err.response?.data?.validationErrors)
+            ? err.response?.data?.validationErrors[0]?.message
+            : null) ||
+          err.message
         : "Failed to create appraisal template";
+      setSaveError(message);
       toast.error(message);
       console.error("Create appraisal template failed:", err);
     } finally {
@@ -312,6 +321,14 @@ export default function OkrKraTemplateBuilder({
 
         <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
           <div className="space-y-6">
+            {/* Error Banner */}
+            {saveError && (
+              <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-4 text-xs text-red-700">
+                <AlertCircle size={16} className="shrink-0 text-red-600" />
+                <span>{saveError}</span>
+              </div>
+            )}
+
             {/* Template name / description */}
             <div className="grid gap-4 md:grid-cols-2">
               <div>
@@ -342,6 +359,25 @@ export default function OkrKraTemplateBuilder({
                   className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 />
               </div>
+            </div>
+
+            {/* Set as Default Template Toggle */}
+            <div className="flex items-center gap-2">
+              <input
+                id="template-is-default"
+                type="checkbox"
+                checked={isDefault}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setIsDefault(e.target.checked)
+                }
+                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label
+                htmlFor="template-is-default"
+                className="cursor-pointer text-sm text-slate-700"
+              >
+                Set as organization default template
+              </label>
             </div>
 
             {/* Weight summary bar */}
@@ -496,7 +532,7 @@ export default function OkrKraTemplateBuilder({
                                   Number(e.target.value) || 0,
                                 )
                               }
-                              className="w-14 rounded-lg border border-slate-200 px-2 py-1.5 text-xs text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                              className="w-14 rounded-lg border border-slate-200 px-2 py-1.5 text-xs text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-inner-spin-button]:m-0"
                             />
                             <span className="text-xs text-slate-400">%</span>
                           </div>

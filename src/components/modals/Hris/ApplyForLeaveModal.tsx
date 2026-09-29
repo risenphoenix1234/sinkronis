@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
+import { toast } from "react-toastify";
 
 import { applyForLeave } from "@/lib/api/hris";
 import { ApplyForLeavePayload } from "@/lib/api/types/hrisTypes";
@@ -10,18 +11,20 @@ interface ApplyForLeaveModalProps {
   isOpen: boolean;
   onClose: () => void;
   onApplied: () => void; // parent refetches list + overview on success
+  employeeId?: string;
 }
 
 const LEAVE_TYPES = [
-  "Annual Leave",
-  "Sick Leave",
-  "Maternity Leave",
-  "Paternity Leave",
-  "Emergency Leave",
+  { label: "Annual Leave", value: "ANNUAL_LEAVE" },
+  { label: "Sick Leave", value: "SICK_LEAVE" },
+  { label: "Maternity Leave", value: "MATERNITY_LEAVE" },
+  { label: "Paternity Leave", value: "PATERNITY_LEAVE" },
+  { label: "Emergency Leave", value: "EMERGENCY_LEAVE" },
+  { label: "Compassionate Leave", value: "COMPASSIONATE_LEAVE" },
 ];
 
 const EMPTY_FORM = {
-  leaveType: LEAVE_TYPES[0],
+  leaveType: LEAVE_TYPES[0].value,
   fromDate: "",
   toDate: "",
   reason: "",
@@ -31,6 +34,7 @@ export default function ApplyForLeaveModal({
   isOpen,
   onClose,
   onApplied,
+  employeeId,
 }: ApplyForLeaveModalProps) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
@@ -65,6 +69,7 @@ export default function ApplyForLeaveModal({
     }
 
     const payload: ApplyForLeavePayload = {
+      employeeId: employeeId || undefined,
       leaveType: form.leaveType,
       fromDate: form.fromDate,
       toDate: form.toDate,
@@ -74,6 +79,7 @@ export default function ApplyForLeaveModal({
     setSubmitting(true);
     try {
       await applyForLeave(payload);
+      toast.success("Leave request submitted successfully");
       onApplied();
       resetAndClose();
     } catch (err: any) {
@@ -81,14 +87,17 @@ export default function ApplyForLeaveModal({
       if (status === 400) {
         setError(
           err.response?.data?.message ??
-            "Invalid dates, leave type, or no workdays in range.",
+          "Invalid dates, leave type, or no workdays in range.",
         );
       } else if (status === 403) {
-        setError("No employee record is linked to your account.");
+        setError(
+          err.response?.data?.message ??
+          "No employee record is linked to your account.",
+        );
       } else if (status === 409) {
         setError(
           err.response?.data?.message ??
-            "Overlapping leave request, or insufficient leave balance.",
+          "Overlapping leave request, or insufficient leave balance.",
         );
       } else {
         setError(
@@ -139,8 +148,8 @@ export default function ApplyForLeaveModal({
               className="h-10 w-full rounded border border-slate-200 px-3 text-sm outline-none transition focus:border-blue-500"
             >
               {LEAVE_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {type}
+                <option key={type.value} value={type.value}>
+                  {type.label}
                 </option>
               ))}
             </select>
@@ -174,7 +183,7 @@ export default function ApplyForLeaveModal({
           <button
             onClick={resetAndClose}
             disabled={submitting}
-            className="h-10 rounded px-6 text-sm font-medium text-slate-600 transition hover:bg-slate-100 disabled:opacity-40"
+            className="h-10 flex-1 rounded px-6 text-sm font-medium border text-slate-600 transition hover:bg-slate-100 disabled:opacity-40"
           >
             Cancel
           </button>
@@ -182,7 +191,7 @@ export default function ApplyForLeaveModal({
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="h-10 rounded bg-sky-500 px-6 text-sm font-medium text-white transition hover:bg-sky-400 disabled:opacity-60"
+            className="h-10 flex-1 rounded bg-sky-500 px-6 text-sm font-medium text-white transition hover:bg-sky-400 disabled:opacity-60"
           >
             {submitting ? "Submitting..." : "Submit Request"}
           </button>

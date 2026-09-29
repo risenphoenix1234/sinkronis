@@ -964,3 +964,133 @@ export interface CacVerificationResponse {
   message: string;
   data: CacVerificationData;
 }
+
+export interface GeneralLocaleSettings {
+  timeZone: string;
+  language: string;
+  dateFormat: string;
+  currency: string;
+}
+
+export interface GeneralLocaleSettingsResponse {
+  success: boolean;
+  message: string;
+  data: GeneralLocaleSettings;
+}
+
+export interface LocaleTimeZoneOption {
+  identifier: string;
+  label: string;
+}
+
+export interface LocaleLanguageOption {
+  code: string;
+  name: string;
+}
+
+export interface LocaleCurrencyOption {
+  code: string;
+  name: string;
+}
+
+export interface GeneralLocaleOptions {
+  timeZones: LocaleTimeZoneOption[];
+  languages: LocaleLanguageOption[];
+  dateFormats: string[];
+  currencies: LocaleCurrencyOption[];
+}
+
+export interface GeneralLocaleOptionsResponse {
+  success: boolean;
+  message: string;
+  data: GeneralLocaleOptions;
+}
+
+export interface GeneralBrandingLogoMetadata {
+  mimeType: string | null;
+  size: number | null;
+  width: number | null;
+  height: number | null;
+}
+
+export interface GeneralBrandingSettings {
+  logoUrl: string | null;
+  fileName: string | null;
+  uploadTimestamp: string | null;
+  accentColor: string;
+  linkText: string | null;
+  logoMetadata: GeneralBrandingLogoMetadata;
+}
+
+export interface GeneralBrandingSettingsResponse {
+  success: boolean;
+  message: string;
+  data: GeneralBrandingSettings;
+}
+
+export interface UpdateBrandingBody {
+  accentColor?: string;
+  linkText?: string;
+}
+
+export interface UploadLogoResponse {
+  success: boolean;
+  message: string;
+  data: unknown; // Swagger schema is empty — refetch branding after upload instead of trusting this
+}
+
+export interface OrganizationExportRequestData {
+  exportId: string;
+  exportDate: string;
+  requestedBy: string;
+  exportStatus: string;
+  deliveryEmail: string;
+  deliveryDueAt: string;
+  deliveryMethod: string;
+  fileSize: number | null;
+  downloadUrl: string | null;
+  fileReference: string | null;
+  message?: string;
+}
+
+export interface OrganizationExportRequestResponse {
+  success: boolean;
+  message: string;
+  data: OrganizationExportRequestData;
+  metadata?: unknown;
+}
+
+export interface OrganizationExportStatus {
+  id: string;
+  status: string;
+  requestedAt: string;
+  processingStartedAt: string | null;
+  completedAt: string | null;
+  failedAt: string | null;
+  deliveredAt: string | null;
+  deliveryDueAt: string | null;
+  expiresAt: string | null;
+  fileName: string | null;
+  fileSize: number | null;
+  errorMessage: string | null;
+  downloadAvailable: boolean;
+  downloadPath: string | null;
+}
+
+export interface OrganizationExportStatusResponse {
+  success: boolean;
+  message: string;
+  data: OrganizationExportStatus;
+}
+
+export interface OrganizationDeletionRequestBody {
+  confirmationPhrase: string;
+  password: string;
+  reason?: string;
+}
+
+export interface OrganizationDeletionRequestResponse {
+  success: boolean;
+  message: string;
+  data: unknown;
+}

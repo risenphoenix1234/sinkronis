@@ -25,13 +25,13 @@ const steps: Array<{
     completed: false,
     active: false,
   },
-   {
+  {
     id: "Hr Approved",
     title: "Hr Approved",
     completed: false,
     active: false,
   },
-   {
+  {
     id: "Acknowledged",
     title: "Acknowledged",
     completed: false,

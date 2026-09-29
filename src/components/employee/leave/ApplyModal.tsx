@@ -1,18 +1,28 @@
 "use client";
 
-import { balances as mockBalances } from "@/data/employee/leave";
-import { createEmployeeLeaveRequest, getEmployeeRelievers } from "@/lib/api/employee";
-import { EmployeeLeaveBalanceItem, EmployeeRelieverItem } from "@/lib/api/types/employeeTypes";
-import { useEffect, useState } from "react";
+import {
+  createEmployeeLeaveRequest,
+  getEmployeeRelievers,
+} from "@/lib/api/employee";
+import {
+  LeaveBalanceItem,
+  EmployeeRelieverItem,
+  CreateEmployeeLeaveRequestPayload,
+} from "@/lib/api/types/employeeTypes";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 
 interface ApplyModalProps {
   onClose: () => void;
-  balances?: EmployeeLeaveBalanceItem[];
+  balances?: LeaveBalanceItem[];
   onSubmitted?: () => void;
 }
 
-export function ApplyModal({ onClose, balances, onSubmitted }: ApplyModalProps) {
+export function ApplyModal({
+  onClose,
+  balances,
+  onSubmitted,
+}: ApplyModalProps) {
   const [leaveTypeId, setLeaveTypeId] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -45,19 +55,85 @@ export function ApplyModal({ onClose, balances, onSubmitted }: ApplyModalProps) 
     "w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition bg-white";
   const labelClass = "block text-xs font-medium text-gray-500 mb-1.5";
 
-  // Derive available leave options from live balances or fallback
-  const leaveOptions =
-    balances && balances.length > 0
-      ? balances.map((b) => ({
-          id: b.leaveTypeId || b.code || b.name,
-          label: `${b.name} (${b.remainingDays} days left)`,
-          value: b.leaveTypeId || b.code || b.name,
-        }))
-      : mockBalances.map((b) => ({
-          id: b.type,
-          label: b.type,
-          value: b.type,
-        }));
+  // Derive leave options ensuring requested types are always present:
+  // [sick, annual, maternity/paternity, emergency]
+  const leaveOptions = useMemo(() => {
+    const requiredTypes = [
+      {
+        slug: "SICK_LEAVE",
+        label: "Sick",
+        matches: ["sick"],
+      },
+      {
+        slug: "ANNUAL_LEAVE",
+        label: "Annual",
+        matches: ["annual"],
+      },
+      {
+        slug: "MATERNITY_LEAVE",
+        label: "Maternity/Paternity",
+        matches: ["maternity", "paternity"],
+      },
+      {
+        slug: "COMPASSIONATE_LEAVE",
+        label: "Emergency",
+        matches: ["emergency", "compassionate"],
+      },
+    ];
+
+    const matchedBalanceIds = new Set<string>();
+
+    const options = requiredTypes.map((req) => {
+      // Find matching live balance if present
+      const match = balances?.find((b) => {
+        const text = `${b.leaveTypeName || ""} ${b.name || ""} ${b.code || ""}`.toLowerCase();
+        return req.matches.some((m) => text.includes(m));
+      });
+
+      if (match) {
+        const typeId =
+          match.leaveTypeId || match.code || match.id || req.slug;
+        if (match.leaveTypeId || match.code || match.id) {
+          matchedBalanceIds.add(
+            match.leaveTypeId || match.code || match.id || "",
+          );
+        }
+        const remaining = match.remainingDays;
+        const remainingText =
+          remaining !== undefined ? ` (${remaining} days left)` : "";
+        return {
+          id: req.slug,
+          label: `${match.leaveTypeName || match.name || req.label}${remainingText}`,
+          value: typeId,
+        };
+      }
+
+      return {
+        id: req.slug,
+        label: req.label,
+        value: req.slug,
+      };
+    });
+
+    // Also include any other live balances that don't match the 4 standard types
+    if (balances && balances.length > 0) {
+      balances.forEach((b) => {
+        const typeId = b.leaveTypeId || b.id;
+        if (typeId && !matchedBalanceIds.has(typeId)) {
+          const name = b.leaveTypeName || b.name || "Leave";
+          const remainingText =
+            b.remainingDays !== undefined ? ` (${b.remainingDays} days left)` : "";
+          options.push({
+            id: typeId,
+            label: `${name}${remainingText}`,
+            value: typeId,
+          });
+        }
+      });
+    }
+
+    return options;
+  }, [balances]);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -82,22 +158,29 @@ export function ApplyModal({ onClose, balances, onSubmitted }: ApplyModalProps) 
       return;
     }
 
+    const payload: CreateEmployeeLeaveRequestPayload = {
+      leaveTypeId,
+      startDate,
+      endDate,
+      reason: reason.trim(),
+    };
+    if (relieverEmployeeId.trim()) {
+      payload.relieverEmployeeId = relieverEmployeeId.trim();
+    }
+
     setSubmitting(true);
     try {
-      const res = await createEmployeeLeaveRequest({
-        leaveTypeId,
-        startDate,
-        endDate,
-        reason: reason.trim(),
-        relieverEmployeeId: relieverEmployeeId.trim() || null,
-      });
-      toast.success(res?.message || "Pending leave request created successfully");
+      const res = await createEmployeeLeaveRequest(payload);
+      toast.success(
+        res?.message || "Pending leave request created successfully",
+      );
       onSubmitted?.();
       onClose();
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Failed to submit leave request. Please check your details.";
+          ?.message ||
+        "Failed to submit leave request. Please check your details.";
       toast.error(msg);
     } finally {
       setSubmitting(false);
@@ -144,7 +227,7 @@ export function ApplyModal({ onClose, balances, onSubmitted }: ApplyModalProps) 
                   onChange={(e) => setLeaveTypeId(e.target.value)}
                   className={inputClass + " appearance-none"}
                 >
-                  <option value="" disabled>
+                  <option value="">
                     Select type
                   </option>
                   {leaveOptions.map((opt) => (
@@ -205,7 +288,8 @@ export function ApplyModal({ onClose, balances, onSubmitted }: ApplyModalProps) 
 
             <div>
               <label className={labelClass}>
-                Reliever <span className="text-gray-400 font-normal">(Optional)</span>
+                Reliever{" "}
+                <span className="text-gray-400 font-normal">(Optional)</span>
               </label>
               <div className="relative">
                 <select
@@ -214,14 +298,20 @@ export function ApplyModal({ onClose, balances, onSubmitted }: ApplyModalProps) 
                   className={inputClass + " appearance-none"}
                 >
                   <option value="">
-                    {loadingRelievers ? "Loading eligible relievers..." : "Select a colleague to cover duties"}
+                    {loadingRelievers
+                      ? "Loading eligible relievers..."
+                      : "Select a colleague to cover duties"}
                   </option>
                   {relievers.map((r) => {
                     const roleText = r.role ? ` (${r.role})` : "";
-                    const deptText = r.department?.name ? ` · ${r.department.name}` : "";
+                    const deptText = r.department?.name
+                      ? ` · ${r.department.name}`
+                      : "";
                     return (
                       <option key={r.id} value={r.id}>
-                        {r.name}{roleText}{deptText} ({r.employeeId})
+                        {r.name}
+                        {roleText}
+                        {deptText} ({r.employeeId})
                       </option>
                     );
                   })}

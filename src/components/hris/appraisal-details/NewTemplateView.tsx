@@ -10,8 +10,10 @@ import ObjectivesTable from "./ObjectivesTable";
 import { AppraisalHeader } from "./AppraisalHeader";
 import { TemplateHeader } from "./TemplateHeader";
 
-import { employee } from "@/data/hris/appraisal";
 import { updateAppraisalTemplate } from "@/lib/api/hris";
+import { toast } from "react-toastify";
+import axios from "axios";
+import type { Employee } from "@/types/hris/appraisal";
 import type {
   AppraisalTemplate,
   AppraisalTemplatePayload,
@@ -19,6 +21,15 @@ import type {
   TemplateSection,
   SignOffType,
 } from "@/lib/api/types/hrisTypes";
+
+const previewEmployee: Employee = {
+  name: "Sample Employee",
+  role: "Designation",
+  department: "Department",
+  supervisorName: "Reporting Manager",
+  supervisorRole: "Manager Role",
+  startDate: "—",
+};
 
 type TemplateViewProps = {
   isOpen: boolean;
@@ -175,13 +186,32 @@ export default function TemplateView({
 
     try {
       const updated = await updateAppraisalTemplate(template.id, payload);
+      toast.success("Appraisal template updated successfully");
       onSaved?.(updated);
       onClose();
-    } catch (err: any) {
-      const message =
-        err?.response?.data?.message ??
+    } catch (err: unknown) {
+      console.error("Update appraisal template error:", err);
+      let message =
         "Failed to save template. Please check section weights and try again.";
+      if (axios.isAxiosError(err) && err.response?.data) {
+        const data = err.response.data as {
+          message?: string;
+          validationErrors?: Array<{ message?: string; field?: string }>;
+        };
+        if (
+          Array.isArray(data.validationErrors) &&
+          data.validationErrors.length > 0
+        ) {
+          message = data.validationErrors
+            .map((v) => v.message || v.field)
+            .filter(Boolean)
+            .join(", ");
+        } else if (data.message) {
+          message = data.message;
+        }
+      }
       setSaveError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -210,7 +240,7 @@ export default function TemplateView({
         <div className="px-4 py-5 sm:px-6 lg:px-10 lg:py-6">
           {!editable && <PreviewBanner />}
           <div className="mt-5">
-            <AppraisalHeader employee={employee} />
+            <AppraisalHeader employee={previewEmployee} />
           </div>
         </div>
 
@@ -239,7 +269,7 @@ export default function TemplateView({
             }
           />
 
-          <GrandTotal />
+          <GrandTotal score="—" ratingLabel="Template Preview" />
 
           <AppraisalSignOff
             signOffTypes={meta.signOffTypes}

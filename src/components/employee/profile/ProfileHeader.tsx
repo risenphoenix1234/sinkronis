@@ -131,7 +131,8 @@ export default function ProfileHeader({
             </h2>
 
             <p className="mt-1 text-sm text-gray-500">
-              {data.role?.name || data.department?.name || "Employee"} • {data.employeeId || "—"}
+              {data.role?.name || data.department?.name || "Employee"} •{" "}
+              {data.employeeId || "—"}
             </p>
 
             <input

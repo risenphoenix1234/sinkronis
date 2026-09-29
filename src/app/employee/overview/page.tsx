@@ -9,7 +9,9 @@ export default function EmployeeOverviewPage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         <div className="rounded-lg bg-white p-4 shadow-sm">
-          <h2 className="text-xs font-semibold text-slate-500">Leave balance</h2>
+          <h2 className="text-xs font-semibold text-slate-500">
+            Leave balance
+          </h2>
           <p className="mt-2 text-2xl font-bold">12 days</p>
         </div>
         <div className="rounded-lg bg-white p-4 shadow-sm">

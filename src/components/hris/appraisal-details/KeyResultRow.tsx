@@ -1,7 +1,7 @@
 import { KeyResult } from "@/types/hris/appraisal";
 import { GRID_COLUMNS } from "./ObjectivesSections";
 import { ObjectiveRowProps } from "./ObjectivesRow";
-import Input, { DisabledInput } from "@/components/ui/Input";
+import Input from "@/components/ui/Input";
 
 type KeyResultRowProps = {
   objectiveId: number;
@@ -41,9 +41,9 @@ export function KeyResultRow({
 
       <Input value={keyResult.initiatives} placeholder="Action plan..." />
 
-      <DisabledInput placeholder="—" />
-      <DisabledInput placeholder="—" />
-      <DisabledInput placeholder="Auto-filled" />
+      <Input disabled placeholder="—" className="bg-slate-100 cursor-not-allowed opacity-75" />
+      <Input disabled placeholder="—" className="bg-slate-100 cursor-not-allowed opacity-75" />
+      <Input disabled placeholder="Auto-filled" className="bg-slate-100 cursor-not-allowed opacity-75" />
     </div>
   );
 }

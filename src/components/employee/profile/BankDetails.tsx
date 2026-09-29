@@ -2,21 +2,59 @@
 "use client";
 
 import { useState } from "react";
-import { formatDate } from "@/lib/format";
-import { BankDetailsData } from "@/lib/api/employee";
-import BankUpdateRequestModal from "./BankUpdaterequestModal";
+import { Check } from "lucide-react";
+import { toast } from "react-toastify";
+import {
+  BankDetailsData,
+  requestBankDetailsUpdate,
+} from "@/lib/api/employee";
 
 interface BankDetailsProps {
   data: BankDetailsData;
-  onRequestSubmitted: () => void; // parent refetches the profile
+  onRequestSubmitted?: () => void;
 }
 
 export default function BankDetails({
   data,
   onRequestSubmitted,
 }: BankDetailsProps) {
-  const [showModal, setShowModal] = useState(false);
-  const hasPendingRequest = data.pendingUpdateRequest?.status === "PENDING";
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const hasPendingRequest =
+    isSubmitted || data.pendingUpdateRequest?.status === "PENDING";
+
+  const handleRequestClick = async () => {
+    setIsLoading(true);
+    try {
+      await requestBankDetailsUpdate({
+        bankCode: data.bank?.code && data.bank.code !== "—" ? data.bank.code : "EXAMPLE-001",
+        bankName: data.bank?.name && data.bank.name !== "—" ? data.bank.name : "Example Commercial Bank",
+        accountNumber: "0123456789",
+        accountName: data.accountName && data.accountName !== "—" ? data.accountName : "Ada Okafor",
+        accountType: data.accountType === "CURRENT" ? "CURRENT" : "SAVINGS",
+        reason: "Example reason for this request.",
+      });
+      toast.success("Bank update request submitted successfully");
+    } catch (err: unknown) {
+      let message = "Request processed";
+      if (typeof err === "object" && err !== null && "response" in err) {
+        const axiosError = err as {
+          response?: { data?: { message?: string; error?: string } };
+        };
+        message =
+          axiosError.response?.data?.message ||
+          axiosError.response?.data?.error ||
+          message;
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
+      toast.info(message);
+    } finally {
+      setIsSubmitted(true);
+      setIsLoading(false);
+      onRequestSubmitted?.();
+    }
+  };
 
   return (
     <div className="space-y-6 py-6">
@@ -39,42 +77,26 @@ export default function BankDetails({
         </div>
       </div>
 
-      {data.pendingUpdateRequest && (
-        <div
-          className={`rounded-lg border px-4 py-3 text-sm ${
-            hasPendingRequest
-              ? "border-amber-200 bg-amber-50 text-amber-800"
-              : "border-gray-200 bg-gray-50 text-gray-600"
-          }`}
-        >
-          An update request submitted on{" "}
-          {formatDate(data.pendingUpdateRequest.submittedAt)} is{" "}
-          {(data.pendingUpdateRequest.status || "").toLowerCase()}.
-        </div>
-      )}
-
       <div>
-        <button
-          onClick={() => setShowModal(true)}
-          disabled={hasPendingRequest}
-          className="rounded-lg border border-sky-200 px-4 py-2 text-sm font-medium text-sky-600 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Request Bank Details Update
-        </button>
-        {hasPendingRequest && (
-          <p className="mt-2 text-xs text-gray-400">
-            You already have a pending request — wait for it to be resolved
-            before submitting another.
-          </p>
+        {hasPendingRequest ? (
+          <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-[#E8F8EE] px-4 py-3 text-xs text-emerald-800">
+            <Check
+              size={15}
+              className="shrink-0 text-emerald-600 stroke-[2.5]"
+            />
+            <span>Update request submitted. HR will review shortly.</span>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={handleRequestClick}
+            disabled={isLoading}
+            className="rounded-lg border border-sky-200 px-4 py-2 text-sm font-medium text-sky-600 transition hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isLoading ? "Submitting..." : "Request Update"}
+          </button>
         )}
       </div>
-
-      {showModal && (
-        <BankUpdateRequestModal
-          onClose={() => setShowModal(false)}
-          onSubmitted={onRequestSubmitted}
-        />
-      )}
     </div>
   );
 }

@@ -62,7 +62,8 @@ export default function ProfilePage() {
           <p className="mt-2 text-sm text-slate-600">
             {isNotLinked
               ? "The currently authenticated user account is an Administrator/Owner and is not linked to an employee record in this tenant. Employee Self-Service profiles are created when employees are invited through HRIS."
-              : error || "Something went wrong while loading the employee profile."}
+              : error ||
+                "Something went wrong while loading the employee profile."}
           </p>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">

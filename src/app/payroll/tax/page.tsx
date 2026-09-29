@@ -1,11 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ChevronRight, Download, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronRight, Download, Loader2, Search } from "lucide-react";
+import { toast } from "react-toastify";
 
 import MonthlyRemittance from "@/components/payroll/tax/MonthlyRemitance";
 import AnnualReturns from "@/components/payroll/tax/AnnualReturns";
 import PayeBandsAndCra from "@/components/payroll/tax/PayeBandsAnd";
+import {
+  getPayrollTaxOverview,
+  PayrollTaxOverviewData,
+  getPayrollTaxEmployeesByState,
+  PayrollTaxEmployeesByStateData,
+  StateTaxGroup,
+  exportPayrollTaxAnnualReturnsCsv,
+} from "@/lib/api/payroll";
 
 type Tab = "employees" | "remittance" | "returns" | "bands";
 
@@ -19,55 +28,9 @@ type StateAuthority = {
   employees: number;
   amount: string;
   color: StateColor;
+  period?: string;
 };
 
-const stateAuthorities: StateAuthority[] = [
-  {
-    id: 1,
-    shortName: "LIRS",
-    name: "Lagos Internal Revenue Service (LIRS)",
-    state: "Lagos",
-    employees: 9,
-    amount: "₦658,011",
-    color: "blue",
-  },
-  {
-    id: 2,
-    shortName: "FCT-IRS",
-    name: "FCT Internal Revenue Service (FCT-IRS)",
-    state: "Abuja (FCT)",
-    employees: 4,
-    amount: "₦227,867",
-    color: "purple",
-  },
-  {
-    id: 3,
-    shortName: "RIRS",
-    name: "Rivers State Internal Revenue Service (RIRS)",
-    state: "Rivers",
-    employees: 3,
-    amount: "₦173,935",
-    color: "green",
-  },
-  {
-    id: 4,
-    shortName: "KIRS",
-    name: "Kano State Internal Revenue Service (KIRS)",
-    state: "Kano",
-    employees: 1,
-    amount: "₦56,268",
-    color: "yellow",
-  },
-  {
-    id: 5,
-    shortName: "OGIRS",
-    name: "Ogun State Internal Revenue Service (OGIRS)",
-    state: "Ogun",
-    employees: 1,
-    amount: "₦91,337",
-    color: "red",
-  },
-];
 
 const badgeStyles: Record<
   StateColor,
@@ -112,9 +75,329 @@ export default function TaxPage() {
   const [activeTab, setActiveTab] = useState<Tab>("employees");
   const [search, setSearch] = useState("");
   const [stateFilter, setStateFilter] = useState("All States");
+  const [overview, setOverview] = useState<PayrollTaxOverviewData | null>(null);
+  const [loadingOverview, setLoadingOverview] = useState<boolean>(true);
+  const [employeesByStateData, setEmployeesByStateData] = useState<
+    PayrollTaxEmployeesByStateData | StateTaxGroup[] | null
+  >(null);
+  const [loadingEmployeesByState, setLoadingEmployeesByState] =
+    useState<boolean>(true);
+  const [exportingAnnualReturns, setExportingAnnualReturns] = useState(false);
+
+  const handleExportAnnualReturns = async () => {
+    if (exportingAnnualReturns) return;
+    try {
+      setExportingAnnualReturns(true);
+      const blob = await exportPayrollTaxAnnualReturnsCsv();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const today = new Date().toISOString().split("T")[0];
+      link.download = `paye-annual-returns-${today}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("PAYE annual returns exported successfully.");
+    } catch (err: unknown) {
+      const axiosErr = err as {
+        response?: {
+          data?: Blob | { message?: string };
+        };
+      };
+      let errorMsg = "Failed to export annual returns.";
+      if (axiosErr.response?.data instanceof Blob) {
+        try {
+          const text = await axiosErr.response.data.text();
+          const parsed = JSON.parse(text);
+          if (parsed.message) errorMsg = parsed.message;
+        } catch {
+          // not json
+        }
+      } else if (
+        typeof axiosErr.response?.data === "object" &&
+        axiosErr.response?.data?.message
+      ) {
+        errorMsg = axiosErr.response.data.message;
+      }
+      toast.error(errorMsg);
+    } finally {
+      setExportingAnnualReturns(false);
+    }
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchTaxOverview() {
+      try {
+        setLoadingOverview(true);
+        const res = await getPayrollTaxOverview();
+        console.log("[TaxPage] Overview API response:", res);
+        if (isMounted && res && res.data) {
+          setOverview(res.data);
+        }
+      } catch (err: unknown) {
+        if (isMounted) {
+          console.error("[TaxPage] Failed to load tax overview:", err);
+          const axiosErr = err as { response?: { data?: { message?: string } } };
+          const errMsg =
+            axiosErr.response?.data?.message ??
+            "Failed to load PAYE tax overview.";
+          toast.error(errMsg);
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingOverview(false);
+        }
+      }
+    }
+
+    fetchTaxOverview();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchEmployeesByState() {
+      try {
+        setLoadingEmployeesByState(true);
+        const res = await getPayrollTaxEmployeesByState();
+        console.log("[TaxPage] Employees by state API response:", res);
+        if (isMounted && res && res.data) {
+          setEmployeesByStateData(res.data);
+        }
+      } catch (err: unknown) {
+        if (isMounted) {
+          console.error("[TaxPage] Failed to load employees by state:", err);
+          const axiosErr = err as { response?: { data?: { message?: string } } };
+          const errMsg =
+            axiosErr.response?.data?.message ??
+            "Failed to load employees by state.";
+          toast.error(errMsg);
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingEmployeesByState(false);
+        }
+      }
+    }
+
+    fetchEmployeesByState();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const authoritiesList: StateAuthority[] = useMemo(() => {
+    if (!employeesByStateData) {
+      return [];
+    }
+
+    let rawGroups: StateTaxGroup[] = [];
+    if (Array.isArray(employeesByStateData)) {
+      rawGroups = employeesByStateData;
+    } else if (
+      employeesByStateData &&
+      typeof employeesByStateData === "object"
+    ) {
+      if (Array.isArray(employeesByStateData.groups)) {
+        rawGroups = employeesByStateData.groups;
+      } else if (Array.isArray(employeesByStateData.stateAuthorities)) {
+        rawGroups = employeesByStateData.stateAuthorities;
+      } else if (Array.isArray(employeesByStateData.items)) {
+        rawGroups = employeesByStateData.items as StateTaxGroup[];
+      } else if (Array.isArray(employeesByStateData.data)) {
+        rawGroups = employeesByStateData.data as StateTaxGroup[];
+      }
+    }
+
+    if (rawGroups.length === 0) {
+      return [];
+    }
+
+    const COLOR_CYCLE: StateColor[] = [
+      "blue",
+      "purple",
+      "green",
+      "yellow",
+      "red",
+    ];
+
+    return rawGroups.map((g, idx) => {
+      const stateName = g.state || g.stateName || "State";
+      const shortName =
+        g.shortName ||
+        `${stateName.replace(/[^a-zA-Z]/g, "").slice(0, 3).toUpperCase()}IRS`;
+      const name =
+        g.name ||
+        g.authorityName ||
+        `${stateName} Internal Revenue Service (${shortName})`;
+
+      let employeeCount = 0;
+      if (typeof g.employees === "number") {
+        employeeCount = g.employees;
+      } else if (Array.isArray(g.employees)) {
+        employeeCount = g.employees.length;
+      } else if (typeof g.employeeCount === "number") {
+        employeeCount = g.employeeCount;
+      }
+
+      let formattedAmount = "₦0";
+      const rawAmount = g.amount ?? g.totalAmount ?? g.totalPaye;
+      if (rawAmount !== undefined && rawAmount !== null) {
+        if (typeof rawAmount === "number") {
+          formattedAmount = `₦${rawAmount.toLocaleString("en-NG")}`;
+        } else {
+          const str = String(rawAmount).trim();
+          if (str.startsWith("₦")) {
+            formattedAmount = str;
+          } else {
+            const num = Number(str);
+            formattedAmount = !isNaN(num)
+              ? `₦${num.toLocaleString("en-NG")}`
+              : str;
+          }
+        }
+      }
+
+      const validColors: StateColor[] = [
+        "blue",
+        "purple",
+        "green",
+        "yellow",
+        "red",
+      ];
+      const color: StateColor =
+        g.color && validColors.includes(g.color as StateColor)
+          ? (g.color as StateColor)
+          : COLOR_CYCLE[idx % COLOR_CYCLE.length];
+
+      return {
+        id: typeof g.id === "number" ? g.id : idx + 1,
+        shortName,
+        name,
+        state: stateName,
+        employees: employeeCount,
+        amount: formattedAmount,
+        color,
+        period: typeof g.period === "string" ? g.period : undefined,
+      };
+    });
+  }, [employeesByStateData]);
+
+  const stateAuthoritiesCount = useMemo(() => {
+    if (!overview && !employeesByStateData) {
+      return "0";
+    }
+
+    const dataObj = overview as PayrollTaxOverviewData;
+
+    const val =
+      dataObj?.stateAuthorityCount ??
+      dataObj?.stateAuthoritiesCount ??
+      dataObj?.totalStateAuthorities ??
+      dataObj?.stateAuthorities ??
+      dataObj?.authoritiesCount;
+
+    if (val !== undefined && val !== null) {
+      return String(val);
+    }
+    return String(authoritiesList.length);
+  }, [overview, employeesByStateData, authoritiesList]);
+
+  const formattedYtdDeducted = useMemo(() => {
+    if (!overview) {
+      return "₦0";
+    }
+
+    const dataObj = overview as PayrollTaxOverviewData;
+
+    const raw =
+      dataObj?.ytdPayeDeducted ??
+      dataObj?.ytdDeducted ??
+      dataObj?.totalYtdDeducted ??
+      dataObj?.payeDeducted ??
+      dataObj?.totalDeducted;
+
+    if (raw !== undefined && raw !== null) {
+      if (typeof raw === "number") {
+        return `₦${raw.toLocaleString("en-NG")}`;
+      }
+      const str = String(raw).trim();
+      if (str.startsWith("₦")) return str;
+      const num = Number(str);
+      if (!isNaN(num)) return `₦${num.toLocaleString("en-NG")}`;
+      return str;
+    }
+    return "₦0";
+  }, [overview]);
+
+  const formattedYtdRemitted = useMemo(() => {
+    if (!overview) {
+      return "₦0";
+    }
+
+    const dataObj = overview as PayrollTaxOverviewData;
+
+    const raw =
+      dataObj?.ytdRemitted ??
+      dataObj?.ytdPayeRemitted ??
+      dataObj?.totalYtdRemitted ??
+      dataObj?.payeRemitted ??
+      dataObj?.totalRemitted;
+
+    if (raw !== undefined && raw !== null) {
+      if (typeof raw === "number") {
+        return `₦${raw.toLocaleString("en-NG")}`;
+      }
+      const str = String(raw).trim();
+      if (str.startsWith("₦")) return str;
+      const num = Number(str);
+      if (!isNaN(num)) return `₦${num.toLocaleString("en-NG")}`;
+      return str;
+    }
+    return "₦0";
+  }, [overview]);
+
+  const formattedNextDueDate = useMemo(() => {
+    if (!overview) {
+      return "—";
+    }
+
+    const dataObj = overview as PayrollTaxOverviewData;
+
+    const raw =
+      dataObj?.nextDueDate ??
+      dataObj?.dueDate ??
+      dataObj?.nextRemittanceDueDate ??
+      dataObj?.nextDue;
+
+    if (raw) {
+      try {
+        const date = new Date(raw as string);
+        if (!isNaN(date.getTime())) {
+          return date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          });
+        }
+      } catch {
+        // fallback
+      }
+      return String(raw);
+    }
+    return "—";
+  }, [overview]);
 
   const filteredAuthorities = useMemo(() => {
-    return stateAuthorities.filter((authority) => {
+    return authoritiesList.filter((authority) => {
       const searchValue = search.toLowerCase();
 
       const matchesSearch =
@@ -127,7 +410,7 @@ export default function TaxPage() {
 
       return matchesSearch && matchesState;
     });
-  }, [search, stateFilter]);
+  }, [authoritiesList, search, stateFilter]);
 
   return (
     <main className="min-h-screen bg-[#f8fafc] p-4 text-[#263447] sm:px-6 sm:py-7">
@@ -150,9 +433,18 @@ export default function TaxPage() {
             Form H1
           </ActionButton>
 
-          <ActionButton>
-            <Download size={16} strokeWidth={1.8} />
-            Annual Returns
+          <ActionButton
+            onClick={handleExportAnnualReturns}
+            disabled={exportingAnnualReturns}
+          >
+            {exportingAnnualReturns ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Download size={16} strokeWidth={1.8} />
+            )}
+            <span>
+              {exportingAnnualReturns ? "Exporting..." : "Annual Returns"}
+            </span>
           </ActionButton>
         </div>
       </header>
@@ -161,39 +453,43 @@ export default function TaxPage() {
       <section className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
           title="State Authorities"
-          value="5"
+          value={stateAuthoritiesCount}
           valueClass="text-[#087fbd]"
+          loading={loadingOverview}
         />
 
         <SummaryCard
           title="YTD PAYE Deducted"
-          value="₦2,055,718"
+          value={formattedYtdDeducted}
           valueClass="text-[#ff3b3b]"
+          loading={loadingOverview}
         />
 
         <SummaryCard
           title="YTD Remitted"
-          value="₦2,414,836"
+          value={formattedYtdRemitted}
           valueClass="text-[#16823b]"
+          loading={loadingOverview}
         />
 
         <SummaryCard
           title="Next Due Date"
-          value="Jul 21, 2026"
+          value={formattedNextDueDate}
           valueClass="text-[#927000]"
+          loading={loadingOverview}
         />
       </section>
 
       {/* STATE SUMMARY CARDS */}
       <section className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        {stateAuthorities.map((authority) => (
+        {authoritiesList.map((authority) => (
           <StateSummaryCard key={authority.id} authority={authority} />
         ))}
       </section>
 
       {/* TABS */}
       <section className="mt-7 border-b border-[#dce2e8]">
-        <div className="flex gap-7 overflow-x-auto">
+        <div className="flex gap-7 overflow-x-auto overflow-y-hidden no-scrollbar [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <TabButton
             active={activeTab === "employees"}
             onClick={() => setActiveTab("employees")}
@@ -232,12 +528,15 @@ export default function TaxPage() {
           stateFilter={stateFilter}
           setStateFilter={setStateFilter}
           authorities={filteredAuthorities}
+          allAuthorities={authoritiesList}
         />
       )}
 
       {activeTab === "remittance" && <MonthlyRemittance />}
 
-      {activeTab === "returns" && <AnnualReturns />}
+      {activeTab === "returns" && (
+        <AnnualReturns search={search} setSearch={setSearch} />
+      )}
 
       {activeTab === "bands" && <PayeBandsAndCra />}
     </main>
@@ -248,27 +547,21 @@ export default function TaxPage() {
    ACTION BUTTON
 ===================================================== */
 
-function ActionButton({ children }: { children: React.ReactNode }) {
+function ActionButton({
+  children,
+  onClick,
+  disabled = false,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+}) {
   return (
     <button
       type="button"
-      className="
-        inline-flex
-        h-9
-        items-center
-        gap-2
-        rounded
-        border
-        border-[#dce2e8]
-        bg-white
-        px-3
-        text-sm
-        font-semibold
-        text-[#526477]
-        transition
-        hover:bg-[#f8fafc]
-        hover:text-[#087fbd]
-      "
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex h-9 items-center gap-2 rounded border border-[#dce2e8] bg-white px-3 text-sm font-semibold text-[#526477] transition hover:bg-[#f8fafc] hover:text-[#087fbd] disabled:cursor-not-allowed disabled:opacity-50"
     >
       {children}
     </button>
@@ -283,36 +576,24 @@ function SummaryCard({
   title,
   value,
   valueClass,
+  loading = false,
 }: {
   title: string;
   value: string;
   valueClass: string;
+  loading?: boolean;
 }) {
   return (
-    <div
-      className="
-        min-h-[90px]
-        rounded
-        border
-        border-[#dce2e8]
-        bg-white
-        px-4
-        py-4
-      "
-    >
+    <div className="min-h-[90px] rounded border border-[#dce2e8] bg-white px-4 py-4">
       <p className="text-sm font-semibold text-[#718096]">{title}</p>
 
-      <p
-        className={`
-          mt-3
-          text-xl
-          font-bold
-          leading-none
-          ${valueClass}
-        `}
-      >
-        {value}
-      </p>
+      {loading ? (
+        <div className="mt-3 h-5 w-24 animate-pulse rounded bg-slate-200" />
+      ) : (
+        <p className={`mt-3 text-xl font-bold leading-none ${valueClass}`}>
+          {value}
+        </p>
+      )}
     </div>
   );
 }
@@ -325,27 +606,9 @@ function StateSummaryCard({ authority }: { authority: StateAuthority }) {
   const styles = badgeStyles[authority.color];
 
   return (
-    <div
-      className="
-        min-h-[135px]
-        rounded
-        border
-        border-[#dce2e8]
-        bg-white
-        px-4
-        py-4
-      "
-    >
+    <div className="min-h-[135px] rounded border border-[#dce2e8] bg-white px-4 py-4">
       <span
-        className={`
-          inline-flex
-          rounded-full
-          px-2
-          py-1
-          text-xs
-          font-semibold
-          ${styles.badge}
-        `}
+        className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${styles.badge}`}
       >
         {authority.shortName}
       </span>
@@ -359,18 +622,13 @@ function StateSummaryCard({ authority }: { authority: StateAuthority }) {
         {authority.employees === 1 ? "employee" : "employees"}
       </p>
 
-      <p
-        className={`
-          mt-2
-          text-base
-          font-bold
-          ${styles.amount}
-        `}
-      >
+      <p className={`mt-2 text-base font-bold ${styles.amount}`}>
         {authority.amount}
       </p>
 
-      <p className="mt-1 text-xs font-medium text-[#91a0b0]">May 2026 PAYE</p>
+      <p className="mt-1 text-xs font-medium text-[#91a0b0]">
+        {authority.period || "PAYE"}
+      </p>
     </div>
   );
 }
@@ -392,29 +650,12 @@ function TabButton({
     <button
       type="button"
       onClick={onClick}
-      className={`
-        relative
-        whitespace-nowrap
-        pb-3
-        text-sm
-        font-semibold
-        transition
-        ${active ? "text-[#087fbd]" : "text-[#718096] hover:text-[#263447]"}
-      `}
+      className={`relative whitespace-nowrap pb-3 text-sm font-semibold transition ${active ? "text-[#087fbd]" : "text-[#718096] hover:text-[#263447]"}`}
     >
       {children}
 
       {active && (
-        <span
-          className="
-            absolute
-            bottom-[-1px]
-            left-0
-            h-0.5
-            w-full
-            bg-[#087fbd]
-          "
-        />
+        <span className="absolute bottom-0 left-0 h-0.5 w-full bg-[#087fbd]" />
       )}
     </button>
   );
@@ -430,12 +671,14 @@ function EmployeesByState({
   stateFilter,
   setStateFilter,
   authorities,
+  allAuthorities = authorities,
 }: {
   search: string;
   setSearch: (value: string) => void;
   stateFilter: string;
   setStateFilter: (value: string) => void;
   authorities: StateAuthority[];
+  allAuthorities?: StateAuthority[];
 }) {
   return (
     <section className="mt-5">
@@ -445,13 +688,7 @@ function EmployeesByState({
           <Search
             size={16}
             strokeWidth={1.8}
-            className="
-              absolute
-              left-3
-              top-1/2
-              -translate-y-1/2
-              text-[#9aa5b1]
-            "
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9aa5b1]"
           />
 
           <input
@@ -459,47 +696,18 @@ function EmployeesByState({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search employee..."
-            className="
-              h-10
-              w-full
-              rounded
-              border
-              border-[#dce2e8]
-              bg-white
-              pl-10
-              pr-3
-              text-sm
-              font-medium
-              text-[#344054]
-              outline-none
-              placeholder:text-[#8994a3]
-              focus:border-[#087fbd]
-            "
+            className="h-10 w-full rounded border border-[#dce2e8] bg-white pl-10 pr-3 text-sm font-medium text-[#344054] outline-none placeholder:text-[#8994a3] focus:border-[#087fbd]"
           />
         </div>
 
         <select
           value={stateFilter}
           onChange={(e) => setStateFilter(e.target.value)}
-          className="
-            h-10
-            w-full
-            rounded
-            border
-            border-[#dce2e8]
-            bg-white
-            px-3
-            text-sm
-            font-semibold
-            text-[#344054]
-            outline-none
-            focus:border-[#087fbd]
-            sm:w-[130px]
-          "
+          className="h-10 w-full rounded border border-[#dce2e8] bg-white px-3 text-sm font-semibold text-[#344054] outline-none focus:border-[#087fbd] sm:w-[130px]"
         >
           <option>All States</option>
 
-          {stateAuthorities.map((authority) => (
+          {allAuthorities.map((authority) => (
             <option key={authority.id} value={authority.state}>
               {authority.state}
             </option>
@@ -514,16 +722,7 @@ function EmployeesByState({
         ))}
 
         {authorities.length === 0 && (
-          <div
-            className="
-              rounded
-              border
-              border-[#dce2e8]
-              bg-white
-              py-12
-              text-center
-            "
-          >
+          <div className="rounded border border-[#dce2e8] bg-white py-12 text-center">
             <p className="text-sm font-semibold text-[#526477]">
               No state authority found.
             </p>
@@ -548,38 +747,11 @@ function AuthorityRow({ authority }: { authority: StateAuthority }) {
   return (
     <button
       type="button"
-      className="
-        group
-        grid
-        min-h-[72px]
-        w-full
-        grid-cols-[auto_1fr_auto_auto]
-        items-center
-        gap-4
-        rounded
-        border
-        border-[#dce2e8]
-        bg-white
-        px-5
-        text-left
-        transition
-        hover:border-[#c9dce7]
-        hover:bg-[#fcfeff]
-      "
+      className="group grid min-h-[72px] w-full grid-cols-[auto_1fr_auto_auto] items-center gap-4 rounded border border-[#dce2e8] bg-white px-5 text-left transition hover:border-[#c9dce7] hover:bg-[#fcfeff]"
     >
       {/* BADGE */}
       <span
-        className={`
-          inline-flex
-          min-w-[52px]
-          justify-center
-          rounded-full
-          px-2
-          py-1
-          text-xs
-          font-semibold
-          ${styles.badge}
-        `}
+        className={`inline-flex min-w-[52px] justify-center rounded-full px-2 py-1 text-xs font-semibold ${styles.badge}`}
       >
         {authority.shortName}
       </span>
@@ -599,16 +771,11 @@ function AuthorityRow({ authority }: { authority: StateAuthority }) {
 
       {/* AMOUNT */}
       <div className="text-right">
-        <p className="text-xs font-medium text-[#91a0b0]">May 2026 PAYE</p>
+        <p className="text-xs font-medium text-[#91a0b0]">
+          {authority.period || "PAYE"}
+        </p>
 
-        <p
-          className={`
-            mt-1
-            text-base
-            font-bold
-            ${styles.amount}
-          `}
-        >
+        <p className={`mt-1 text-base font-bold ${styles.amount}`}>
           {authority.amount}
         </p>
       </div>
@@ -617,12 +784,7 @@ function AuthorityRow({ authority }: { authority: StateAuthority }) {
       <ChevronRight
         size={18}
         strokeWidth={1.8}
-        className="
-          text-[#64748b]
-          transition
-          group-hover:translate-x-0.5
-          group-hover:text-[#087fbd]
-        "
+        className="text-[#64748b] transition group-hover:translate-x-0.5 group-hover:text-[#087fbd]"
       />
     </button>
   );

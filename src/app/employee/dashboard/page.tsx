@@ -24,8 +24,7 @@ export default function DashboardPage() {
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
-        if (status === 401)
-          setError("Session expired. Please log in again.");
+        if (status === 401) setError("Session expired. Please log in again.");
         else if (status === 403)
           setError("Your plan doesn't include HRIS access.");
         else if (status === 404)

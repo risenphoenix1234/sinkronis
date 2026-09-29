@@ -1,10 +1,11 @@
 import { AppraisalStatus, WORKFLOW_STEPS } from "@/lib/api/types/hrisTypes";
 import {
-  Check,
   Target,
-  ClipboardList,
+  FileText,
+  User,
   Shield,
   ThumbsUp,
+  Check,
   type LucideIcon,
 } from "lucide-react";
 
@@ -14,10 +15,10 @@ interface ProgressStepperProps {
 
 const STEP_CONFIG = {
   GOAL_SETTING: { title: "Goal Setting", icon: Target },
-  SELF_ASSESSMENT: { title: "Self-Assessment", icon: ClipboardList },
-  MANAGER_REVIEW: { title: "Manager Review", icon: Check },
+  SELF_ASSESSMENT: { title: "Self-Assessment", icon: FileText },
+  MANAGER_REVIEW: { title: "Manager Review", icon: User },
   PENDING_HR_APPROVAL: { title: "HR Approval", icon: Shield },
-  ACKNOWLEDGEMENT: { title: "Acknowledgement", icon: ThumbsUp },
+  ACKNOWLEDGEMENT: { title: "Acknowledgment", icon: ThumbsUp },
 } satisfies Record<
   (typeof WORKFLOW_STEPS)[number],
   { title: string; icon: LucideIcon }
@@ -26,13 +27,18 @@ const STEP_CONFIG = {
 export default function ProgressStepper({
   currentStatus,
 }: ProgressStepperProps) {
+  const normalizedStatus =
+    (currentStatus as string) === "ACKNOWLEDGMENT"
+      ? "ACKNOWLEDGEMENT"
+      : currentStatus;
   const currentIndex =
-    currentStatus === "COMPLETED"
+    normalizedStatus === "COMPLETED" ||
+    (normalizedStatus as string) === "ACKNOWLEDGED"
       ? WORKFLOW_STEPS.length
-      : WORKFLOW_STEPS.indexOf(currentStatus);
+      : WORKFLOW_STEPS.indexOf(normalizedStatus as (typeof WORKFLOW_STEPS)[number]);
 
   return (
-    <div className="rounded-xl border bg-white px-10 py-8">
+    <div className="rounded-xl border border-gray-200 bg-white px-8 py-6 shadow-xs">
       <div className="flex items-center justify-between">
         {WORKFLOW_STEPS.map((statusKey, index) => {
           const { title, icon: Icon } = STEP_CONFIG[statusKey];
@@ -43,16 +49,19 @@ export default function ProgressStepper({
             <div key={statusKey} className="flex flex-1 items-center">
               <div className="flex flex-col items-center">
                 <div
-                  className={`flex h-10 w-10 items-center justify-center rounded-full
-                  ${
+                  className={`flex h-10 w-10 items-center justify-center rounded-full ${
                     completed
-                      ? "bg-green-700 text-white"
+                      ? "bg-[#10753E] text-white"
                       : active
                         ? "bg-[#1677C8] text-white"
                         : "bg-gray-100 text-gray-400"
                   }`}
                 >
-                  <Icon size={18} />
+                  {completed ? (
+                    <Check size={18} strokeWidth={2.5} />
+                  ) : (
+                    <Icon size={18} />
+                  )}
                 </div>
 
                 <span
@@ -60,7 +69,7 @@ export default function ProgressStepper({
                     active
                       ? "text-[#1677C8]"
                       : completed
-                        ? "text-green-700"
+                        ? "text-[#10753E]"
                         : "text-gray-400"
                   }`}
                 >
@@ -71,7 +80,7 @@ export default function ProgressStepper({
               {index !== WORKFLOW_STEPS.length - 1 && (
                 <div
                   className={`mx-5 h-[2px] flex-1 ${
-                    completed ? "bg-green-700" : "bg-gray-200"
+                    completed ? "bg-[#10753E]" : "bg-gray-200"
                   }`}
                 />
               )}

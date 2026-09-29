@@ -1,5 +1,5 @@
 import axios from "axios";
-import api from "../axios";
+import api from "../api/axios";
 import { ActiveAppraisalCycle, ApplyForLeavePayload, ApplyForLeaveResponse, AppraisalCycle, AppraisalTemplate, ApproveLeaveRequestPayload, ApproveLeaveRequestResp, ArchiveAppraisalTemplateResponse, AttendanceDispute, ClockInPayload, ClockInResponse, ClockOutPayload, 
   ClockOutResponse, CreateAppraisalCyclePayload, CreateAppraisalCycleResponse, CreateAppraisalTemplatePayload, CreateAppraisalTemplateResponse, CreateEmployeeFiles, CreateEmployeePayload, 
   CreateEmployeeResponse, DailyAttendanceResponse, EmployeeListItem,

@@ -16,8 +16,7 @@ export default function QuarterTabs({
         <button
           key={quarter}
           onClick={() => onChange?.(quarter)}
-          className={`rounded-full px-4 py-1 text-xs font-semibold transition
-          ${quarter === active ? "bg-[#1677C8] text-white" : "bg-[#EEF2F7] text-slate-500"}`}
+          className={`rounded-full px-4 py-1 text-xs font-semibold transition ${quarter === active ? "bg-[#1677C8] text-white" : "bg-[#EEF2F7] text-slate-500"}`}
         >
           {quarter}
         </button>

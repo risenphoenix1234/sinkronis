@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { AlertTriangle } from "lucide-react";
-import { attendanceLog as fallbackLogs } from "@/data/employee/attendance";
 import DisputeModal from "./DisputeModal";
 import { AttendanceLogItem } from "@/lib/api/types/employeeTypes";
 
@@ -77,8 +76,7 @@ export default function AttendanceLogTable({
     status: string;
   } | null>(null);
 
-  const hasExplicitLogs = logs !== undefined;
-  const displayLogs = logs ?? fallbackLogs;
+  const displayLogs = logs ?? [];
 
   return (
     <>
@@ -115,46 +113,23 @@ export default function AttendanceLogTable({
                   </td>
                 </tr>
               ) : (
-                displayLogs.map((log, index) => {
-                  const isFallback = !hasExplicitLogs;
+                displayLogs.map((item, index) => {
                   const zebra = index % 2 === 1 ? "bg-[#F8F9FC]" : "bg-white";
 
-                  let dateDisplay = "";
-                  let clockInDisplay = "";
-                  let clockOutDisplay = "";
-                  let hoursDisplay = "";
-                  let status = "";
-                  let canDispute = false;
-
-                  if ("id" in log && "attendanceLog" in (log as unknown as Record<string, unknown>)) {
-                    // Safety check
-                  }
-
-                  if ("workedMinutes" in log) {
-                    // Real API AttendanceLogItem
-                    const item = log as AttendanceLogItem;
-                    dateDisplay = formatDateDisplay(item.date);
-                    clockInDisplay = formatTime(item.clockInAt);
-                    clockOutDisplay = formatTime(item.clockOutAt);
-                    hoursDisplay = formatHours(item.workedMinutes, item.active);
-                    status = item.status;
-                    canDispute = item.canRaiseDispute ?? (status === "LATE" || status === "ABSENT");
-                  } else {
-                    // Fallback Mock Log
-                    const fallback = log as typeof fallbackLogs[0];
-                    dateDisplay = fallback.date;
-                    clockInDisplay = fallback.clockIn;
-                    clockOutDisplay = fallback.clockOut;
-                    hoursDisplay = fallback.hoursWorked;
-                    status = fallback.status.toUpperCase();
-                    canDispute = fallback.status === "Late" || fallback.status === "Absent";
-                  }
-
+                  const dateDisplay = formatDateDisplay(item.date);
+                  const clockInDisplay = formatTime(item.clockIn);
+                  const clockOutDisplay = formatTime(item.clockOut);
+                  const hoursDisplay =
+                    typeof item.workHours === "number" && item.workHours > 0
+                      ? formatHours(Math.round(item.workHours * 60))
+                      : "—";
+                  const status = item.status;
+                  const canDispute = status === "LATE" || status === "ABSENT";
                   const statusText = formatStatusText(status);
 
                   return (
                     <tr
-                      key={"id" in log ? (log as AttendanceLogItem).id : index}
+                      key={item.id || index}
                       className={`transition-colors hover:bg-slate-50/80 ${zebra}`}
                     >
                       <td className="whitespace-nowrap px-6 py-4 font-medium text-slate-800">
@@ -189,7 +164,7 @@ export default function AttendanceLogTable({
                             type="button"
                             onClick={() =>
                               setDisputeTarget({
-                                id: "id" in log ? (log as AttendanceLogItem).id : undefined,
+                                id: item.id,
                                 date: dateDisplay,
                                 status: statusText,
                               })

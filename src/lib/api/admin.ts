@@ -1,4 +1,4 @@
-import api from "../axios";
+import api from "../api/axios";
 import {
   CreateGroupPayload,
   CreateInvitationPayload,
@@ -57,6 +57,16 @@ import {
   MyPlanPreviewResponse,
   CacVerificationPayload,
   CacVerificationResponse,
+  GeneralLocaleOptionsResponse,
+  GeneralLocaleSettings,
+  GeneralLocaleSettingsResponse,
+  GeneralBrandingSettingsResponse,
+  OrganizationDeletionRequestBody,
+  OrganizationDeletionRequestResponse,
+  OrganizationExportRequestResponse,
+  OrganizationExportStatusResponse,
+  UpdateBrandingBody,
+  UploadLogoResponse,
 } from "./types/admin.types";
 
 const BASE = "/admin";
@@ -448,6 +458,82 @@ export const downloadInvoicePdf2 = async (invoiceId: string) => {
 export const verifyCacNumber = async (payload: CacVerificationPayload) => {
   const { data } = await api.post<CacVerificationResponse>(
     `${BASE}/organization/cac-verification`,
+    payload
+  );
+  return data;
+};
+
+export const getLocaleSettings = async () => {
+  const { data } = await api.get<GeneralLocaleSettingsResponse>(
+    `${BASE}/general-settings/locale`
+  );
+  return data;
+};
+
+export const saveLocaleSettings = async (payload: GeneralLocaleSettings) => {
+  const { data } = await api.put<GeneralLocaleSettingsResponse>(
+    `${BASE}/general-settings/locale`,
+    payload
+  );
+  return data;
+};
+
+export const getLocaleOptions = async () => {
+  const { data } = await api.get<GeneralLocaleOptionsResponse>(
+    `${BASE}/general-settings/locale/options`
+  );
+  return data;
+};
+
+export const getBrandingSettings = async () => {
+  const { data } = await api.get<GeneralBrandingSettingsResponse>(`${BASE}/general-settings/branding`);
+  return data;
+};
+
+export const updateBrandingSettings = async (payload: UpdateBrandingBody) => {
+  const { data } = await api.patch<GeneralBrandingSettingsResponse>(
+    `${BASE}/general-settings/branding`,
+    payload
+  );
+  return data;
+};
+
+export const uploadBrandingLogo = async (file: File) => {
+  const formData = new FormData();
+  formData.append("logo", file);
+  const { data } = await api.post<UploadLogoResponse>(
+    `${BASE}/general-settings/branding/logo`,
+    formData,
+    { headers: { "Content-Type": "multipart/form-data" } }
+  );
+  return data;
+};
+
+export const requestOrganizationExport = async () => {
+  const { data } = await api.post<OrganizationExportRequestResponse>(
+    `${BASE}/general-settings/data-privacy/exports`
+  );
+  return data;
+};
+
+export const getOrganizationExportStatus = async (exportId: string) => {
+  const { data } = await api.get<OrganizationExportStatusResponse>(
+    `${BASE}/general-settings/data-privacy/exports/${exportId}`
+  );
+  return data;
+};
+
+export const downloadOrganizationExport = async (exportId: string) => {
+  const response = await api.get(
+    `${BASE}/general-settings/data-privacy/exports/${exportId}/download`,
+    { responseType: "blob" }
+  );
+  return response.data;
+};
+
+export const requestOrganizationDeletion = async (payload: OrganizationDeletionRequestBody) => {
+  const { data } = await api.post<OrganizationDeletionRequestResponse>(
+    `${BASE}/general-settings/data-privacy/deletion-request`,
     payload
   );
   return data;

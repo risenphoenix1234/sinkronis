@@ -32,9 +32,7 @@ export default function AttendanceSummary() {
             <p className="text-xs text-gray-400 mb-1">{label}</p>
             <p className="text-2xl font-bold text-gray-900">{value}</p>
           </div>
-          <div
-            className={`w-9 h-9  ${color} flex items-center justify-center`}
-          >
+          <div className={`w-9 h-9  ${color} flex items-center justify-center`}>
             <span className={`w-3 h-3 rounded-2xl ${dot}`} />
           </div>
         </div>

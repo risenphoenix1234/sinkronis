@@ -2,25 +2,76 @@
 
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
-import TransactionDetail from "@/components/payroll/wallet/TransactionDetail";
-import { walletLedger } from "@/types/payroll/wallet-data";
-import { useWallet } from "@/context/payroll/WalletContext";
-import { toTransactionDetail } from "@/lib/wallet-transaction";
+import TransactionDetail, {
+  type Transaction,
+} from "@/components/payroll/wallet/TransactionDetail";
+import {
+  apiTxToTransactionDetail,
+} from "@/lib/wallet-transaction";
+import { getPayrollWalletTransaction } from "@/lib/api/payroll";
 
 export default function WalletTransactionDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams();
+  const id =
+    typeof params?.id === "string"
+      ? params.id
+      : Array.isArray(params?.id)
+      ? params.id[0]
+      : "";
   const router = useRouter();
-  const { transactions } = useWallet();
 
-  const ledger = useMemo(() => walletLedger(transactions), [transactions]);
-  const entry = ledger.find((item) => item.id === id);
+  const [transaction, setTransaction] = useState<Transaction | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!entry) {
+  useEffect(() => {
+    if (!id) return;
+    let isCancelled = false;
+
+    async function fetchDetail() {
+      setLoading(true);
+      try {
+        const res = await getPayrollWalletTransaction(id);
+        if (!isCancelled) {
+          if (res?.data) {
+            setTransaction(apiTxToTransactionDetail(res.data));
+          } else {
+            setTransaction(null);
+          }
+        }
+      } catch {
+        if (!isCancelled) {
+          setTransaction(null);
+        }
+      } finally {
+        if (!isCancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchDetail();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [id]);
+
+  if (loading) {
     return (
-      <main className="flex min-h-screen flex-col items-enter justify-center gap-3 bg-[#f8fafc] px-4 text-center">
+      <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[#f8fafc] px-4 text-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[#1683d8]" />
+        <p className="text-[14px] text-[#8994a3]">Loading transaction details...</p>
+      </main>
+    );
+  }
+
+  if (!transaction) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[#f8fafc] px-4 text-center">
         <p className="text-[15px] font-semibold text-[#344054]">
           Transaction not found
         </p>
@@ -40,7 +91,7 @@ export default function WalletTransactionDetailPage() {
 
   return (
     <TransactionDetail
-      transaction={toTransactionDetail(entry)}
+      transaction={transaction}
       onBack={() => router.push("/payroll/wallets")}
     />
   );

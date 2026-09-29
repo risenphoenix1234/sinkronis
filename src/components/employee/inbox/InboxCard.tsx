@@ -93,8 +93,8 @@ export default function InboxCard({ item }: Props) {
   const displayDate = item.dueDate
     ? `Due: ${formatDate(item.dueDate)}`
     : item.eventDate
-    ? formatDate(item.eventDate)
-    : formatDate(item.createdAt);
+      ? formatDate(item.eventDate)
+      : formatDate(item.createdAt);
 
   const targetHref = getTargetHref(item.navigation?.target);
   const isNavAvailable = item.navigation?.available ?? true;

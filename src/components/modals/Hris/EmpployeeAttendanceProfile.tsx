@@ -3,22 +3,27 @@
 import { Attendance } from "@/types/hris/attendance";
 
 interface EmployeeProfileProps {
-  isOpen: boolean;
-  onClose: () => void;
-  employee: Attendance | null;
+  stats?: {
+    onTime?: number;
+    late?: number;
+    absent?: number;
+    onLeave?: number;
+    noClockOut?: number;
+    overtime?: number;
+  };
 }
 
-const EmpployeeAttendanceProfile = () => {
+const EmpployeeAttendanceProfile = ({ stats }: EmployeeProfileProps) => {
   return (
     <div className="">
       <div className="grid grid-cols-6 gap-4 mt-5">
         {[
-          ["On Time", 5],
-          ["Late", 1],
-          ["Absent", 1],
-          ["On Leave", 2],
-          ["No Clock-out", 1],
-          ["Overtime", 1],
+          ["On Time", stats?.onTime ?? 0],
+          ["Late", stats?.late ?? 0],
+          ["Absent", stats?.absent ?? 0],
+          ["On Leave", stats?.onLeave ?? 0],
+          ["No Clock-out", stats?.noClockOut ?? 0],
+          ["Overtime", stats?.overtime ?? 0],
         ].map(([title, value]) => (
           <div key={title} className="bg-white border rounded-lg p-4">
             <p className="text-xs text-gray-500">{title}</p>

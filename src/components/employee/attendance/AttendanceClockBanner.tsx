@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { toast } from "react-toastify";
-import { clockIn as apiClockIn, clockOut as apiClockOut } from "@/lib/api/employee";
+import {
+  clockIn as apiClockIn,
+  clockOut as apiClockOut,
+} from "@/lib/api/employee";
 import { AttendanceTodayData } from "@/lib/api/types/employeeTypes";
 
 interface AttendanceClockBannerProps {
@@ -38,9 +41,7 @@ export default function AttendanceClockBanner({
 }: AttendanceClockBannerProps) {
   const [loading, setLoading] = useState(false);
 
-  const isClockedIn = today
-    ? today.clockState === "CLOCKED_IN"
-    : true; // default demo fallback
+  const isClockedIn = today ? today.clockState === "CLOCKED_IN" : true; // default demo fallback
 
   const canAction = today
     ? isClockedIn
@@ -72,14 +73,14 @@ export default function AttendanceClockBanner({
   const titleText = isClockedIn
     ? `Currently Clocked In · since ${formatTime(today?.clockInAt)}`
     : today?.clockState === "CLOCKED_OUT"
-    ? `Clocked Out · at ${formatTime(today?.clockOutAt)}`
-    : "Not clocked in yet";
+      ? `Clocked Out · at ${formatTime(today?.clockOutAt)}`
+      : "Not clocked in yet";
 
   const subtitleText = isClockedIn
     ? `Today's summary: ${formatMinutes(today?.workedMinutes)} worked so far`
     : today?.clockState === "CLOCKED_OUT"
-    ? `Today's summary: ${formatMinutes(today?.workedMinutes)} worked`
-    : "Start your day when you're ready";
+      ? `Today's summary: ${formatMinutes(today?.workedMinutes)} worked`
+      : "Start your day when you're ready";
 
   return (
     <div className="flex flex-col justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm sm:flex-row sm:items-center">
@@ -94,11 +95,7 @@ export default function AttendanceClockBanner({
         onClick={handleToggle}
         className="inline-flex items-center justify-center rounded-xl bg-[#1976D2] px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-[#1565C0] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {loading
-          ? "Processing..."
-          : isClockedIn
-          ? "Clock Out"
-          : "Clock In"}
+        {loading ? "Processing..." : isClockedIn ? "Clock Out" : "Clock In"}
       </button>
     </div>
   );

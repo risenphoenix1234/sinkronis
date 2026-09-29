@@ -3,19 +3,21 @@
 
 import { useEffect, useState } from "react";
 import { FiX } from "react-icons/fi";
-import { InvoiceTemplate, PaymentTerm, paymentTermOptions } from "@/lib/settings-data";
+import { InvoiceTemplate, CreateInvoiceTemplatePayload } from "@/lib/api/types/accounting.types";
 
 type InvoiceTemplateModalProps = {
   open: boolean;
   mode: "edit" | "create";
   template: InvoiceTemplate | null;
   onClose: () => void;
-  onSave: (data: Omit<InvoiceTemplate, "id" | "isDefault">, id?: string) => void;
+  onSave: (data: CreateInvoiceTemplatePayload, id?: string) => void;
 };
+
+const paymentTermOptions = ["Net 7", "Net 14", "Net 30", "Due on Receipt"];
 
 const emptyForm = {
   name: "",
-  paymentTerm: "Net 14" as PaymentTerm,
+  paymentTerms: "Net 14",
   headerNote: "",
   footerNote: "",
 };
@@ -33,9 +35,9 @@ export default function InvoiceTemplateModal({
     if (mode === "edit" && template) {
       setForm({
         name: template.name,
-        paymentTerm: template.paymentTerm,
-        headerNote: template.headerNote,
-        footerNote: template.footerNote,
+        paymentTerms: template.paymentTerms ?? "Net 14",
+        headerNote: template.headerNote ?? "",
+        footerNote: template.footerNote ?? "",
       });
     } else {
       setForm(emptyForm);
@@ -53,7 +55,6 @@ export default function InvoiceTemplateModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
       <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
-        {/* Header */}
         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
           <div>
             <h2 className="text-base font-semibold text-slate-900">{title}</h2>
@@ -64,7 +65,6 @@ export default function InvoiceTemplateModal({
           </button>
         </div>
 
-        {/* Form */}
         <div className="space-y-4 p-6">
           <div>
             <label className="mb-1 block text-xs text-slate-500">Template Name</label>
@@ -80,8 +80,8 @@ export default function InvoiceTemplateModal({
           <div>
             <label className="mb-1 block text-xs text-slate-500">Payment Terms</label>
             <select
-              value={form.paymentTerm}
-              onChange={(e) => setForm((f) => ({ ...f, paymentTerm: e.target.value as PaymentTerm }))}
+              value={form.paymentTerms}
+              onChange={(e) => setForm((f) => ({ ...f, paymentTerms: e.target.value }))}
               className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-600 outline-none focus:border-sky-400"
             >
               {paymentTermOptions.map((term) => (
@@ -115,7 +115,6 @@ export default function InvoiceTemplateModal({
           </div>
         </div>
 
-        {/* Footer */}
         <div className="flex items-center gap-3 border-t border-slate-100 px-6 py-4">
           <button
             onClick={onClose}

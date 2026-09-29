@@ -3,11 +3,12 @@
 
 import { useState } from "react";
 import { FiX, FiAlertTriangle } from "react-icons/fi";
+import { OrganizationDeletionRequestBody } from "@/lib/api/types/admin.types";
 
 type RequestAccountDeletionModalProps = {
   open: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (payload: OrganizationDeletionRequestBody) => void | Promise<void>;
 };
 
 const CONFIRM_PHRASE = "DELETE";
@@ -18,20 +19,36 @@ export default function RequestAccountDeletionModal({
   onConfirm,
 }: RequestAccountDeletionModalProps) {
   const [confirmText, setConfirmText] = useState("");
+  const [password, setPassword] = useState("");
+  const [reason, setReason] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   if (!open) return null;
 
-  const isValid = confirmText === CONFIRM_PHRASE;
+  const isValid = confirmText === CONFIRM_PHRASE && password.length > 0;
 
-  const handleClose = () => {
+  const resetAndClose = () => {
     setConfirmText("");
+    setPassword("");
+    setReason("");
     onClose();
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!isValid) return;
-    setConfirmText("");
-    onConfirm();
+    setSubmitting(true);
+    try {
+      await onConfirm({
+        confirmationPhrase: confirmText,
+        password,
+        ...(reason.trim() ? { reason: reason.trim() } : {}),
+      });
+      setConfirmText("");
+      setPassword("");
+      setReason("");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -49,37 +66,61 @@ export default function RequestAccountDeletionModal({
               </p>
             </div>
           </div>
-          <button onClick={handleClose} className="text-slate-400 hover:text-slate-600">
+          <button onClick={resetAndClose} className="text-slate-400 hover:text-slate-600">
             <FiX size={18} />
           </button>
         </div>
 
-        <div className="px-6 pb-2">
-          <label className="mb-1 block text-xs text-slate-500">
-            Type <span className="font-mono font-semibold text-slate-700">{CONFIRM_PHRASE}</span> to confirm
-          </label>
-          <input
-            type="text"
-            value={confirmText}
-            onChange={(e) => setConfirmText(e.target.value)}
-            placeholder={CONFIRM_PHRASE}
-            className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-rose-400"
-          />
+        <div className="space-y-3 px-6 pb-2">
+          <div>
+            <label className="mb-1 block text-xs text-slate-500">
+              Type <span className="font-mono font-semibold text-slate-700">{CONFIRM_PHRASE}</span> to confirm
+            </label>
+            <input
+              type="text"
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder={CONFIRM_PHRASE}
+              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-rose-400"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs text-slate-500">Confirm your password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-rose-400"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs text-slate-500">Reason (optional)</label>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={2}
+              placeholder="Let us know why you're leaving"
+              className="w-full resize-none rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-rose-400"
+            />
+          </div>
         </div>
 
         <div className="flex items-center gap-3 px-6 py-5">
           <button
-            onClick={handleClose}
+            onClick={resetAndClose}
             className="flex-1 rounded-md border border-slate-200 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50"
           >
             Cancel
           </button>
           <button
             onClick={handleConfirm}
-            disabled={!isValid}
+            disabled={!isValid || submitting}
             className="flex-1 rounded-md bg-rose-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-300"
           >
-            Request Deletion
+            {submitting ? "Submitting…" : "Request Deletion"}
           </button>
         </div>
       </div>

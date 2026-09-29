@@ -1,43 +1,90 @@
-// src/app/accounting/reports/clients/[id]/page.tsx
+"use client";
 
-import { notFound } from "next/navigation";
-import ReportBreadcrumb from "@/components/reports/ReportBreadcrumb";
-import EntityDetailHeader from "@/components/reports/EntityDetailHeader";
-import InvoiceReportTable from "@/components/reports/InvoiceReportTable";
-import ExportActions from "@/components/reports/ExportActions";
-import { getEntityDetail } from "@/lib/reports-data";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { FiArrowLeft, FiBriefcase } from "react-icons/fi";
+import EntityHeader from "@/components/EntityHeader";
+import InvoiceTable from "@/components/InvoiceTable";
+import { getReports, exportReportsCsv, exportReportsPdf } from "@/lib/api/accounting";
+import { EntityDetail } from "@/lib/api/types/accounting.types";
 
-type ClientReportPageProps = {
-  params: Promise<{ id: string }>;
-};
+export default function ClientDetailPage() {
+  const params = useParams<{ id: string }>();
+  const [detail, setDetail] = useState<EntityDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export default async function ClientReportPage({
-  params,
-}: ClientReportPageProps) {
-  const { id } = await params;
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    getReports()
+      .then((res) => {
+        if (cancelled) return;
+        const invoices = (res.data.invoices ?? []).filter((inv) => inv.clientId === params.id);
+        if (invoices.length === 0) {
+          setError("No invoices found for this client.");
+          setDetail(null);
+        } else {
+          setDetail({ id: params.id, name: invoices[0].client.name, invoices });
+        }
+      })
+      .catch((err) => { if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load client"); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [params.id]);
 
-  // Swap for a real API call later, e.g. fetch(`/api/clients/${id}/report`)
-  const result = await getEntityDetail("client", id);
-  if (!result) notFound();
-
-  const { entity, invoices } = result;
+  async function handleExport(kind: "csv" | "pdf") {
+    try {
+      const blob = await (kind === "csv" ? exportReportsCsv() : exportReportsPdf());
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `client-report.${kind}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      setError(`Failed to export ${kind.toUpperCase()}`);
+    }
+  }
 
   return (
-    <section className="space-y-4 p-6">
-      <ReportBreadcrumb
-        backHref="/accounting/reports"
-        crumbs={[
-          { label: "Reports", href: "/accounting/reports" },
-          { label: "Clients", href: "/accounting/reports" },
-          { label: entity.name },
-        ]}
-      />
+    <section className="space-y-6 p-6">
+      <div className="flex items-center gap-1.5 text-sm text-slate-400">
+        <Link href="/accounting/reports" className="hover:text-slate-600">Reports</Link>
+        <span>/</span>
+        <Link href="/accounting/reports" className="hover:text-slate-600">Clients</Link>
+        <span>/</span>
+        <span className="text-slate-600">{detail?.name ?? "Details"}</span>
+      </div>
 
-      <EntityDetailHeader entity={entity} />
+      <Link href="/accounting/reports" className="flex w-fit items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:bg-slate-50">
+        <FiArrowLeft size={14} /> Back
+      </Link>
 
-      <InvoiceReportTable invoices={invoices} showClient={false} />
+      {error && (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-600">
+          Couldn&apos;t load this client: {error}
+        </div>
+      )}
 
-      <ExportActions label={`Export ${invoices.length} invoices as:`} />
+      {loading && <p className="text-center text-sm text-slate-400">Loading client…</p>}
+
+      {detail && !loading && (
+        <>
+          <EntityHeader detail={detail} icon={<FiBriefcase size={18} />} onDownloadReport={() => handleExport("pdf")} />
+          <InvoiceTable
+            invoices={detail.invoices}
+            linkAgents
+            linkProjects
+            onDownloadCsv={() => handleExport("csv")}
+            onDownloadPdf={() => handleExport("pdf")}
+          />
+        </>
+      )}
     </section>
   );
 }
