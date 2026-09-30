@@ -58,22 +58,33 @@ const sidebarIcons = {
   settings: FiSettings,
 
   // HRIS
+  overview: FiGrid,
   attendance: FiCalendar,
   leave: FiCalendar,
   appraisal: FiBarChart2,
   conduct: FiUsers,
+  "hris-employee": FiUsers,
+  "hris-employees": FiUsers,
 
   // PAYROLL
   "payroll-dashboard": FiGrid,
   employee: FiUsers,
+  employees: FiUsers,
   payee: FiUsers,
+  payees: FiUsers,
   payruns: FiPlayCircle,
+  "pay-runs": FiPlayCircle,
+  payslip: FiFileMinus,
   payslips: FiFileMinus,
   deduction: FiMinus,
+  deductions: FiMinus,
+  wallet: FiDollarSign,
+  wallets: FiDollarSign,
   "payroll-wallet": FiDollarSign,
   "payroll-tax": FiDollarSign,
   pension: FiBarChart2,
   "payroll-reports": FiSliders,
+  "payroll-settings": FiSettings,
 
   //EMPLOYEE
   "employee-dashboard": FiGrid,
@@ -94,7 +105,6 @@ const sidebarIcons = {
   reminders: FiCalendar,
   reports: FiPieChart,
   tax: FiFileText,
-  wallet: FiDollarSign,
 
   // Tenant Admin
   organisation: FiBriefcase,
@@ -260,7 +270,7 @@ export default function Sidebar({ title, items }: SidebarProps) {
                 (c) => pathname === c.href || pathname.startsWith(`${c.href}/`),
               );
 
-            const Icon = item.icon ? sidebarIcons[item.icon] : null;
+            const Icon = (item.icon && sidebarIcons[item.icon]) ? sidebarIcons[item.icon] : FiGrid;
 
             return (
               <div key={item.label}>
@@ -280,7 +290,7 @@ export default function Sidebar({ title, items }: SidebarProps) {
                   }`}
                 >
                   <span className="flex items-center gap-3">
-                    {Icon && <Icon size={17} strokeWidth={1.8} />}
+                    <Icon size={17} strokeWidth={1.8} />
 
                     <span>{item.label}</span>
                   </span>
@@ -309,7 +319,7 @@ export default function Sidebar({ title, items }: SidebarProps) {
             ? pathname === item.href || pathname.startsWith(`${item.href}/`)
             : false;
 
-          const Icon = item.icon ? sidebarIcons[item.icon] : null;
+          const Icon = (item.icon && sidebarIcons[item.icon]) ? sidebarIcons[item.icon] : FiGrid;
 
           return (
             <Link
@@ -321,7 +331,7 @@ export default function Sidebar({ title, items }: SidebarProps) {
                   : "text-slate-700 hover:bg-slate-100"
               }`}
             >
-              {Icon && <Icon size={17} strokeWidth={1.8} />}
+              <Icon size={17} strokeWidth={1.8} />
 
               <span>{item.label}</span>
             </Link>

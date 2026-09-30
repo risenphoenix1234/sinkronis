@@ -1,40 +1,77 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
-
-import { Payee, PayeeStatus, PayeeType } from "@/types/payroll/payee-data";
-
-import { payees as initialPayees } from "@/data/payroll/payee-data";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { UnifiedPayee } from "@/types/payroll/unified-payee";
+import {
+  loadUnifiedPayees,
+  saveUnifiedPayees,
+} from "@/data/payroll/unified-payee-data";
 
 type PayeeContextType = {
-  payees: Payee[];
-  addPayee: (payee: Payee) => void;
-  updatePayee: (id: string, data: Partial<Payee>) => void;
+  payees: UnifiedPayee[];
+  addPayee: (payee: UnifiedPayee) => void;
+  addPayees: (newPayees: UnifiedPayee[]) => void;
+  updatePayee: (id: string, data: Partial<UnifiedPayee>) => void;
   deletePayee: (id: string) => void;
-  getPayeeById: (id: string) => Payee | undefined;
+  toggleOnPayroll: (id: string) => void;
+  getPayeeById: (id: string) => UnifiedPayee | undefined;
+  resetToDefault: () => void;
 };
 
 const PayeeContext = createContext<PayeeContextType | undefined>(undefined);
 
 export function PayeeProvider({ children }: { children: ReactNode }) {
-  const [payees, setPayees] = useState<Payee[]>(initialPayees);
+  const [payees, setPayees] = useState<UnifiedPayee[]>(() => {
+    return loadUnifiedPayees();
+  });
 
-  const addPayee = (payee: Payee) => {
+  // Keep in sync with local storage
+  useEffect(() => {
+    saveUnifiedPayees(payees);
+  }, [payees]);
+
+  const addPayee = (payee: UnifiedPayee) => {
     setPayees((prev) => [payee, ...prev]);
   };
 
-  const updatePayee = (id: string, data: Partial<Payee>) => {
+  const addPayees = (newPayees: UnifiedPayee[]) => {
+    setPayees((prev) => [...newPayees, ...prev]);
+  };
+
+  const updatePayee = (id: string, data: Partial<UnifiedPayee>) => {
     setPayees((prev) =>
-      prev.map((payee) => (payee.id === id ? { ...payee, ...data } : payee)),
+      prev.map((item) => (item.id === id ? { ...item, ...data } : item)),
     );
   };
 
   const deletePayee = (id: string) => {
-    setPayees((prev) => prev.filter((payee) => payee.id !== id));
+    setPayees((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const toggleOnPayroll = (id: string) => {
+    setPayees((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, onPayroll: !item.onPayroll } : item,
+      ),
+    );
   };
 
   const getPayeeById = (id: string) => {
-    return payees.find((payee) => payee.id === id);
+    return payees.find((item) => item.id === id);
+  };
+
+  const resetToDefault = () => {
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("sinkronis_payroll_unified_payees_v1");
+    }
+    const fresh = loadUnifiedPayees();
+    setPayees(fresh);
   };
 
   return (
@@ -42,9 +79,12 @@ export function PayeeProvider({ children }: { children: ReactNode }) {
       value={{
         payees,
         addPayee,
+        addPayees,
         updatePayee,
         deletePayee,
+        toggleOnPayroll,
         getPayeeById,
+        resetToDefault,
       }}
     >
       {children}

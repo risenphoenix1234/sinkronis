@@ -10,14 +10,23 @@ import {
   AlertCircle,
   Clock,
   CheckCircle2,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { naira } from "@/types/payroll/payee-data";
+import Button from "@/components/ui/Button";
 import {
   getPayRunDetail,
   approvePayRun,
   exportPayRunCsv,
 } from "@/lib/api/payroll";
+import {
+  getClientPayRunDetail,
+  updateClientPayRunStatus,
+  removePayeeFromClientPayRun,
+} from "@/data/payroll/pay-run-store";
+import AddPayeesToRunModal from "@/components/payroll/pay-run/AddPayeesToRunModal";
 import {
   PayRunDetail,
   PayRunStatus,
@@ -98,6 +107,7 @@ export default function PayRunDetailPage() {
   const [approveError, setApproveError] = useState<string | null>(null);
 
   const [exporting, setExporting] = useState(false);
+  const [addPayeesModalOpen, setAddPayeesModalOpen] = useState(false);
 
   // Debounce search
   useEffect(() => {
@@ -113,6 +123,27 @@ export default function PayRunDetailPage() {
     setLoading(true);
     setError(null);
     setNotFound(false);
+
+    // Check client store first
+    const clientRun = getClientPayRunDetail(payRunId);
+    if (clientRun) {
+      let filteredSlips = clientRun.payslips;
+      if (debouncedSearch) {
+        const q = debouncedSearch.toLowerCase();
+        filteredSlips = filteredSlips.filter(
+          (s) =>
+            s.employeeName.toLowerCase().includes(q) ||
+            s.employeeCode.toLowerCase().includes(q) ||
+            s.departmentName.toLowerCase().includes(q) ||
+            s.jobTitle.toLowerCase().includes(q),
+        );
+      }
+      setRun({ ...clientRun, payslips: filteredSlips });
+      setPagination({ page: 1, limit: 100, total: filteredSlips.length, totalPages: 1 });
+      setLoading(false);
+      return;
+    }
+
     try {
       const result = await getPayRunDetail(payRunId, {
         page: 1,
@@ -147,6 +178,17 @@ export default function PayRunDetailPage() {
     if (!payRunId || approving) return;
     setApproving(true);
     setApproveError(null);
+
+    const clientRun = getClientPayRunDetail(payRunId);
+    if (clientRun) {
+      updateClientPayRunStatus(payRunId, "APPROVED");
+      toast.success("Payroll approved successfully!");
+      setApproveModalOpen(false);
+      setApproving(false);
+      fetchDetail();
+      return;
+    }
+
     try {
       const res = await approvePayRun(payRunId);
       toast.success(res.message || "Payroll approved successfully");
@@ -169,6 +211,52 @@ export default function PayRunDetailPage() {
   const handleExportCsv = async () => {
     if (!payRunId || exporting) return;
     setExporting(true);
+
+    if (run && run.payslips && run.payslips.length > 0) {
+      const headers = [
+        "Payee ID",
+        "Payee Name",
+        "Role / Classification",
+        "Department",
+        "Gross (₦)",
+        "PAYE (₦)",
+        "Pension (₦)",
+        "NHF (₦)",
+        "Net Pay (₦)",
+        "Bank Name",
+        "Bank Account",
+        "Status",
+      ];
+      const rows = run.payslips.map((ps) => [
+        ps.employeeCode,
+        `"${ps.employeeName}"`,
+        `"${ps.jobTitle}"`,
+        `"${ps.departmentName}"`,
+        ps.gross,
+        ps.paye,
+        ps.pension,
+        ps.nhf,
+        ps.netPay,
+        `"${ps.bankName}"`,
+        `"${ps.bankAccount}"`,
+        ps.status,
+      ]);
+
+      const csvContent =
+        "data:text/csv;charset=utf-8," +
+        [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.href = encodedUri;
+      link.download = `pay-run-${run.period.replace(/\s+/g, "_")}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Pay run exported successfully");
+      setExporting(false);
+      return;
+    }
+
     try {
       const blob = await exportPayRunCsv(payRunId);
       const url = window.URL.createObjectURL(blob);
@@ -209,6 +297,17 @@ export default function PayRunDetailPage() {
       toast.error(msg);
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleRemovePayee = (employeeId: string, employeeName: string) => {
+    if (!payRunId) return;
+    const updated = removePayeeFromClientPayRun(payRunId, employeeId);
+    if (updated) {
+      toast.success(`${employeeName} removed from pay run`);
+      fetchDetail();
+    } else {
+      toast.error("Could not remove payee from this pay run.");
     }
   };
 
@@ -279,6 +378,10 @@ export default function PayRunDetailPage() {
 
   const isProcessing = run.status === "PROCESSING";
   const isFailed = run.status === "FAILED";
+  const isEditable =
+    run.status === "PENDING_APPROVAL" ||
+    run.status === "DRAFT" ||
+    run.status === "PROCESSING";
 
   const timeline = [
     `${run.from} – ${run.to}`,
@@ -407,41 +510,56 @@ export default function PayRunDetailPage() {
       <div className="mt-5 rounded-lg border border-[#e5e7eb] bg-white">
         <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-5">
           <h2 className="text-base font-bold text-[#1f2937]">
-            Employee Payslips ({total})
+            Payee Payslips ({total})
           </h2>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search employee or dept..."
-            className="h-10 w-[195px] rounded-md border border-[#e5e7eb] bg-white px-4 text-sm text-[#374151] outline-none placeholder:text-[#9ca3af] focus:border-[#1683d8]"
-          />
+          <div className="flex items-center gap-3">
+            {isEditable && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setAddPayeesModalOpen(true)}
+                className="gap-1.5"
+              >
+                <Plus size={14} />
+                Add Payees to Run
+              </Button>
+            )}
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search payee or role..."
+              className="h-9 w-[210px] rounded-md border border-[#e5e7eb] bg-white px-3 text-xs text-[#374151] outline-none placeholder:text-[#9ca3af] focus:border-[#1683d8]"
+            />
+          </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1050px] text-left text-sm">
             <thead>
               <tr className="border-b border-[#e5e7eb] text-xs text-[#6b7280]">
-                <th className="px-6 py-3 font-medium">Employee</th>
-                <th className="px-4 py-3 font-medium">Dept</th>
+                <th className="px-6 py-3 font-medium">Payee & Role</th>
                 <th className="px-4 py-3 font-medium">Gross</th>
-                <th className="px-4 py-3 font-medium">PAYE</th>
+                <th className="px-4 py-3 font-medium">PAYE / WHT</th>
                 <th className="px-4 py-3 font-medium">Pension</th>
                 <th className="px-4 py-3 font-medium">NHF</th>
                 <th className="px-4 py-3 font-medium">Net Pay</th>
-                <th className="px-4 py-3 font-medium">Bank</th>
+                <th className="px-4 py-3 font-medium">Bank Details</th>
                 <th className="px-4 py-3 font-medium">Status</th>
+                {isEditable && (
+                  <th className="px-4 py-3 font-medium text-right">Actions</th>
+                )}
               </tr>
             </thead>
             <tbody>
               {payslips.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={9}
+                    colSpan={isEditable ? 9 : 8}
                     className="px-6 py-10 text-center text-sm text-[#9ca3af]"
                   >
                     {isProcessing
                       ? "Payslips will appear as processing completes."
-                      : "No payslips found."}
+                      : "No payslips found in this pay run."}
                   </td>
                 </tr>
               ) : (
@@ -471,9 +589,6 @@ export default function PayRunDetailPage() {
                           </p>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-4 py-3.5 text-[#6b7280]">
-                      {slip.departmentName}
                     </td>
                     <td className="px-4 py-3.5 font-semibold text-[#1f2937]">
                       {naira(slip.gross)}
@@ -505,6 +620,20 @@ export default function PayRunDetailPage() {
                         {payslipStatusLabels[slip.status]}
                       </span>
                     </td>
+                    {isEditable && (
+                      <td className="px-4 py-3.5 text-right">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleRemovePayee(slip.employeeId, slip.employeeName)
+                          }
+                          className="p-1.5 rounded text-[#9ca3af] hover:text-[#b91c1c] hover:bg-[#fee2e2] transition"
+                          title={`Remove ${slip.employeeName} from this pay run`}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}
@@ -602,6 +731,17 @@ export default function PayRunDetailPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Add Payees to Pay Run Modal */}
+      {addPayeesModalOpen && run && (
+        <AddPayeesToRunModal
+          open={addPayeesModalOpen}
+          onClose={() => setAddPayeesModalOpen(false)}
+          runId={payRunId}
+          existingPayeeIds={run.payslips.map((p) => p.employeeId)}
+          onSuccess={fetchDetail}
+        />
       )}
     </div>
   );

@@ -2,10 +2,11 @@
 "use client";
 
 import { Payee } from "@/types/payroll/payee-data";
+import { UnifiedPayee } from "@/types/payroll/unified-payee";
 
 type RemovePayeeModalProps = {
   open: boolean;
-  payee: Payee | null;
+  payee: UnifiedPayee | Payee | { id: string; name: string } | null;
   onCancel: () => void;
   onRemove: () => void;
 };

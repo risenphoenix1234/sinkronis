@@ -13,11 +13,6 @@ const sidebarItems: SidebarItem[] = [
     icon: "payroll-dashboard",
   },
   {
-    label: "Employees",
-    href: "/payroll/employees",
-    icon: "employees",
-  },
-  {
     label: "Payees",
     href: "/payroll/payees",
     icon: "payees",

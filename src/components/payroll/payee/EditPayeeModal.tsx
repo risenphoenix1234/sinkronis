@@ -2,118 +2,86 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Loader2, ChevronDown } from "lucide-react";
-import { toast } from "react-toastify";
+import { X, Calculator } from "lucide-react";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
 import {
-  updatePayee,
-  PayeeDetail,
-  PayeeListItem,
-  PayeeApiType,
-  PayeeApiStatus,
-  UpdatePayeeBody,
-} from "@/lib/api/payroll";
-import { normalizePhoneNumber } from "@/utils/phoneField";
-
-export type EditPayeeFormData = {
-  fullName: string;
-  type: string;
-  status: string;
-  email: string;
-  phone: string;
-  bank: string;
-  accountNumber: string;
-  accountName: string;
-  tin: string;
-  monthlyAmount: string;
-  subjectToPaye: boolean;
-};
+  UnifiedPayee,
+  PayeeType,
+  PayeeStatus,
+  EmploymentType,
+  formatNaira,
+  calculatePayeeDeductions,
+} from "@/types/payroll/unified-payee";
 
 type EditPayeeModalProps = {
   open: boolean;
-  payee: PayeeDetail | PayeeListItem | null;
+  payee: UnifiedPayee | null;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSave?: (updated: UnifiedPayee) => void;
 };
-
-const initialFormData: EditPayeeFormData = {
-  fullName: "",
-  type: "Contractor",
-  status: "Active",
-  email: "",
-  phone: "",
-  bank: "",
-  accountNumber: "",
-  accountName: "",
-  tin: "",
-  monthlyAmount: "0",
-  subjectToPaye: false,
-};
-
-function formatTypeToSelect(type?: string): string {
-  switch (type) {
-    case "DIRECTOR":
-      return "Director";
-    case "VENDOR":
-      return "Vendor";
-    case "BOARD_MEMBER":
-      return "Board Member";
-    case "CONTRACTOR":
-    default:
-      return "Contractor";
-  }
-}
-
-function formatStatusToSelect(status?: string): string {
-  return status === "INACTIVE" ? "Inactive" : "Active";
-}
 
 export default function EditPayeeModal({
   open,
   payee,
   onClose,
-  onSuccess,
+  onSave,
 }: EditPayeeModalProps) {
-  const [formData, setFormData] = useState<EditPayeeFormData>(initialFormData);
-  const [submitting, setSubmitting] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [formData, setFormData] = useState({
+    name: "",
+    type: "Employee" as PayeeType,
+    role: "",
+    department: "",
+    employmentType: "Full-time" as EmploymentType,
+    status: "Active" as PayeeStatus,
+    onPayroll: true,
+    email: "",
+    phone: "",
+    stateOfResidence: "Lagos",
+    bankName: "",
+    bankAccount: "",
+    accountName: "",
+    monthlyAmount: "0",
+    basicSalary: "0",
+    housingAllowance: "0",
+    transportAllowance: "0",
+    otherAllowance: "0",
+    taxable: true,
+    tin: "",
+    pensionPin: "",
+    pfaName: "",
+    nhfNumber: "",
+  });
 
   useEffect(() => {
-    if (open && payee) {
-      const bankName = payee.bank?.bankName || "";
-      const accountNumber = payee.bank?.accountNumber || "";
-      const accountName =
-        (payee.bank && "accountName" in payee.bank
-          ? (payee.bank as { accountName?: string | null }).accountName
-          : "") || "";
-      const tin = ("tin" in payee ? (payee as PayeeDetail).tin : "") || "";
-
+    if (payee) {
       setFormData({
-        fullName: payee.name || "",
-        type: formatTypeToSelect(payee.type),
-        status: formatStatusToSelect(payee.status),
+        name: payee.name || "",
+        type: payee.type || "Employee",
+        role: payee.role || "",
+        department: payee.department || "Operations",
+        employmentType: payee.employmentType || "Full-time",
+        status: payee.status || "Active",
+        onPayroll: payee.onPayroll ?? true,
         email: payee.email || "",
         phone: payee.phone || "",
-        bank: bankName,
-        accountNumber: accountNumber,
-        accountName: accountName,
-        tin: tin,
-        monthlyAmount: String(payee.monthlyAmount ?? 0),
-        subjectToPaye: Boolean(payee.isTaxable),
+        stateOfResidence: payee.stateOfResidence || "Lagos",
+        bankName: payee.bankName || "",
+        bankAccount: payee.bankAccount || "",
+        accountName: payee.accountName || "",
+        monthlyAmount: String(payee.grossSalary || 0),
+        basicSalary: String(payee.basicSalary || Math.round((payee.grossSalary || 0) * 0.4)),
+        housingAllowance: String(payee.housingAllowance || Math.round((payee.grossSalary || 0) * 0.3)),
+        transportAllowance: String(payee.transportAllowance || Math.round((payee.grossSalary || 0) * 0.2)),
+        otherAllowance: String(payee.otherAllowance || 0),
+        taxable: payee.taxable ?? true,
+        tin: payee.statutory?.tin || "",
+        pensionPin: payee.statutory?.pensionPin || "",
+        pfaName: payee.statutory?.pfaName || "",
+        nhfNumber: payee.statutory?.nhfNumber || "",
       });
-      setFieldErrors({});
     }
-  }, [open, payee]);
-
-  // Close on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && open && !submitting) {
-        handleClose();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, submitting]);
+  }, [payee]);
 
   if (!open || !payee) return null;
 
@@ -127,352 +95,264 @@ export default function EditPayeeModal({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
-
-    if (fieldErrors[name]) {
-      setFieldErrors((prev) => {
-        const next = { ...prev };
-        delete next[name];
-        return next;
-      });
-    }
   };
 
-  const handleClose = () => {
-    setFieldErrors({});
+  const isEmployee = formData.type === "Employee";
+  const basic = parseFloat(formData.basicSalary) || 0;
+  const housing = parseFloat(formData.housingAllowance) || 0;
+  const transport = parseFloat(formData.transportAllowance) || 0;
+  const other = parseFloat(formData.otherAllowance) || 0;
+  const flatAmount = parseFloat(formData.monthlyAmount) || 0;
+
+  const gross = isEmployee ? basic + housing + transport + other : flatAmount;
+
+  const preview = calculatePayeeDeductions({
+    type: formData.type,
+    grossSalary: gross,
+    basicSalary: basic,
+    housingAllowance: housing,
+    transportAllowance: transport,
+    otherAllowance: other,
+    taxable: formData.taxable,
+  });
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const updated: UnifiedPayee = {
+      ...payee,
+      name: formData.name,
+      type: formData.type,
+      role: formData.role,
+      department: formData.department,
+      employmentType: formData.employmentType,
+      status: formData.status,
+      onPayroll: formData.onPayroll,
+      email: formData.email,
+      phone: formData.phone,
+      stateOfResidence: formData.stateOfResidence,
+      bankName: formData.bankName,
+      bankAccount: formData.bankAccount,
+      accountName: formData.accountName,
+      taxable: formData.taxable,
+      grossSalary: gross,
+      basicSalary: isEmployee ? basic : undefined,
+      housingAllowance: isEmployee ? housing : undefined,
+      transportAllowance: isEmployee ? transport : undefined,
+      otherAllowance: isEmployee ? other : undefined,
+      statutory: {
+        tin: formData.tin || undefined,
+        pensionPin: formData.pensionPin || undefined,
+        pfaName: formData.pfaName || undefined,
+        nhfNumber: formData.nhfNumber || undefined,
+      },
+      deductions: preview.deductions,
+      netSalary: preview.netSalary,
+    };
+
+    onSave?.(updated);
     onClose();
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (submitting) return;
-
-    setFieldErrors({});
-
-    const name = formData.fullName.trim();
-    if (!name) {
-      setFieldErrors((prev) => ({ ...prev, fullName: "Full Name is required" }));
-      toast.error("Full Name / Company Name is required.");
-      return;
-    }
-
-    const amount = Number(formData.monthlyAmount);
-    if (isNaN(amount) || amount < 0) {
-      setFieldErrors((prev) => ({
-        ...prev,
-        monthlyAmount: "Must be a valid positive number",
-      }));
-      toast.error("Monthly Amount must be a valid non-negative number.");
-      return;
-    }
-
-    // Validate & normalize phone if provided
-    let normalizedPhone: string | undefined = undefined;
-    if (formData.phone.trim()) {
-      const norm = normalizePhoneNumber(formData.phone);
-      if (!norm) {
-        setFieldErrors((prev) => ({
-          ...prev,
-          phone: "Invalid phone format (e.g. +234 801 234 5678 or 08012345678)",
-        }));
-        toast.error("Invalid phone number format.");
-        return;
-      }
-      normalizedPhone = norm;
-    }
-
-    setSubmitting(true);
-
-    // Map type & status to Swagger enum values
-    const typeUpper = (
-      formData.type === "Board Member"
-        ? "BOARD_MEMBER"
-        : formData.type.toUpperCase()
-    ) as PayeeApiType;
-
-    const statusUpper = formData.status.toUpperCase() as PayeeApiStatus;
-
-    const payload: UpdatePayeeBody = {
-      name,
-      type: typeUpper,
-      status: statusUpper,
-      email: formData.email.trim() || undefined,
-      phone: normalizedPhone,
-      bankName: formData.bank.trim() || undefined,
-      accountName: formData.accountName.trim() || undefined,
-      monthlyAmount: amount,
-      isTaxable: Boolean(formData.subjectToPaye),
-    };
-
-    // Only send accountNumber and tin if they were edited and not masked (contains no '*')
-    if (formData.accountNumber && !formData.accountNumber.includes("*")) {
-      payload.accountNumber = formData.accountNumber.trim();
-    }
-    if (formData.tin && !formData.tin.includes("*")) {
-      payload.tin = formData.tin.trim();
-    }
-
-    try {
-      await updatePayee(payee.id, payload);
-
-      toast.success("Payee updated successfully");
-      onSuccess?.();
-      handleClose();
-    } catch (err: unknown) {
-      const axiosErr = err as {
-        response?: {
-          data?: {
-            message?: string;
-            validationErrors?: Array<{ field?: string; message?: string; code?: string }>;
-            details?: {
-              validationErrors?: Array<{ field?: string; message?: string; code?: string }>;
-            };
-          };
-        };
-      };
-
-      const valList =
-        axiosErr?.response?.data?.validationErrors ||
-        axiosErr?.response?.data?.details?.validationErrors;
-
-      if (Array.isArray(valList) && valList.length > 0) {
-        const serverFieldErrors: Record<string, string> = {};
-        for (const item of valList) {
-          if (item.field) {
-            if (item.field === "phone") {
-              serverFieldErrors.phone =
-                "Invalid phone format. Please use international format (e.g. +2348012345678).";
-            } else {
-              serverFieldErrors[item.field] = item.message || "Invalid input";
-            }
-          }
-        }
-        setFieldErrors(serverFieldErrors);
-
-        const firstErr = valList[0];
-        const friendlyMsg =
-          firstErr.field === "phone"
-            ? "Invalid phone number format. Please provide e.g. +2348012345678 or 08012345678."
-            : firstErr.message || axiosErr?.response?.data?.message || "Validation failed.";
-
-        toast.error(friendlyMsg);
-      } else {
-        const msg =
-          axiosErr?.response?.data?.message ||
-          "Failed to update payee. Please check the inputs and try again.";
-        toast.error(msg);
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const inputClass =
-    "h-10 w-full rounded-lg border border-[#D0D5DD] bg-white px-3.5 text-sm text-[#101828] placeholder-[#98A2B3] outline-none transition hover:border-gray-400 focus:border-[#1683d8] focus:ring-1 focus:ring-[#1683d8] disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed";
-
   return (
-    <div
-      onClick={handleClose}
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4"
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-[530px] rounded-2xl bg-white p-7 sm:p-8 shadow-2xl transition-all animate-in fade-in zoom-in-95 duration-150"
-      >
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4">
+      <div className="w-full max-w-xl rounded-xl bg-white shadow-2xl overflow-hidden my-6">
         {/* Header */}
-        <div className="flex items-center justify-between pb-6">
-          <h2 className="text-lg font-bold text-[#1f2937]">Edit Payee</h2>
+        <div className="flex items-center justify-between border-b border-[#e5e7eb] px-6 py-4">
+          <div>
+            <h2 className="text-lg font-bold text-[#1f2937]">Edit Payee</h2>
+            <p className="text-xs text-[#6b7280]">
+              Update compensation, banking, and details for {payee.name}
+            </p>
+          </div>
           <button
             type="button"
-            onClick={handleClose}
-            disabled={submitting}
+            onClick={onClose}
             aria-label="Close"
-            className="rounded-lg p-1 text-[#667085] transition hover:bg-gray-100 hover:text-[#1f2937] disabled:opacity-50"
+            className="rounded-md p-1.5 text-[#667085] transition hover:bg-[#f2f4f7] hover:text-[#1f2937]"
           >
             <X size={18} strokeWidth={1.8} />
           </button>
         </div>
 
-        {/* Form */}
+        {/* Form Body */}
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            {/* Row 1: Full Name / Company Name */}
-            <Field label="Full Name / Company Name *" error={fieldErrors.fullName}>
-              <input
-                name="fullName"
-                value={formData.fullName}
+          <div className="max-h-[65vh] overflow-y-auto px-6 py-5 space-y-4">
+            <Field label="Full Name / Entity Name" required>
+              <Input
+                name="name"
+                value={formData.name}
                 onChange={handleChange}
                 required
-                disabled={submitting}
-                className={`${inputClass} ${fieldErrors.fullName ? "border-red-500 focus:border-red-500 focus:ring-red-500/15" : ""}`}
               />
             </Field>
 
-            {/* Row 2: Type & Status */}
             <div className="grid grid-cols-2 gap-4">
-              <Field label="Type" error={fieldErrors.type}>
-                <div className="relative">
-                  <select
-                    name="type"
-                    value={formData.type}
-                    onChange={handleChange}
-                    disabled={submitting}
-                    className={`${inputClass} appearance-none pr-9 cursor-pointer`}
-                  >
-                    <option value="Contractor">Contractor</option>
-                    <option value="Vendor">Vendor</option>
-                    <option value="Director">Director</option>
-                    <option value="Board Member">Board Member</option>
-                  </select>
-                  <ChevronDown
-                    size={16}
-                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#667085]"
-                  />
+              <Field label="Payee Classification / Type" required>
+                <select
+                  name="type"
+                  value={formData.type}
+                  onChange={handleChange}
+                  className="h-10 w-full rounded-md border border-[#e5e7eb] px-3 text-sm outline-none focus:border-[#2183c6]"
+                >
+                  <option value="Employee">Employee (Salaried Staff)</option>
+                  <option value="Contractor">Contractor (Individual / Firm)</option>
+                  <option value="Vendor">Vendor (Supplies / Services)</option>
+                  <option value="Director">Director (Executive / Non-Exec)</option>
+                  <option value="Board Member">Board Member</option>
+                </select>
+              </Field>
+
+              <Field label="Status">
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
+                  className="h-10 w-full rounded-md border border-[#e5e7eb] px-3 text-sm outline-none focus:border-[#2183c6]"
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                  <option value="On Leave">On Leave</option>
+                  <option value="Suspended">Suspended</option>
+                </select>
+              </Field>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Role / Designation" required>
+                <Input
+                  name="role"
+                  value={formData.role}
+                  onChange={handleChange}
+                  required
+                />
+              </Field>
+
+              <Field label="Department">
+                <Input
+                  name="department"
+                  value={formData.department}
+                  onChange={handleChange}
+                />
+              </Field>
+            </div>
+
+            {/* Compensation */}
+            {isEmployee ? (
+              <div className="space-y-3 rounded-lg border border-[#e5e7eb] bg-[#f9fafb] p-3.5">
+                <span className="text-xs font-semibold text-[#1f2937]">Earnings Structure (Monthly)</span>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Basic Salary (₦)">
+                    <Input
+                      name="basicSalary"
+                      type="number"
+                      value={formData.basicSalary}
+                      onChange={handleChange}
+                    />
+                  </Field>
+                  <Field label="Housing Allowance (₦)">
+                    <Input
+                      name="housingAllowance"
+                      type="number"
+                      value={formData.housingAllowance}
+                      onChange={handleChange}
+                    />
+                  </Field>
+                  <Field label="Transport Allowance (₦)">
+                    <Input
+                      name="transportAllowance"
+                      type="number"
+                      value={formData.transportAllowance}
+                      onChange={handleChange}
+                    />
+                  </Field>
+                  <Field label="Other Allowance (₦)">
+                    <Input
+                      name="otherAllowance"
+                      type="number"
+                      value={formData.otherAllowance}
+                      onChange={handleChange}
+                    />
+                  </Field>
                 </div>
-              </Field>
-
-              <Field label="Status" error={fieldErrors.status}>
-                <div className="relative">
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                    disabled={submitting}
-                    className={`${inputClass} appearance-none pr-9 cursor-pointer`}
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
-                  <ChevronDown
-                    size={16}
-                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#667085]"
-                  />
-                </div>
-              </Field>
-            </div>
-
-            {/* Row 3: Email & Phone */}
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Email" error={fieldErrors.email}>
-                <input
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  disabled={submitting}
-                  className={`${inputClass} ${fieldErrors.email ? "border-red-500 focus:border-red-500 focus:ring-red-500/15" : ""}`}
-                />
-              </Field>
-
-              <Field label="Phone" error={fieldErrors.phone}>
-                <input
-                  name="phone"
-                  type="tel"
-                  placeholder="+234 800 000 0000"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  disabled={submitting}
-                  className={`${inputClass} ${fieldErrors.phone ? "border-red-500 focus:border-red-500 focus:ring-red-500/15" : ""}`}
-                />
-              </Field>
-            </div>
-
-            {/* Row 4: Bank */}
-            <Field label="Bank" error={fieldErrors.bank}>
-              <input
-                name="bank"
-                value={formData.bank}
-                onChange={handleChange}
-                disabled={submitting}
-                className={inputClass}
-              />
-            </Field>
-
-            {/* Row 5: Account Number & Account Name */}
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Account Number" error={fieldErrors.accountNumber}>
-                <input
-                  name="accountNumber"
-                  value={formData.accountNumber}
-                  onChange={handleChange}
-                  disabled={submitting}
-                  className={inputClass}
-                />
-              </Field>
-
-              <Field label="Account Name" error={fieldErrors.accountName}>
-                <input
-                  name="accountName"
-                  value={formData.accountName}
-                  onChange={handleChange}
-                  disabled={submitting}
-                  className={inputClass}
-                />
-              </Field>
-            </div>
-
-            {/* Row 6: TIN (optional) & Monthly Amount (₦) * */}
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="TIN (optional)" error={fieldErrors.tin}>
-                <input
-                  name="tin"
-                  value={formData.tin}
-                  onChange={handleChange}
-                  disabled={submitting}
-                  className={inputClass}
-                />
-              </Field>
-
-              <Field label="Monthly Amount (₦) *" error={fieldErrors.monthlyAmount}>
-                <input
+              </div>
+            ) : (
+              <Field label="Monthly Contract / Retainer Fee (₦)" required>
+                <Input
                   name="monthlyAmount"
                   type="number"
-                  min={0}
                   value={formData.monthlyAmount}
                   onChange={handleChange}
                   required
-                  disabled={submitting}
-                  className={`${inputClass} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-inner-spin-button]:m-0 ${fieldErrors.monthlyAmount ? "border-red-500 focus:border-red-500 focus:ring-red-500/15" : ""}`}
+                />
+              </Field>
+            )}
+
+            {/* Calculation Preview */}
+            <div className="flex items-center justify-between rounded-lg bg-[#f0f9ff] border border-[#bae6fd] p-3 text-xs">
+              <div>
+                <span className="text-[#64748b] block">Monthly Gross</span>
+                <span className="font-bold text-[#0f172a] text-sm">{formatNaira(gross)}</span>
+              </div>
+              <div>
+                <span className="text-[#64748b] block">Deductions</span>
+                <span className="font-bold text-[#b91c1c] text-sm">
+                  {formatNaira(preview.deductions.totalDeductions)}
+                </span>
+              </div>
+              <div>
+                <span className="text-[#64748b] block">Net Take-Home</span>
+                <span className="font-bold text-[#15803d] text-sm">{formatNaira(preview.netSalary)}</span>
+              </div>
+            </div>
+
+            {/* Bank details */}
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Bank Name">
+                <Input
+                  name="bankName"
+                  value={formData.bankName}
+                  onChange={handleChange}
+                />
+              </Field>
+              <Field label="Account Number">
+                <Input
+                  name="bankAccount"
+                  value={formData.bankAccount}
+                  onChange={handleChange}
                 />
               </Field>
             </div>
 
-            {/* Row 7: Checkbox */}
-            <div className="pt-1">
-              <label className="inline-flex cursor-pointer items-center gap-2.5">
-                <input
-                  type="checkbox"
-                  name="subjectToPaye"
-                  checked={formData.subjectToPaye}
-                  onChange={handleChange}
-                  disabled={submitting}
-                  className="h-4 w-4 rounded border-[#D0D5DD] text-[#1683d8] focus:ring-[#1683d8] cursor-pointer"
-                />
-                <span className="text-sm font-medium text-[#1f2937]">
-                  Subject to PAYE tax
-                </span>
-              </label>
-            </div>
+            <label className="flex items-center gap-2 text-sm text-[#374151]">
+              <input
+                type="checkbox"
+                name="onPayroll"
+                checked={formData.onPayroll}
+                onChange={handleChange}
+                className="h-4 w-4 rounded border-[#d0d5dd] text-[#2183c6] focus:ring-[#2183c6]"
+              />
+              <span className="font-medium text-[#111827]">Active on Payroll</span>
+            </label>
+          </div>
 
-            {/* Row 8: Actions */}
-            <div className="flex items-center gap-3 pt-3">
-              <button
-                type="button"
-                onClick={handleClose}
-                disabled={submitting}
-                className="h-11 flex-1 rounded-lg border border-[#D0D5DD] bg-[#F2F4F7] px-6 text-sm font-medium text-[#344054] transition hover:bg-gray-200 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-[#1683d8] px-8 text-sm font-medium text-white transition hover:bg-[#1270b8] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {submitting && <Loader2 size={16} className="animate-spin" />}
-                {submitting ? "Saving Payee..." : "Save Payee"}
-              </button>
-            </div>
+          {/* Actions */}
+          <div className="flex justify-end gap-3 border-t border-[#f0f0f0] bg-[#fafafa] px-6 py-4">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+            >
+              Update Payee
+            </Button>
           </div>
         </form>
       </div>
@@ -482,20 +362,20 @@ export default function EditPayeeModal({
 
 function Field({
   label,
-  error,
+  required,
   children,
 }: {
   label: string;
-  error?: string;
+  required?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-w-0">
-      <label className="mb-1.5 block text-xs font-normal text-[#667085]">
+    <div>
+      <label className="mb-1 block text-xs font-medium text-[#4b5563]">
         {label}
+        {required && <span className="ml-0.5 text-red-500">*</span>}
       </label>
       {children}
-      {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
     </div>
   );
 }

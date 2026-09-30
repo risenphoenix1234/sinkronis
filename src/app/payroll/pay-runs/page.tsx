@@ -1,24 +1,31 @@
 // app/payroll/pay-runs/page.tsx
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Plus,
   ChevronDown,
   ChevronUp,
-  Loader2,
-  AlertCircle,
+  Search,
 } from "lucide-react";
 import { naira } from "@/types/payroll/payee-data";
-import { getPayRuns } from "@/lib/api/payroll";
 import {
   PayRunListItem,
   PayRunStatus,
-  PaginationMeta,
 } from "@/lib/api/payroll";
-import RunPayrollModal from "@/components/payroll/pay-run/RunPayrollModal";
-import { CreatedPayRunData } from "@/lib/api/payroll";
+import RunPayrollModal, {
+  RunPayrollSubmitData,
+} from "@/components/payroll/pay-run/RunPayrollModal";
+import {
+  loadStoredPayRuns,
+  createClientPayRun,
+} from "@/data/payroll/pay-run-store";
+import { usePayees } from "@/context/payroll/PayeeContext";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import EmptyState from "@/components/shared/EmptyState";
+import { toast } from "react-toastify";
 
 // All 10 API-canonical status values mapped to badge styles
 const statusStyles: Record<PayRunStatus, string> = {
@@ -47,263 +54,232 @@ const statusLabels: Record<PayRunStatus, string> = {
   CANCELLED: "Cancelled",
 };
 
-/** Status values available as filter options (matches Swagger enum) */
 const FILTER_STATUSES: PayRunStatus[] = [
   "DRAFT",
   "PROCESSING",
   "PENDING_APPROVAL",
   "APPROVED",
   "PENDING_DISBURSEMENT",
-  "DISBURSING",
   "DISBURSED",
-  "FAILED",
   "PAID",
   "CANCELLED",
 ];
 
 export default function PayRunsPage() {
   const router = useRouter();
+  const { updatePayee } = usePayees();
 
   const [payRuns, setPayRuns] = useState<PayRunListItem[]>([]);
-  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<PayRunStatus | "">("");
   const [runPayrollOpen, setRunPayrollOpen] = useState(false);
 
-  // Debounce ref for search input
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Pending search value that will be sent after debounce
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  // Load runs from store
+  const refreshPayRuns = () => {
+    const stored = loadStoredPayRuns();
+    const mapped: PayRunListItem[] = stored.map((r) => ({
+      id: r.id,
+      period: r.period,
+      status: r.status,
+      createdAt: r.createdAt,
+      from: r.from,
+      to: r.to,
+      payDate: r.payDate,
+      employees: r.employees,
+      gross: r.gross,
+      netPay: r.netPay,
+      paye: r.paye,
+    }));
+    setPayRuns(mapped);
+  };
 
-  // Debounce search
   useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, 400);
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [search]);
+    refreshPayRuns();
+  }, []);
 
-  const fetchPayRuns = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await getPayRuns({
-        page: 1,
-        limit: 50,
-        ...(debouncedSearch ? { search: debouncedSearch } : {}),
-        ...(status ? { status } : {}),
-        sortBy: "createdAt",
-        sortOrder: "desc",
+  // Filtered runs
+  const filteredRuns = useMemo(() => {
+    return payRuns.filter((r) => {
+      const matchesSearch =
+        search.trim() === "" ||
+        r.period.toLowerCase().includes(search.toLowerCase()) ||
+        r.id.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus = !status || r.status === status;
+      return matchesSearch && matchesStatus;
+    });
+  }, [payRuns, search, status]);
+
+  // Handle Create Pay Run with Selected Payees
+  const handlePayRunSubmit = (data: RunPayrollSubmitData) => {
+    const newRun = createClientPayRun({
+      periodLabel: data.periodLabel,
+      from: data.from,
+      to: data.to,
+      selectedPayees: data.selectedPayees,
+    });
+
+    // Update payment history on each selected payee
+    data.selectedPayees.forEach((payee) => {
+      const newRecord = {
+        period: data.periodLabel,
+        amount: payee.netSalary,
+        paymentDate: data.to,
+        reference: `PAY-${newRun.id}-${payee.id}`,
+        status: "Pending" as const,
+      };
+      updatePayee(payee.id, {
+        paymentHistory: [newRecord, ...(payee.paymentHistory || [])],
       });
-      setPayRuns(result.data);
-      setPagination(result.pagination ?? null);
-    } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
-      setError(
-        axiosErr?.response?.data?.message ??
-          "Failed to load pay runs. Please try again.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [debouncedSearch, status]);
+    });
 
-  useEffect(() => {
-    fetchPayRuns();
-  }, [fetchPayRuns]);
-
-  const handlePayRunSuccess = (_data: CreatedPayRunData) => {
-    setRunPayrollOpen(false);
-    // Re-fetch to pick up the newly queued PROCESSING run
-    fetchPayRuns();
-  };
-
-  // Determine action button for a run
-  const getActionLabel = (run: PayRunListItem) => {
-    if (run.status === "PENDING_APPROVAL") return "Review";
-    return "View";
-  };
-
-  const getActionStyle = (run: PayRunListItem) => {
-    if (run.status === "PENDING_APPROVAL") {
-      return "rounded-md bg-[#1683d8] px-4 py-1.5 text-xs font-medium text-white hover:bg-[#0f74c2]";
-    }
-    return "rounded-md bg-[#e8f4fd] px-4 py-1.5 text-xs font-medium text-[#1683d8] hover:bg-[#d5eafb]";
+    refreshPayRuns();
+    toast.success(
+      `Pay run for ${data.periodLabel} created with ${data.selectedPayees.length} selected payees!`,
+    );
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f8fa] p-4">
+    <div className="min-h-screen bg-[#f7f8fa] p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-[#1f2937]">Pay Runs</h1>
-          <p className="mt-1 text-sm text-[#6b7280]">
-            Create and manage monthly payroll runs.
-            {pagination && pagination.total > 0 && (
-              <span className="ml-2 text-[#9ca3af]">
-                ({pagination.total} total)
-              </span>
-            )}
+          <h1 className="text-2xl font-bold text-[#1f2937]">Pay Runs</h1>
+          <p className="mt-1 text-xs text-[#6b7280]">
+            Create and manage monthly payroll runs with selective payee enrollment.
           </p>
         </div>
 
-        <button
+        <Button
+          variant="primary"
+          size="md"
           onClick={() => setRunPayrollOpen(true)}
-          className="flex items-center gap-2 rounded-md bg-[#1683d8] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#0f74c2]"
         >
-          <Plus size={15} />
+          <Plus size={15} className="mr-1.5" />
           Run Payroll
-        </button>
+        </Button>
       </div>
 
       {/* Search + filter */}
-      <div className="mt-6 flex items-center gap-3">
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search period..."
-          className="h-11 w-[225px] rounded-md border border-[#e5e7eb] bg-white px-4 text-sm text-[#374151] outline-none placeholder:text-[#9ca3af] focus:border-[#1683d8]"
-        />
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-sm">
+        <div className="relative min-w-[240px] flex-1">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af] pointer-events-none" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search period e.g. May 2026..."
+            className="h-9 pl-9 text-xs"
+          />
+        </div>
+
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value as PayRunStatus | "")}
-          className="h-11 w-[180px] rounded-md border border-[#e5e7eb] bg-white px-3 text-sm text-[#374151] outline-none focus:border-[#1683d8]"
+          className="h-9 rounded-lg border border-[#e5e7eb] bg-white px-3 text-xs text-[#374151] outline-none focus:border-[#2183c6]"
         >
           <option value="">All Statuses</option>
           {FILTER_STATUSES.map((s) => (
             <option key={s} value={s}>
-              {statusLabels[s]}
+              {statusLabels[s] || s}
             </option>
           ))}
         </select>
       </div>
 
-      {/* Error banner */}
-      {error && !loading && (
-        <div className="mt-4 flex items-center gap-2 rounded-md border border-[#fecaca] bg-[#fef2f2] px-4 py-3 text-sm text-[#dc2626]">
-          <AlertCircle size={16} className="shrink-0" />
-          <span>{error}</span>
-          <button
-            onClick={fetchPayRuns}
-            className="ml-auto text-xs font-medium underline"
-          >
-            Retry
-          </button>
-        </div>
-      )}
-
       {/* Table */}
-      <div className="mt-6 overflow-x-auto rounded-lg border border-[#e5e7eb] bg-white">
-        <table className="w-full min-w-[900px] text-left text-sm">
-          <thead>
-            <tr className="border-b border-[#e5e7eb] text-xs text-[#6b7280]">
-              <th className="px-6 py-3 font-medium">
-                <span className="inline-flex items-center gap-1">
-                  Period <ChevronDown size={12} />
-                </span>
-              </th>
-              <th className="px-6 py-3 font-medium">
-                <span className="inline-flex items-center gap-1">
-                  Employees <ChevronUp size={12} />
-                </span>
-              </th>
-              <th className="px-6 py-3 font-medium">Gross</th>
-              <th className="px-6 py-3 font-medium">
-                <span className="inline-flex items-center gap-1">
-                  Net Pay <ChevronUp size={12} />
-                </span>
-              </th>
-              <th className="px-6 py-3 font-medium">PAYE</th>
-              <th className="px-6 py-3 font-medium">Status</th>
-              <th className="px-6 py-3 font-medium">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {/* Loading skeleton */}
-            {loading && (
-              <tr>
-                <td colSpan={7} className="px-6 py-10 text-center">
-                  <div className="flex items-center justify-center gap-2 text-sm text-[#6b7280]">
-                    <Loader2 size={16} className="animate-spin" />
-                    Loading pay runs…
-                  </div>
-                </td>
+      <div className="overflow-hidden rounded-xl border border-[#e5e7eb] bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[850px] text-left text-xs">
+            <thead>
+              <tr className="border-b border-[#e5e7eb] bg-[#f9fafb] text-[#6b7280]">
+                <th className="px-5 py-3.5 font-semibold">
+                  <span className="inline-flex items-center gap-1">
+                    Period <ChevronDown size={12} />
+                  </span>
+                </th>
+                <th className="px-4 py-3.5 font-semibold">
+                  <span className="inline-flex items-center gap-1">
+                    Payees Included <ChevronUp size={12} />
+                  </span>
+                </th>
+                <th className="px-4 py-3.5 font-semibold text-right">Total Gross</th>
+                <th className="px-4 py-3.5 font-semibold text-right">
+                  <span className="inline-flex items-center gap-1">
+                    Net Payout <ChevronUp size={12} />
+                  </span>
+                </th>
+                <th className="px-4 py-3.5 font-semibold text-right">PAYE / Deductions</th>
+                <th className="px-4 py-3.5 font-semibold text-center">Status</th>
+                <th className="px-5 py-3.5 font-semibold text-right">Action</th>
               </tr>
-            )}
-
-            {/* Empty state */}
-            {!loading && !error && payRuns.length === 0 && (
-              <tr>
-                <td
-                  colSpan={7}
-                  className="px-6 py-10 text-center text-sm text-[#9ca3af]"
-                >
-                  No pay runs found.
-                </td>
-              </tr>
-            )}
-
-            {/* Data rows */}
-            {!loading &&
-              payRuns.map((run, index) => (
-                <tr
-                  key={run.id}
-                  className={`border-b border-[#f0f0f0] last:border-b-0 ${
-                    index % 2 === 1 ? "bg-[#f9fafb]" : "bg-white"
-                  }`}
-                >
-                  <td className="px-6 py-4">
-                    <p className="font-semibold text-[#1f2937]">{run.period}</p>
-                    <p className="mt-0.5 text-xs text-[#9ca3af]">
-                      Created{" "}
-                      {new Date(run.createdAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </p>
-                  </td>
-                  <td className="px-6 py-4 text-[#374151]">{run.employees}</td>
-                  <td className="px-6 py-4 text-[#6b7280]">
-                    {naira(run.gross)}
-                  </td>
-                  <td className="px-6 py-4 font-semibold text-[#1f2937]">
-                    {naira(run.netPay)}
-                  </td>
-                  <td className="px-6 py-4 text-[#ef4444]">
-                    {naira(run.paye)}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${statusStyles[run.status]}`}
-                    >
-                      {statusLabels[run.status]}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <button
-                      onClick={() => router.push(`/payroll/pay-runs/${run.id}`)}
-                      className={getActionStyle(run)}
-                    >
-                      {getActionLabel(run)}
-                    </button>
+            </thead>
+            <tbody className="divide-y divide-[#f0f0f0]">
+              {filteredRuns.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="p-8">
+                    <EmptyState
+                      title="No pay runs found"
+                      subtitle="No pay runs match the selected filters. Click 'Run Payroll' to initiate a new payroll run."
+                    />
                   </td>
                 </tr>
-              ))}
-          </tbody>
-        </table>
+              ) : (
+                filteredRuns.map((run) => (
+                  <tr key={run.id} className="transition hover:bg-[#fcfdfd]">
+                    <td className="px-5 py-3.5 font-semibold text-[#1f2937]">
+                      {run.period}
+                      <span className="block text-[11px] font-mono text-[#9ca3af]">{run.id}</span>
+                    </td>
+
+                    <td className="px-4 py-3.5">
+                      <span className="inline-flex items-center rounded-full bg-[#e0f2fe] px-2.5 py-0.5 text-[11px] font-semibold text-[#0369a1]">
+                        {run.employees} Payees
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-3.5 text-right font-medium text-[#1f2937]">
+                      {naira(run.gross)}
+                    </td>
+
+                    <td className="px-4 py-3.5 text-right font-bold text-[#15803d]">
+                      {naira(run.netPay)}
+                    </td>
+
+                    <td className="px-4 py-3.5 text-right font-medium text-[#b91c1c]">
+                      -{naira(run.paye)}
+                    </td>
+
+                    <td className="px-4 py-3.5 text-center">
+                      <span
+                        className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                          statusStyles[run.status] || "bg-[#f3f4f6] text-[#6b7280]"
+                        }`}
+                      >
+                        {statusLabels[run.status] || run.status}
+                      </span>
+                    </td>
+
+                    <td className="px-5 py-3.5 text-right">
+                      <Button
+                        variant={run.status === "PENDING_APPROVAL" ? "primary" : "outline"}
+                        size="sm"
+                        onClick={() => router.push(`/payroll/pay-runs/${run.id}`)}
+                      >
+                        {run.status === "PENDING_APPROVAL" ? "Review & Approve" : "View Details"}
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
+      {/* Run Payroll Modal with Payee Selection */}
       <RunPayrollModal
         open={runPayrollOpen}
         onClose={() => setRunPayrollOpen(false)}
-        onSuccess={handlePayRunSuccess}
+        onSubmit={handlePayRunSubmit}
       />
     </div>
   );

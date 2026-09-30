@@ -30,3 +30,18 @@ export function toTransactionDetail(entry: LedgerEntry): Transaction {
     ],
   };
 }
+
+export function apiTxToTransactionDetail(tx: any): Transaction {
+  if (!tx) return toTransactionDetail({} as LedgerEntry);
+  return toTransactionDetail({
+    id: tx.id || tx.reference || "",
+    date: tx.date || tx.createdAt || new Date().toISOString().split("T")[0],
+    description: tx.description || tx.narration || "",
+    amount: typeof tx.amount === "number" ? tx.amount : parseFloat(tx.amount) || 0,
+    direction: tx.direction || (tx.type === "credit" ? "Credit" : "Debit"),
+    balance: typeof tx.balance === "number" ? tx.balance : parseFloat(tx.balance) || 0,
+    txType: tx.txType || tx.type || "Disbursement",
+    reference: tx.reference || tx.id || "",
+  });
+}
+

@@ -31,9 +31,14 @@ const documents: DocumentItem[] = [
   },
 ];
 
-export default function Documents() {
+interface DocumentsProps {
+  payeeId?: string;
+  payeeName?: string;
+}
+
+export default function Documents({ payeeId, payeeName }: DocumentsProps = {}) {
   const handleUpload = () => {
-    console.log("Upload document");
+    console.log("Upload document for", payeeName || payeeId);
   };
 
   const handleDownload = (doc: DocumentItem) => {
