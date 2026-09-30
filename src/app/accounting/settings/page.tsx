@@ -27,6 +27,37 @@ import ConfirmDeleteModal from "@/components/modals/ConfirmDeleteModal";
 
 type Tab = "templates" | "categories" | "reminders";
 
+const toggleCss = `
+  .rem-toggle {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    flex: 0 0 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 9999px;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .rem-toggle:disabled {
+    cursor: not-allowed;
+  }
+  .rem-toggle-knob {
+    position: absolute;
+    top: 2px;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 9999px;
+    transform: translateX(2px);
+    transition: transform 0.2s ease;
+  }
+  .rem-toggle.rem-on .rem-toggle-knob {
+    transform: translateX(22px);
+  }
+`;
+
 export default function SettingsPage() {
   const [tab, setTab] = useState<Tab>("templates");
 
@@ -161,25 +192,27 @@ export default function SettingsPage() {
   };
 
   // --- Reminder handlers ---
-const handleReminderChange = async (patch: Partial<ReminderSettings>) => {
-  if (!reminderSettings) return;
-  const next = { ...reminderSettings, ...patch };
-  setReminderSettings(next); // optimistic update
-  setSavingReminders(true);
-  setReminderError(null);
-  try {
-    const res = await updateReminderSettings(next); // send the FULL object, not just the patch
-    setReminderSettings(res.data);
-  } catch (err) {
-    setReminderSettings(reminderSettings); // revert on failure
-    setReminderError(err instanceof Error ? err.message : "Failed to update reminder settings");
-  } finally {
-    setSavingReminders(false);
-  }
-};
+  const handleReminderChange = async (patch: Partial<ReminderSettings>) => {
+    if (!reminderSettings) return;
+    const next = { ...reminderSettings, ...patch };
+    setReminderSettings(next); // optimistic update
+    setSavingReminders(true);
+    setReminderError(null);
+    try {
+      const res = await updateReminderSettings(next); // send the FULL object, not just the patch
+      setReminderSettings(res.data);
+    } catch (err) {
+      setReminderSettings(reminderSettings); // revert on failure
+      setReminderError(err instanceof Error ? err.message : "Failed to update reminder settings");
+    } finally {
+      setSavingReminders(false);
+    }
+  };
 
   return (
     <section className="space-y-6 p-6">
+      <style>{toggleCss}</style>
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">Settings</h1>
@@ -358,17 +391,14 @@ const handleReminderChange = async (patch: Partial<ReminderSettings>) => {
                   <p className="text-xs text-slate-400">Send reminders automatically without manual action</p>
                 </div>
                 <button
+                  type="button"
                   disabled={savingReminders}
                   onClick={() => handleReminderChange({ automaticRemindersEnabled: !reminderSettings.automaticRemindersEnabled })}
-                  className={`relative h-6 w-11 flex-shrink-0 overflow-hidden rounded-full transition-colors disabled:opacity-60 ${
-                    reminderSettings.automaticRemindersEnabled ? "bg-sky-600" : "bg-slate-200"
+                  className={`rem-toggle transition-colors disabled:opacity-60 ${
+                    reminderSettings.automaticRemindersEnabled ? "rem-on bg-sky-600" : "bg-slate-200"
                   }`}
                 >
-                  <span
-                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                      reminderSettings.automaticRemindersEnabled ? "translate-x-5" : "translate-x-0.5"
-                    }`}
-                  />
+                  <span className="rem-toggle-knob bg-white shadow" />
                 </button>
               </div>
 
@@ -378,17 +408,14 @@ const handleReminderChange = async (patch: Partial<ReminderSettings>) => {
                   <p className="text-xs text-slate-400">Show reminders inside the app</p>
                 </div>
                 <button
+                  type="button"
                   disabled={savingReminders}
                   onClick={() => handleReminderChange({ inAppEnabled: !reminderSettings.inAppEnabled })}
-                  className={`relative h-6 w-11 flex-shrink-0 overflow-hidden rounded-full transition-colors disabled:opacity-60 ${
-                    reminderSettings.inAppEnabled ? "bg-sky-600" : "bg-slate-200"
+                  className={`rem-toggle transition-colors disabled:opacity-60 ${
+                    reminderSettings.inAppEnabled ? "rem-on bg-sky-600" : "bg-slate-200"
                   }`}
                 >
-                  <span
-                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                      reminderSettings.inAppEnabled ? "translate-x-5" : "translate-x-0.5"
-                    }`}
-                  />
+                  <span className="rem-toggle-knob bg-white shadow" />
                 </button>
               </div>
 
@@ -398,17 +425,14 @@ const handleReminderChange = async (patch: Partial<ReminderSettings>) => {
                   <p className="text-xs text-slate-400">Send reminders by email</p>
                 </div>
                 <button
+                  type="button"
                   disabled={savingReminders}
                   onClick={() => handleReminderChange({ emailEnabled: !reminderSettings.emailEnabled })}
-                  className={`relative h-6 w-11 flex-shrink-0 overflow-hidden rounded-full transition-colors disabled:opacity-60 ${
-                    reminderSettings.emailEnabled ? "bg-sky-600" : "bg-slate-200"
+                  className={`rem-toggle transition-colors disabled:opacity-60 ${
+                    reminderSettings.emailEnabled ? "rem-on bg-sky-600" : "bg-slate-200"
                   }`}
                 >
-                  <span
-                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                      reminderSettings.emailEnabled ? "translate-x-5" : "translate-x-0.5"
-                    }`}
-                  />
+                  <span className="rem-toggle-knob bg-white shadow" />
                 </button>
               </div>
 
