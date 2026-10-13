@@ -1,8 +1,9 @@
+// src/components/reports/EntityHeader.tsx
 "use client";
 
 import { FiDownload } from "react-icons/fi";
 import { EntityDetail } from "@/lib/api/types/accounting.types";
-import { naira, sumInvoices } from "@/lib/api/accounting";
+import { naira } from "@/lib/api/accounting";
 
 interface EntityHeaderProps {
   detail: EntityDetail;
@@ -14,13 +15,12 @@ export default function EntityHeader({ detail, icon, onDownloadReport }: EntityH
   return (
     <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-5">
       <div className="flex items-center gap-3">
-        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-sky-50 text-sky-600">
-          {icon}
-        </span>
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-sky-50 text-sky-600">{icon}</span>
         <div>
           <h1 className="text-xl font-semibold text-slate-900">{detail.name}</h1>
           <p className="text-sm text-slate-500">
-            {detail.invoices.length} invoices · {naira(sumInvoices(detail.invoices))} total
+            {detail.pagination.total} invoices · {naira(detail.summary.totalRevenue)} paid ·{" "}
+            {naira(detail.summary.outstanding)} outstanding
           </p>
         </div>
       </div>

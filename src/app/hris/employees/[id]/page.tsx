@@ -93,6 +93,11 @@ const AVAILABLE_STATUSES: {
   { value: "EXITED", label: "Exited", dotColor: "bg-rose-500" },
 ];
 
+const STATUSES_REQUIRING_CONFIRMATION: EmployeeStatus[] = [
+  "INACTIVE",
+  "EXITED",
+];
+
 interface WorkDetailsFormState {
   departmentId: string;
   phoneNumber: string;
@@ -160,9 +165,13 @@ function getInitialBankFormState(
         ? String(bank.monthlySalary)
         : "";
 
+  const rawAccountNumber = bank.accountNumber ? String(bank.accountNumber) : "";
+  const accountNumberIsMasked =
+    bank.masked === true || rawAccountNumber.includes("*");
+
   return {
     bankName: bank.bankName || "",
-    accountNumber: bank.accountNumber || "",
+    accountNumber: accountNumberIsMasked ? "" : rawAccountNumber,
     accountName: bank.accountName || personal.fullName || header.name || "",
     bankCode: bank.bankCode || "",
     accountType: (bank.accountType as AccountType) || "",
@@ -367,6 +376,7 @@ export default function EmployeeProfilePage({
   >(undefined);
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const statusDropdownRef = useRef<HTMLDivElement | null>(null);
+  const editParamHandled = useRef(false);
 
   // In-card Edit Mode for Work Details
   const [isEditingWorkDetails, setIsEditingWorkDetails] = useState(false);
@@ -475,7 +485,12 @@ export default function EmployeeProfilePage({
   useEffect(() => {
     if (typeof window !== "undefined") {
       const sp = new URLSearchParams(window.location.search);
-      if (sp.get("edit") === "true" && employee) {
+      if (
+        !editParamHandled.current &&
+        sp.get("edit") === "true" &&
+        employee
+      ) {
+        editParamHandled.current = true;
         setEditForm(getInitialFormState(employee));
         setIsEditingWorkDetails(true);
       }
@@ -506,6 +521,12 @@ export default function EmployeeProfilePage({
     const currentStatus =
       employee.header.lifecycleStatus || employee.header.status || "ACTIVE";
     if (newStatus === currentStatus) return;
+
+    if (STATUSES_REQUIRING_CONFIRMATION.includes(newStatus)) {
+      setInitialStatusForModal(newStatus);
+      setStatusModalOpen(true);
+      return;
+    }
 
     setUpdatingStatus(true);
     try {
@@ -978,6 +999,9 @@ export default function EmployeeProfilePage({
   const guar = (guarantor || {}) as Record<string, any>;
   const attendance = (attendanceOverview || {}) as Record<string, any>;
 
+  const bankAccountMasked =
+    bank.masked === true || String(bank.accountNumber ?? "").includes("*");
+
   const statusKey = header.lifecycleStatus || header.status || "ACTIVE";
 
   const departmentName =
@@ -1360,6 +1384,7 @@ export default function EmployeeProfilePage({
                     { value: "MARRIED", label: "Married" },
                     { value: "DIVORCED", label: "Divorced" },
                     { value: "WIDOWED", label: "Widowed" },
+                    { value: "OTHER", label: "Other" },
                   ]}
                 />
 
@@ -1374,6 +1399,7 @@ export default function EmployeeProfilePage({
                     { value: "MALE", label: "Male" },
                     { value: "FEMALE", label: "Female" },
                     { value: "OTHER", label: "Other" },
+                    { value: "PREFER_NOT_TO_SAY", label: "Prefer not to say" },
                   ]}
                 />
 
@@ -1405,7 +1431,6 @@ export default function EmployeeProfilePage({
                     { value: "PART_TIME", label: "Part-Time" },
                     { value: "CONTRACT", label: "Contract" },
                     { value: "INTERN", label: "Intern" },
-                    { value: "CASUAL", label: "Casual" },
                   ]}
                 />
 
@@ -1553,7 +1578,11 @@ export default function EmployeeProfilePage({
                   label="Account Number"
                   value={bankForm.accountNumber}
                   onChange={(v) => updateBankField("accountNumber", v)}
-                  placeholder="e.g. 0123456789"
+                  placeholder={
+                    bankAccountMasked
+                      ? "Leave blank to keep current number"
+                      : "e.g. 0123456789"
+                  }
                   disabled={submittingBank}
                 />
                 <FormInput

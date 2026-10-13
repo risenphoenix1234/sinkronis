@@ -1,3 +1,4 @@
+// src/lib/api/types/accounting.types.ts
 export interface AccountingSummary {
   totalRevenue: number;
   outstanding: number;
@@ -59,9 +60,25 @@ export interface AccountingDashboardResponse {
     paymentRequests: PaymentRequestSummaryItem[];
   };
 }
+
 export interface CustomerSummary {
   totalCustomers: number;
   activeCustomers: number;
+}
+
+export interface Customer {
+  id: string;
+  customerId: string;
+  companyName: string;
+  taxId: string | null;
+  contactPerson: string | null;
+  email: string;
+  phone: string | null;
+  address: string | null;
+  status: "ACTIVE" | "INACTIVE";
+  since: string;
+  invoiceCount: number;
+  projectCount: number;
 }
 
 export interface CustomersListResponse {
@@ -103,21 +120,6 @@ export interface CustomerResponse {
   success: boolean;
   message: string;
   data: Customer;
-}
-
-export interface Customer {
-  id: string;
-  customerId: string;
-  companyName: string;
-  taxId: string | null;
-  contactPerson: string | null;
-  email: string;
-  phone: string | null;
-  address: string | null;
-  status: "ACTIVE" | "INACTIVE";
-  since: string;
-  invoiceCount: number;
-  projectCount: number;
 }
 
 export interface CustomerFinancialSummary {
@@ -176,22 +178,6 @@ export interface CustomerDetailResponse {
   data: CustomerDetail;
 }
 
-
-export interface CreateInvoiceLineItem {
-  catalogueItemId: string;
-  quantity: string;
-}
-
-export interface CreateInvoicePayload {
-  clientId: string;
-  assignedAgentId?: string;
-  projectId?: string;
-  dueDate: string;
-  notes?: string;
-  whtApplicable?: boolean;
-  whtRate?: 5 | 10;
-  items: CreateInvoiceLineItem[];
-}
 export interface CatalogueItem {
   id: string;
   itemCode: string;
@@ -285,6 +271,8 @@ export interface ProjectResponse {
   data: ProjectListItem;
 }
 
+export type InvoiceStatus = "DRAFT" | "SENT" | "PARTIALLY_PAID" | "PAID" | "OVERDUE" | "VOID";
+
 export interface InvoiceClientRef {
   id: string;
   reference: string;
@@ -354,7 +342,7 @@ export interface Invoice {
   invoiceNo: string;
   issueDate: string;
   dueDate: string;
-  status: "DRAFT" | "SENT" | "PAID" | "OVERDUE";
+  status: InvoiceStatus;
   subtotal: number;
   taxAmount: string;
   total: number;
@@ -461,23 +449,128 @@ export interface AgentsListResponse {
   };
 }
 
+export interface InviteAgentPayload {
+  fullName: string;
+  email: string;
+  phone?: string;
+  roleId: string;
+}
+
+export interface InviteAgentResponse {
+  success: boolean;
+  message: string;
+  data: {
+    id: string;
+    agentId: string;
+    email: string;
+    expiresAt: string;
+    deliveryStatus: string;
+  };
+}
+
+export interface InviteAgentsBulkPayload {
+  entries: string;
+  roleId: string;
+}
+
+export interface BulkInviteResultItem {
+  email: string;
+  reason?: string;
+}
+
+export interface InviteAgentsBulkResponse {
+  success: boolean;
+  message: string;
+  data: {
+    invited: BulkInviteResultItem[];
+    skipped: BulkInviteResultItem[];
+    failed: BulkInviteResultItem[];
+  };
+}
+
+export interface UpdateAgentPayload {
+  fullName?: string;
+  phone?: string | null;
+  roleId?: string;
+  status?: "ACTIVE" | "INACTIVE";
+}
+
+export interface UpdateAgentResponse {
+  success: boolean;
+  message: string;
+  data: {
+    id: string;
+    organizationId: string;
+    userId: string;
+    reference: string;
+    phone: string | null;
+    status: "ACTIVE" | "INACTIVE";
+    invitedAt: string;
+    deactivatedAt: string | null;
+    createdAt: string;
+    updatedAt: string;
+  };
+}
+
+export interface AdminRole {
+  id: string;
+  organizationId: string;
+  name: string;
+  description: string;
+  isSystem: boolean;
+  canModify: boolean;
+  canDelete: boolean;
+  lockedReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+  permissions: string[];
+}
+
 export interface PaymentRequestSummary {
   pendingApproval: number;
   totalCompleted: number;
   declined: number;
 }
 
-// export interface PaymentRequestItem {
-//   id: string;
-//   requestNumber: string;
-//   title: string;
-//   description: string | null;
-//   amount: string;
-//   currency: string;
-//   requestedBy: string;
-//   status: "PENDING" | "APPROVED" | "COMPLETED" | "DECLINED";
-//   createdAt: string;
-// }
+export interface PaymentRequestBankDetails {
+  bankName: string | null;
+  accountName: string | null;
+  accountNumber: string | null;
+}
+
+export interface PaymentRequestPerson {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+export interface PaymentRequestItem {
+  id: string;
+  organizationId: string;
+  title: string;
+  vendorName: string | null;
+  amount: number;
+  currency: string;
+  status: "PENDING" | "APPROVED" | "COMPLETED" | "DECLINED";
+  requestedBy: string;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  invoiceId: string | null;
+  projectId: string | null;
+  clientId: string | null;
+  requesterUserId: string;
+  description: string | null;
+  decisionReason: string | null;
+  declinedBy: string | null;
+  declinedAt: string | null;
+  disbursementReference: string | null;
+  disbursedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  requester: PaymentRequestPerson;
+  bankDetails: PaymentRequestBankDetails;
+}
 
 export interface PaymentRequestsListResponse {
   success: boolean;
@@ -513,6 +606,7 @@ export interface PaymentRequestResponse {
     status: string;
   };
 }
+
 export interface ExpenseUser {
   id: string;
   firstName: string;
@@ -570,7 +664,7 @@ export interface CreateExpensePayload {
   category: string;
   description: string;
   amount: string;
-  expenseDate: string; // "YYYY-MM-DD"
+  expenseDate: string;
   receiptReference?: string;
 }
 
@@ -580,6 +674,34 @@ export interface ExpenseResponse {
   success: boolean;
   message: string;
   data: ExpenseItem;
+}
+
+export interface ExpenseCategory {
+  id: string;
+  organizationId: string;
+  reference: string;
+  name: string;
+  normalizedName: string;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ExpenseCategoriesListResponse {
+  success: boolean;
+  message: string;
+  data: ExpenseCategory[];
+}
+
+export interface CreateExpenseCategoryPayload {
+  name: string;
+  description?: string;
+}
+
+export interface ExpenseCategoryResponse {
+  success: boolean;
+  message: string;
+  data: ExpenseCategory;
 }
 
 export interface WalletAccountSummaryRef {
@@ -625,13 +747,14 @@ export interface WalletAccountResponse {
   message: string;
   data: WalletAccount;
 }
+
 export interface WalletTransactionItem {
   id: string;
   organizationId: string;
   walletAccountId: string;
   payrollRunId: string | null;
   taxRemittanceId: string | null;
-  type: "MANUAL_FUNDING" | "WALLET_FUNDING" | string; // widen further as payroll/tax-remittance types surface
+  type: "MANUAL_FUNDING" | "WALLET_FUNDING" | string;
   direction: "CREDIT" | "DEBIT";
   amount: number;
   balanceBefore: number;
@@ -639,12 +762,13 @@ export interface WalletTransactionItem {
   reference: string;
   transferReference: string | null;
   description: string | null;
-  sourceType: "MANUAL_FUNDING" | "PAYSTACK_FUNDING" | string; // widen further as other sources surface
+  sourceType: "MANUAL_FUNDING" | "PAYSTACK_FUNDING" | string;
   sourceId: string | null;
   reversalOfId: string | null;
   createdById: string;
   createdAt: string;
 }
+
 export interface WalletTransactionsListResponse {
   success: boolean;
   message: string;
@@ -699,7 +823,7 @@ export interface PaystackVerifyResponse {
   message: string;
   data: {
     reference: string;
-    status: "PENDING" | "COMPLETED" | "FAILED"; // PENDING/FAILED inferred, not yet observed directly
+    status: "PENDING" | "COMPLETED" | "FAILED";
     amount: number;
     currency: string;
     transactionId: string;
@@ -715,216 +839,6 @@ export interface WalletReceiptResponse {
   };
 }
 
-export interface PaymentRequestBankDetails {
-  bankName: string | null;
-  accountName: string | null;
-  accountNumber: string | null;
-}
-
-export interface PaymentRequestPerson {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-}
-
-export interface PaymentRequestItem {
-  id: string;
-  organizationId: string;
-  title: string;
-  vendorName: string | null;
-  amount: number;
-  currency: string;
-  status: "PENDING" | "APPROVED" | "COMPLETED" | "DECLINED";
-  requestedBy: string;
-  approvedBy: string | null;
-  approvedAt: string | null;
-  invoiceId: string | null;
-  projectId: string | null;
-  clientId: string | null;
-  requesterUserId: string;
-  description: string | null;
-  decisionReason: string | null;
-  declinedBy: string | null;
-  declinedAt: string | null;
-  disbursementReference: string | null;
-  disbursedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-  requester: PaymentRequestPerson;
-  bankDetails: PaymentRequestBankDetails;
-}
-
-export interface ExpenseCategory {
-  id: string;
-  organizationId: string;
-  reference: string;
-  name: string;
-  normalizedName: string;
-  description: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ExpenseCategoriesListResponse {
-  success: boolean;
-  message: string;
-  data: ExpenseCategory[];
-}
-
-export interface CreateExpenseCategoryPayload {
-  name: string;
-  description?: string;
-}
-
-export interface ExpenseCategoryResponse {
-  success: boolean;
-  message: string;
-  data: ExpenseCategory;
-}
-
-export interface InviteAgentPayload {
-  fullName: string;
-  email: string;
-  phone?: string;
-  roleId: string;
-}
-
-export interface InviteAgentResponse {
-  success: boolean;
-  message: string;
-  data: {
-    id: string;
-    agentId: string;
-    email: string;
-    expiresAt: string;
-    deliveryStatus: string;
-  };
-}
-
-export interface InviteAgentsBulkPayload {
-  entries: string; // comma/newline-separated emails, one string — NOT an array
-  roleId: string;
-}
-
-export interface BulkInviteResultItem {
-  email: string;
-  reason?: string; // present on skipped/failed entries
-}
-
-export interface InviteAgentsBulkResponse {
-  success: boolean;
-  message: string;
-  data: {
-    invited: BulkInviteResultItem[];
-    skipped: BulkInviteResultItem[];
-    failed: BulkInviteResultItem[];
-  };
-}
-
-export interface UpdateAgentPayload {
-  fullName?: string;
-  phone?: string | null;
-  roleId?: string;
-  status?: "ACTIVE" | "INACTIVE";
-}
-
-export interface UpdateAgentResponse {
-  success: boolean;
-  message: string;
-  data: {
-    id: string;
-    organizationId: string;
-    userId: string;
-    reference: string;
-    phone: string | null;
-    status: "ACTIVE" | "INACTIVE";
-    invitedAt: string;
-    deactivatedAt: string | null;
-    createdAt: string;
-    updatedAt: string;
-  };
-}
-
-// GET /admin/roles returns a bare array, NOT wrapped in {success, message, data}
-export interface AdminRole {
-  id: string;
-  organizationId: string;
-  name: string;
-  description: string;
-  isSystem: boolean;
-  canModify: boolean;
-  canDelete: boolean;
-  lockedReason: string | null;
-  createdAt: string;
-  updatedAt: string;
-  permissions: string[];
-  // permissionGroups omitted from the type — large nested structure we don't need for the picker
-}
-
-export interface InviteAgentPayload {
-  fullName: string;
-  email: string;
-  phone?: string;
-  roleId: string;
-}
-
-export interface InviteAgentResponse {
-  success: boolean;
-  message: string;
-  data: {
-    id: string;
-    agentId: string;
-    email: string;
-    expiresAt: string;
-    deliveryStatus: string;
-  };
-}
-
-export interface InviteAgentsBulkPayload {
-  entries: string; // comma/newline-separated emails as ONE string, not an array
-  roleId: string;
-}
-
-export interface BulkInviteResultItem {
-  email: string;
-  reason?: string;
-}
-
-export interface InviteAgentsBulkResponse {
-  success: boolean;
-  message: string;
-  data: {
-    invited: BulkInviteResultItem[];
-    skipped: BulkInviteResultItem[];
-    failed: BulkInviteResultItem[];
-  };
-}
-
-export interface UpdateAgentPayload {
-  fullName?: string;
-  phone?: string | null;
-  roleId?: string;
-  status?: "ACTIVE" | "INACTIVE";
-}
-
-export interface UpdateAgentResponse {
-  success: boolean;
-  message: string;
-  data: {
-    id: string;
-    organizationId: string;
-    userId: string;
-    reference: string;
-    phone: string | null;
-    status: "ACTIVE" | "INACTIVE";
-    invitedAt: string;
-    deactivatedAt: string | null;
-    createdAt: string;
-    updatedAt: string;
-  };
-}
-
 export interface ReportSummary {
   totalRevenue: number;
   outstanding: number;
@@ -934,12 +848,8 @@ export interface ReportSummary {
   netProfit: number;
 }
 
-
-
-
-
 export interface ReportGroup {
-  id: string; // "UNASSIGNED" when nothing is linked
+  id: string;
   name: string;
   invoiceCount: number;
   invoiceValue: number;
@@ -948,6 +858,14 @@ export interface ReportGroup {
   vatCharged: number;
 }
 
+export interface ReportPagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
 
 export interface AccountingReportResponse {
   success: boolean;
@@ -955,42 +873,47 @@ export interface AccountingReportResponse {
   data: {
     appliedFilters: Record<string, unknown>;
     summary: ReportSummary;
-    invoices?: Invoice[];   // when no groupBy
-    groups?: ReportGroup[]; // when groupBy is set
-    pagination?: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-      hasNextPage: boolean;
-      hasPreviousPage: boolean;
-    };
+    groups?: ReportGroup[];
+    invoices: Invoice[];
+    pagination: ReportPagination;
   };
 }
 
 export interface ReportFilters {
   clientId?: string;
   agentId?: string;
+  itemServiceId?: string;
   projectId?: string;
-  catalogueItemId?: string;
   status?: string;
-  dateFrom?: string;
-  dateTo?: string;
+  fromDate?: string;
+  toDate?: string;
 }
+
+export type ReportGroupBy = "CLIENT" | "AGENT" | "PROJECT";
+
+export type ReportSortBy = "issueDate" | "dueDate" | "total" | "createdAt" | "status";
+
+export interface ReportQuery extends ReportFilters {
+  groupBy?: ReportGroupBy;
+  page?: number;
+  limit?: number;
+  sortBy?: ReportSortBy;
+  sortOrder?: "asc" | "desc";
+}
+
+export type ReportEntityKind = "client" | "agent" | "project";
 
 export type DrillEntry = ReportGroup;
-
-export interface DrillIn {
-  byClient: DrillEntry[];
-  byAgent: DrillEntry[];
-  byProject: DrillEntry[];
-}
 
 export interface EntityDetail {
   id: string;
   name: string;
+  summary: ReportSummary;
   invoices: Invoice[];
-}export interface InvoiceTemplate {
+  pagination: ReportPagination;
+}
+
+export interface InvoiceTemplate {
   id: string;
   organizationId: string;
   name: string;
@@ -1009,17 +932,6 @@ export interface CreateInvoiceTemplatePayload {
   paymentTerms?: string;
   headerNote?: string;
   footerNote?: string;
-}
-
-export interface ExpenseCategory {
-  id: string;
-  organizationId: string;
-  reference: string;
-  name: string;
-  normalizedName: string;
-  description: string | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface ReminderSettings {

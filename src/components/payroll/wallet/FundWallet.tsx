@@ -13,6 +13,8 @@ type FundWalletModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSubmit?: (data: FundWalletFormData) => void;
+  isLoading?: boolean;
+  currentBalance?: number;
 };
 
 const initialFormData: FundWalletFormData = {
@@ -25,6 +27,8 @@ export default function FundWalletModal({
   isOpen,
   onClose,
   onSubmit,
+  isLoading = false,
+  currentBalance,
 }: FundWalletModalProps) {
   const [formData, setFormData] = useState<FundWalletFormData>(initialFormData);
 
@@ -97,7 +101,11 @@ export default function FundWalletModal({
           focus:border-[#248ac6] focus:ring-2 focus:ring-[#248ac6]/10"
         >
           <h2 className="mb-2 text-sm  text-slate-600">Current Balance</h2>
-          <p className="text-2xl font-bold">₦1,454,878</p>
+          <p className="text-2xl font-bold">
+            {typeof currentBalance === "number"
+              ? `₦${currentBalance.toLocaleString("en-NG")}`
+              : "-"}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -137,12 +145,14 @@ export default function FundWalletModal({
 
             <button
               type="submit"
+              disabled={isLoading}
               className="h-11 w-full rounded-md bg-[#248ac6]
                 px-6 text-base font-medium text-white transition
                 hover:bg-[#197db8] focus:outline-none
-                focus:ring-2 focus:ring-[#248ac6]/30"
+                focus:ring-2 focus:ring-[#248ac6]/30
+                disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Comfirm Funding
+              {isLoading ? "Funding..." : "Comfirm Funding"}
             </button>
           </div>
         </form>

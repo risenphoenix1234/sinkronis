@@ -82,6 +82,8 @@ export interface HrisDashboardResponse {
 }
 
 export interface EmployeeListItem {
+  exitedDate: any;
+  exitDate: any;
   id: string;
   employeeId: string;
   name: string;

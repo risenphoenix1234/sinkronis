@@ -1,79 +1,30 @@
+// src/components/payroll/overview/PayrollChart.tsx
 "use client";
 
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  Tooltip,
-  Cell,
-} from "recharts";
-import { ChevronDown } from "lucide-react";
+import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import type { PayrollDashboardTrendPoint } from "@/lib/api/types/payroll.types";
 
-const payrollData = [
-  { month: "Jan", amount: 420000 },
-  { month: "Feb", amount: 470000 },
-  { month: "Mar", amount: 510000 },
-  { month: "Apr", amount: 650000 },
-  { month: "May", amount: 480000 },
-  { month: "Jun", amount: 550000 },
-  { month: "Jul", amount: 460000 },
-  { month: "Oct", amount: 650000 },
-  { month: "Sept", amount: 480000 },
-  { month: "Nov", amount: 550000 },
-  { month: "Dec", amount: 460000 },
-  { month: "Aug", amount: 460000 },
-  { month: "Jan", amount: 650000 },
-  { month: "Sept", amount: 480000 },
-  { month: "Nov", amount: 550000 },
-  { month: "Dec", amount: 460000 },
-];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const monthLabel = (period: string) => MONTHS[Number(period.split("-")[1]) - 1] ?? period;
+const naira = (n: number) => `₦${n.toLocaleString("en-NG")}`;
+const millions = (n: number) => `₦${(n / 1_000_000).toFixed(1)}M`;
 
-export default function PayrollChart() {
+export default function PayrollChart({ data, currentPeriod }: { data: PayrollDashboardTrendPoint[]; currentPeriod: string }) {
+  const rows = data.map((p) => ({ month: monthLabel(p.period), period: p.period, amount: p.gross }));
   return (
-    <div className="h-full">
-      {/* Header */}
-      <div className="mb-8 flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-[#667085]">Payroll Summary</p>
-
-          <h2 className="mt-2 text-4xl font-bold text-[#101828]">₦650,000</h2>
-        </div>
-
-        <button className="flex items-center gap-2 rounded-lg border border-[#EAECF0] bg-white px-4 py-2 text-sm font-medium text-[#344054] hover:bg-gray-50">
-          Monthly
-          <ChevronDown size={16} />
-        </button>
-      </div>
-
-      {/* Chart */}
-
-      <div className="h-[280px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={payrollData}>
-            <XAxis
-              dataKey="month"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: "#98A2B3", fontSize: 12 }}
-            />
-
-            <Tooltip
-              cursor={{ fill: "#F2F4F7" }}
-              formatter={(value) => `₦${Number(value).toLocaleString()}`}
-            />
-
-            <Bar dataKey="amount" radius={[8, 8, 0, 0]}>
-              {payrollData.map((entry, index) => (
-                <Cell
-                  key={index}
-                  fill={entry.month === "Apr" ? "#F79009" : "#D0D5DD"}
-                />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+    <div className="h-72 w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={rows} barSize={28}>
+          <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: "#667085", fontSize: 12 }} />
+          <YAxis axisLine={false} tickLine={false} tick={{ fill: "#667085", fontSize: 12 }} tickFormatter={(v) => millions(Number(v))} />
+          <Tooltip formatter={(v) => naira(Number(v))} cursor={{ fill: "#F2F4F7" }} />
+          <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
+            {rows.map((d) => (
+              <Cell key={d.period} fill={d.period === currentPeriod ? "#F79009" : "#D0D5DD"} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 }

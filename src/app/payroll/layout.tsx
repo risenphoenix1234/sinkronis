@@ -1,74 +1,55 @@
-import type { ReactNode } from "react";
-
+// src/app/payroll/layout.tsx
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { SidebarItem } from "@/components/layout/Sidebar";
-import { DeductionProvider } from "@/context/payroll/DeductionContext";
 import { PayeeProvider } from "@/context/payroll/PayeeContext";
+import { DeductionProvider } from "@/context/payroll/DeductionContext";
 import { WalletProvider } from "@/context/payroll/WalletContext";
+import type { SidebarItem } from "@/components/layout/Sidebar";
 
 const sidebarItems: SidebarItem[] = [
+  { label: "Overview", href: "/payroll/overview", icon: "payroll-dashboard" },
   {
-    label: "Dashboard",
-    href: "/payroll/dashboard",
-    icon: "payroll-dashboard",
-  },
-  {
-    label: "Employees",
-    href: "/payroll/employees",
-    icon: "employees",
-  },
-  {
-    label: "Payees",
+    label: "Payee",
     href: "/payroll/payees",
-    icon: "payees",
+    icon: "payee",
+    children: [
+      { label: "Active Payee", href: "/payroll/payees" },
+      { label: "Invite Payee", href: "/payroll/invite-payee" },
+      { label: "Payee Group", href: "/payroll/payee-groups" },
+    ],
   },
   {
-    label: "Pay Runs",
-    href: "/payroll/pay-runs",
-    icon: "pay-runs",
+    label: "Payroll",
+    href: "/payroll/payroll",
+    icon: "payruns",
+    children: [
+      { label: "Create Payroll", href: "/payroll/payroll" },
+      { label: "Payroll History", href: "/payroll/pay-runs" },
+    ],
   },
-  {
-    label: "Payslips",
-    href: "/payroll/payslips",
-    icon: "payslips",
-  },
-  {
-    label: "Deductions",
-    href: "/payroll/deductions",
-    icon: "deductions",
-  },
-  {
-    label: "Wallet",
-    href: "/payroll/wallets",
-    icon: "wallets",
-  },
-  {
-    label: "Tax (PAYE)",
-    href: "/payroll/tax",
-    icon: "payroll-tax",
-  },
+  { label: "Payslips", href: "/payroll/payslips", icon: "payslips" },
+  { label: "Deductions", href: "/payroll/deductions", icon: "deduction" },
   {
     label: "Pension",
     href: "/payroll/pension",
     icon: "pension",
+    children: [
+      { label: "Payroll Pension", href: "/payroll/pension" },
+      { label: "PFAs", href: "/payroll/pfas" },
+    ],
   },
   {
-    label: "Reports",
-    href: "/payroll/reports",
-    icon: "payroll-reports",
+    label: "Tax",
+    href: "/payroll/tax",
+    icon: "payroll-tax",
+    children: [
+      { label: "Payroll Tax", href: "/payroll/tax" },
+      { label: "Tax Portals", href: "/payroll/tax-portals" },
+    ],
   },
-  {
-    label: "Settings",
-    href: "/payroll/settings",
-    icon: "payroll-settings",
-  },
+  { label: "Wallet", href: "/payroll/wallets", icon: "payroll-wallet" },
 ];
 
-interface PayrollLayoutProps {
-  children: ReactNode;
-}
-
-export default function PayrollLayout({ children }: PayrollLayoutProps) {
+export default function PayrollLayout({ children }: { children: React.ReactNode }) {
   return (
     <PayeeProvider>
       <DeductionProvider>

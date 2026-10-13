@@ -1,5 +1,65 @@
+// src/lib/api/accounting.ts
 import api from "./axios";
-import { AccountingDashboardResponse, AccountingReportResponse, AdminRole, AgentsListResponse, CatalogueItemResponse, CatalogueItemsResponse, CreateCatalogueItemPayload, CreateCustomerPayload, CreateExpenseCategoryPayload, CreateExpensePayload, CreateInvoicePayload, CreateInvoiceTemplatePayload, CreatePaymentRequestPayload, CreateProjectPayload, CreateWalletAccountPayload, CustomerDetailResponse, CustomerResponse, CustomersListResponse, DrillEntry, EntityDetail, ExpenseCategoriesListResponse, ExpenseCategoryResponse, ExpenseResponse, ExpensesListResponse, InviteAgentPayload, InviteAgentResponse, InviteAgentsBulkPayload, InviteAgentsBulkResponse, Invoice, InvoiceResponse, InvoicesListResponse, InvoiceTemplate, ManualFundingPayload, ManualFundingResponse, PaymentRequestResponse, PaymentRequestsListResponse, PaystackInitializePayload, PaystackInitializeResponse, PaystackVerifyResponse, ProjectResponse, ProjectsListResponse, ReminderSettings, ReportFilters, ReportGroup, UpdateAgentPayload, UpdateAgentResponse, UpdateCustomerPayload, UpdateExpensePayload, WalletAccountResponse, WalletReceiptResponse, WalletSummaryResponse, WalletTransactionsListResponse } from "./types/accounting.types";
+import {
+  AccountingDashboardResponse,
+  AccountingReportResponse,
+  AdminRole,
+  AgentsListResponse,
+  CatalogueItemResponse,
+  CatalogueItemsResponse,
+  CreateCatalogueItemPayload,
+  CreateCustomerPayload,
+  CreateExpenseCategoryPayload,
+  CreateExpensePayload,
+  CreateInvoicePayload,
+  CreateInvoiceTemplatePayload,
+  CreatePaymentRequestPayload,
+  CreateProjectPayload,
+  CreateWalletAccountPayload,
+  CustomerDetailResponse,
+  CustomerResponse,
+  CustomersListResponse,
+  EntityDetail,
+  ExpenseCategoriesListResponse,
+  ExpenseCategoryResponse,
+  ExpenseResponse,
+  ExpensesListResponse,
+  InviteAgentPayload,
+  InviteAgentResponse,
+  InviteAgentsBulkPayload,
+  InviteAgentsBulkResponse,
+  Invoice,
+  InvoiceResponse,
+  InvoicesListResponse,
+  InvoiceTemplate,
+  ManualFundingPayload,
+  ManualFundingResponse,
+  PaymentRequestResponse,
+  PaymentRequestsListResponse,
+  PaystackInitializePayload,
+  PaystackInitializeResponse,
+  PaystackVerifyResponse,
+  ProjectResponse,
+  ProjectsListResponse,
+  ReminderSettings,
+  ReportEntityKind,
+  ReportFilters,
+  ReportQuery,
+  UpdateAgentPayload,
+  UpdateAgentResponse,
+  UpdateCustomerPayload,
+  UpdateExpensePayload,
+  WalletAccountResponse,
+  WalletReceiptResponse,
+  WalletSummaryResponse,
+  WalletTransactionsListResponse,
+} from "./types/accounting.types";
+import {
+  RemindersListResponse,
+  ReminderConfigurationResponse,
+  UpdateReminderConfigurationPayload,
+  ReminderFilter,
+} from "@/types/reminder";
 
 const BASE = "/accounting";
 
@@ -7,6 +67,7 @@ export const getAccountingDashboard = async () => {
   const { data } = await api.get<AccountingDashboardResponse>(`${BASE}/dashboard`);
   return data;
 };
+
 export const getCustomers = async (params?: { page?: number; limit?: number; search?: string }) => {
   const { data } = await api.get<CustomersListResponse>(`${BASE}/customers`, { params });
   return data;
@@ -39,6 +100,11 @@ export const getInvoices = async (params?: { page?: number; limit?: number; sear
 
 export const createInvoice = async (payload: CreateInvoicePayload) => {
   const { data } = await api.post<InvoiceResponse>(`${BASE}/invoices`, payload);
+  return data;
+};
+
+export const getInvoiceDetail = async (id: string) => {
+  const { data } = await api.get<InvoiceResponse>(`${BASE}/invoices/${id}`);
   return data;
 };
 
@@ -82,15 +148,34 @@ export const deleteProject = async (id: string) => {
   return data;
 };
 
-
-export const getInvoiceDetail = async (id: string) => {
-  const { data } = await api.get<InvoiceResponse>(`${BASE}/invoices/${id}`);
-  return data;
-};
-
 export const getAgents = async (params?: { page?: number; limit?: number; search?: string }) => {
   const { data } = await api.get<AgentsListResponse>(`${BASE}/agents`, { params });
   return data;
+};
+
+export const inviteAgent = async (payload: InviteAgentPayload) => {
+  const { data } = await api.post<InviteAgentResponse>(`${BASE}/agents/invite`, payload);
+  return data;
+};
+
+export const inviteAgentsBulk = async (payload: InviteAgentsBulkPayload) => {
+  const { data } = await api.post<InviteAgentsBulkResponse>(`${BASE}/agents/invite-bulk`, payload);
+  return data;
+};
+
+export const updateAgent = async (id: string, payload: UpdateAgentPayload) => {
+  const { data } = await api.patch<UpdateAgentResponse>(`${BASE}/agents/${id}`, payload);
+  return data;
+};
+
+export const getAdminRoles = async () => {
+  const { data } = await api.get<AdminRole[]>(`/admin/roles`);
+  return data;
+};
+
+export const getAccountingRoles = async () => {
+  const roles = await getAdminRoles();
+  return roles.filter((r) => r.permissions.some((p) => p.startsWith("accounting:")));
 };
 
 export const getPaymentRequests = async (params?: { page?: number; limit?: number }) => {
@@ -117,7 +202,15 @@ export const disbursePaymentRequest = async (id: string) => {
   const { data } = await api.post(`${BASE}/payment-requests/${id}/disburse`);
   return data;
 };
-export const getExpenses = async (params?: { page?: number; limit?: number; search?: string; category?: string; startDate?: string; endDate?: string }) => {
+
+export const getExpenses = async (params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  category?: string;
+  startDate?: string;
+  endDate?: string;
+}) => {
   const { data } = await api.get<ExpensesListResponse>(`${BASE}/expenses`, { params });
   return data;
 };
@@ -137,12 +230,20 @@ export const voidExpense = async (id: string) => {
   return data;
 };
 
-import {
-  RemindersListResponse,
-  ReminderConfigurationResponse,
-  UpdateReminderConfigurationPayload,
-  ReminderFilter,
-} from "@/types/reminder";
+export const getExpenseCategories = async () => {
+  const { data } = await api.get<ExpenseCategoriesListResponse>(`${BASE}/settings/expense-categories`);
+  return data;
+};
+
+export const createExpenseCategory = async (payload: CreateExpenseCategoryPayload) => {
+  const { data } = await api.post<ExpenseCategoryResponse>(`${BASE}/settings/expense-categories`, payload);
+  return data;
+};
+
+export const deleteExpenseCategory = async (id: string) => {
+  const { data } = await api.delete(`${BASE}/settings/expense-categories/${id}`);
+  return data;
+};
 
 export const getReminders = async (params?: { filter?: ReminderFilter; page?: number; limit?: number }) => {
   const { data } = await api.get<RemindersListResponse>(`${BASE}/reminders`, { params });
@@ -168,6 +269,7 @@ export const markReminderRead = async (id: string) => {
   const { data } = await api.post(`${BASE}/reminders/${id}/read`);
   return data;
 };
+
 export const getWalletSummary = async () => {
   const { data } = await api.get<WalletSummaryResponse>(`${BASE}/wallet/summary`);
   return data;
@@ -203,186 +305,6 @@ export const getWalletReceipt = async (transactionId: string) => {
   return data;
 };
 
-export const getExpenseCategories = async () => {
-  const { data } = await api.get<ExpenseCategoriesListResponse>(`${BASE}/settings/expense-categories`);
-  return data;
-};
-
-export const createExpenseCategory = async (payload: CreateExpenseCategoryPayload) => {
-  const { data } = await api.post<ExpenseCategoryResponse>(`${BASE}/settings/expense-categories`, payload);
-  return data;
-};
-
-export const deleteExpenseCategory = async (id: string) => {
-  const { data } = await api.delete(`${BASE}/settings/expense-categories/${id}`);
-  return data;
-};
-
-
-export const inviteAgent = async (payload: InviteAgentPayload) => {
-  const { data } = await api.post<InviteAgentResponse>(`${BASE}/agents/invite`, payload);
-  return data;
-};
-
-export const inviteAgentsBulk = async (payload: InviteAgentsBulkPayload) => {
-  const { data } = await api.post<InviteAgentsBulkResponse>(`${BASE}/agents/invite-bulk`, payload);
-  return data;
-};
-
-export const updateAgent = async (id: string, payload: UpdateAgentPayload) => {
-  const { data } = await api.patch<UpdateAgentResponse>(`${BASE}/agents/${id}`, payload);
-  return data;
-};
-
-// Note: bare array response, not the usual {success, message, data} wrapper
-export const getAdminRoles = async () => {
-  const { data } = await api.get<AdminRole[]>(`/admin/roles`);
-  return data;
-};
-
-export const getAccountingRoles = async () => {
-  const roles = await getAdminRoles();
-  return roles.filter((r) => r.permissions.some((p) => p.startsWith("accounting:")));
-};
-
-export const getReports = async (params?: { page?: number; limit?: number }) => {
-  const { data } = await api.get<AccountingReportResponse>(`${BASE}/reports`, { params });
-  return data;
-};
-
-export const exportReportsCsv = async () => {
-  const response = await api.get(`${BASE}/reports/export.csv`, { responseType: "blob" });
-  return response.data;
-};
-
-export const exportReportsPdf = async () => {
-  const response = await api.get(`${BASE}/reports/export.pdf`, { responseType: "blob" });
-  return response.data;
-};
-
-// --- Client-side helpers until backend confirms filter/grouping query params ---
-
-export function filterInvoicesLocally(invoices: Invoice[], filters: ReportFilters): Invoice[] {
-  return invoices.filter((inv) => {
-    if (filters.clientId && inv.clientId !== filters.clientId) return false;
-    if (filters.agentId && inv.assignedAgentId !== filters.agentId) return false;
-    if (filters.projectId && inv.projectId !== filters.projectId) return false;
-    if (filters.catalogueItemId && !inv.items.some((i) => i.catalogueItemId === filters.catalogueItemId)) return false;
-    if (filters.status && inv.status !== filters.status) return false;
-    if (filters.dateFrom && new Date(inv.issueDate) < new Date(filters.dateFrom)) return false;
-    if (filters.dateTo && new Date(inv.issueDate) > new Date(filters.dateTo)) return false;
-    return true;
-  });
-}
-
- export const getProjectDetail = async (id: string): Promise<EntityDetail> => {
-  const res = await getReports();
-  const invoices = filterInvoicesLocally(res.data.invoices ?? [], { projectId: id });
-  return { id, name: invoices[0]?.project?.name ?? "Project", invoices };
-};
-
-export const getClientDetail = async (id: string): Promise<EntityDetail> => {
-  const res = await getReports();
-  const invoices = filterInvoicesLocally(res.data.invoices ?? [], { clientId: id });
-  return { id, name: invoices[0]?.client?.name ?? "Client", invoices };
-};
-
-export const getAgentDetail = async (id: string): Promise<EntityDetail> => {
-  const res = await getReports();
-  const invoices = filterInvoicesLocally(res.data.invoices ?? [], { agentId: id });
-  return { id, name: invoices[0]?.assignedAgent?.name ?? "Agent", invoices };
-};
-
-async function downloadReport(kind: "csv" | "pdf", filters?: ReportFilters) {
-  const response = await api.get(`${BASE}/reports/export.${kind}`, {
-    params: filters,
-    responseType: "blob",
-  });
-  const url = window.URL.createObjectURL(response.data);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `accounting-report.${kind}`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
-}
-
-export const exportCsv = (filters?: ReportFilters) => downloadReport("csv", filters);
-export const exportPdf = (filters?: ReportFilters) => downloadReport("pdf", filters);
-
-
- 
-
-const emptyGroup = (id: string, name: string): ReportGroup => ({
-  id,
-  name,
-  invoiceCount: 0,
-  invoiceValue: 0,
-  revenuePaid: 0,
-  outstanding: 0,
-  vatCharged: 0,
-});
-
-function addToGroup(group: ReportGroup, inv: Invoice) {
-  group.invoiceCount += 1;
-  group.invoiceValue += inv.total;
-  group.vatCharged += inv.vat;
-  if (inv.status?.toUpperCase() === "PAID") group.revenuePaid += inv.total;
-  else group.outstanding += inv.total;
-}
-
-export function groupInvoicesByClient(invoices: Invoice[]): DrillEntry[] {
-  const map = new Map<string, DrillEntry>();
-  invoices.forEach((inv) => {
-    const existing = map.get(inv.clientId) ?? emptyGroup(inv.clientId, inv.client.name);
-    addToGroup(existing, inv);
-    map.set(inv.clientId, existing);
-  });
-  return Array.from(map.values());
-}
-
-export function groupInvoicesByAgent(invoices: Invoice[]): DrillEntry[] {
-  const map = new Map<string, DrillEntry>();
-  invoices.forEach((inv) => {
-    if (!inv.assignedAgentId || !inv.assignedAgent) return;
-    const existing = map.get(inv.assignedAgentId) ?? emptyGroup(inv.assignedAgentId, inv.assignedAgent.name);
-    addToGroup(existing, inv);
-    map.set(inv.assignedAgentId, existing);
-  });
-  return Array.from(map.values());
-}
-
-export function groupInvoicesByProject(invoices: Invoice[]): DrillEntry[] {
-  const map = new Map<string, DrillEntry>();
-  invoices.forEach((inv) => {
-    if (!inv.projectId || !inv.project) return;
-    const existing = map.get(inv.projectId) ?? emptyGroup(inv.projectId, inv.project.name);
-    addToGroup(existing, inv);
-    map.set(inv.projectId, existing);
-  });
-  return Array.from(map.values());
-}
-
-
-
-export function sumInvoices(invoices: Invoice[]): number {
-  return invoices.reduce((sum, inv) => sum + inv.total, 0);
-}
-
-export const filterLabels: Record<keyof ReportFilters, string> = {
-  clientId: "Client",
-  agentId: "Agent",
-  projectId: "Project",
-  catalogueItemId: "Item",
-  status: "Status",
-  dateFrom: "From",
-  dateTo: "To",
-};
-
-export function naira(value: number): string {
-  return `₦${value.toLocaleString()}`;
-}
 export const getInvoiceTemplates = async () => {
   const { data } = await api.get<{ success: boolean; message: string; data: InvoiceTemplate[] }>(
     `${BASE}/settings/invoice-templates`
@@ -398,7 +320,6 @@ export const createInvoiceTemplate = async (payload: CreateInvoiceTemplatePayloa
   return data;
 };
 
-// PATCH body not yet confirmed against a real response — same fields as create, all optional
 export const updateInvoiceTemplate = async (id: string, payload: Partial<CreateInvoiceTemplatePayload>) => {
   const { data } = await api.patch<{ success: boolean; message: string; data: InvoiceTemplate }>(
     `${BASE}/settings/invoice-templates/${id}`,
@@ -433,3 +354,86 @@ export const updateReminderSettings = async (payload: ReminderSettings) => {
   );
   return data;
 };
+
+export const REPORT_FILTER_KEYS: (keyof ReportFilters)[] = [
+  "clientId",
+  "agentId",
+  "projectId",
+  "itemServiceId",
+  "status",
+  "fromDate",
+  "toDate",
+];
+
+export const filterLabels: Record<keyof ReportFilters, string> = {
+  clientId: "Client",
+  agentId: "Agent",
+  projectId: "Project",
+  itemServiceId: "Item",
+  status: "Status",
+  fromDate: "From",
+  toDate: "To",
+};
+
+function cleanParams(params?: object): Record<string, string | number> | undefined {
+  if (!params) return undefined;
+  const entries = Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== "");
+  return Object.fromEntries(entries) as Record<string, string | number>;
+}
+
+export const getReports = async (query?: ReportQuery) => {
+  const { data } = await api.get<AccountingReportResponse>(`${BASE}/reports`, { params: cleanParams(query) });
+  return data;
+};
+
+export const entityFilters = (kind: ReportEntityKind, id: string): ReportFilters => {
+  if (kind === "client") return { clientId: id };
+  if (kind === "agent") return { agentId: id };
+  return { projectId: id };
+};
+
+function resolveEntityName(kind: ReportEntityKind, id: string, invoices: Invoice[]): string {
+  if (id === "UNASSIGNED") return kind === "agent" ? "Unassigned agent" : "Unassigned project";
+  const first = invoices[0];
+  if (kind === "client") return first?.client.name ?? "Client";
+  if (kind === "agent") return first?.assignedAgent?.name ?? "Agent";
+  return first?.project?.name ?? "Project";
+}
+
+export const getEntityReport = async (
+  kind: ReportEntityKind,
+  id: string,
+  options?: { page?: number; limit?: number }
+): Promise<EntityDetail> => {
+  const res = await getReports({ ...entityFilters(kind, id), page: options?.page, limit: options?.limit });
+  const invoices = res.data.invoices ?? [];
+  return {
+    id,
+    name: resolveEntityName(kind, id, invoices),
+    summary: res.data.summary,
+    invoices,
+    pagination: res.data.pagination,
+  };
+};
+
+async function downloadReport(format: "csv" | "pdf", filters?: ReportFilters) {
+  const response = await api.get(`${BASE}/reports/export.${format}`, {
+    params: cleanParams(filters),
+    responseType: "blob",
+  });
+  const url = window.URL.createObjectURL(response.data);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `accounting-report.${format}`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
+export const exportCsv = (filters?: ReportFilters) => downloadReport("csv", filters);
+export const exportPdf = (filters?: ReportFilters) => downloadReport("pdf", filters);
+
+export function naira(value: number | null | undefined): string {
+  return `₦${(value ?? 0).toLocaleString()}`;
+}
