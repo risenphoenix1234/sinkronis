@@ -186,16 +186,20 @@ export default function PayRunDetailPage() {
                 <td colSpan={6} className="py-10 text-center text-slate-400">No employees in this payroll.</td>
               </tr>
             )}
-            {items.map((i, idx) => (
-              <tr key={i.participantId ?? i.payeeId ?? i.employeeId ?? idx} className={idx % 2 === 1 ? "bg-slate-50" : ""}>
-                <td className="py-4 text-slate-800">{i.displayName ?? "-"}</td>
-                <td className="py-4 text-slate-700">{i.group?.name ?? "-"}</td>
-                <td className="py-4 text-slate-700">{naira(i.cashGross ?? 0)}</td>
-                <td className="py-4 text-slate-700">{naira((i.paye ?? 0) + (i.wht ?? 0))}</td>
-                <td className="py-4 text-slate-700">{naira(i.employeePension ?? 0)}</td>
-                <td className="py-4 text-slate-700">{naira(i.netPay ?? 0)}</td>
-              </tr>
-            ))}
+            {items.map((i, idx) => {
+              const pending = i.resultStatus === "PENDING";
+              const cell = (v: number) => (pending ? "Pending" : naira(v));
+              return (
+                <tr key={i.participantId ?? i.payeeId ?? i.employeeId ?? idx} className={idx % 2 === 1 ? "bg-slate-50" : ""}>
+                  <td className="py-4 text-slate-800">{i.displayName ?? "-"}</td>
+                  <td className="py-4 text-slate-700">{i.group?.name ?? "-"}</td>
+                  <td className="py-4 text-slate-700">{pending ? naira(i.baseCompensation ?? 0) : naira(i.cashGross ?? 0)}</td>
+                  <td className="py-4 text-slate-700">{cell((i.paye ?? 0) + (i.wht ?? 0))}</td>
+                  <td className="py-4 text-slate-700">{cell(i.employeePension ?? 0)}</td>
+                  <td className="py-4 text-slate-700">{cell(i.netPay ?? 0)}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

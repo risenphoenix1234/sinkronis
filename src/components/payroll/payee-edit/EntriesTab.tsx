@@ -125,9 +125,6 @@ export default function EntriesTab({ kind, payee }: { kind: EntryKind; payee: Pa
     if (!amount) return setFormError("Enter an amount greater than 0.");
     if (form.justification.trim().length < 2) return setFormError("Justification must be at least 2 characters.");
     if (!form.frequency) return setFormError("Select a frequency.");
-    if (kind === "deduction" && form.frequency === "ONCE") {
-      return setFormError("One-time deductions are not supported yet. Choose Multiple.");
-    }
     if (kind === "bonus") {
       if (!form.startDate) return setFormError("Select a start date.");
       if (form.frequency === "MULTIPLE" && form.endDate && form.endDate < form.startDate) {
@@ -157,7 +154,8 @@ export default function EntriesTab({ kind, payee }: { kind: EntryKind; payee: Pa
           deductionTypeId,
           amount,
           name,
-          type: "RECURRING",
+          type: form.frequency === "ONCE" ? "ONE_OFF" : "RECURRING",
+          effectiveFrom: todayIso(),
         });
       }
       setOpen(false);
