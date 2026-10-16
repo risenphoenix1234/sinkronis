@@ -155,7 +155,6 @@ export default function EntriesTab({ kind, payee }: { kind: EntryKind; payee: Pa
           amount,
           name,
           type: form.frequency === "ONCE" ? "ONE_OFF" : "RECURRING",
-          effectiveFrom: todayIso(),
         });
       }
       setOpen(false);

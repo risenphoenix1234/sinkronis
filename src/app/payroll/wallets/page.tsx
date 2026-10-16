@@ -38,6 +38,7 @@ import {
   getPayrollWalletTransactions,
   exportPayrollWalletTransactionsCsv,
   getPayrollWalletObligations,
+  getPayRuns,
   payPayrollWalletObligation,
   PayrollWalletData,
   PayrollWalletTransaction,
@@ -206,6 +207,7 @@ export default function PayrollWalletPage() {
   const [apiObligations, setApiObligations] = useState<
     PayrollWalletObligation[] | null
   >(null);
+    const [payableRunIds, setPayableRunIds] = useState<Set<string>>(new Set());
   const [obligationsLoading, setObligationsLoading] = useState(true);
   const [obligationsError, setObligationsError] = useState<string | null>(null);
 
@@ -213,9 +215,27 @@ export default function PayrollWalletPage() {
     try {
       setObligationsLoading(true);
       setObligationsError(null);
-      const res = await getPayrollWalletObligations();
+           const res = await getPayrollWalletObligations();
       if (res && Array.isArray(res.data)) {
         setApiObligations(res.data);
+        if (res.data.some((o) => o.id.startsWith("PAYROLL_RUN:"))) {
+          try {
+            const ids = new Set<string>();
+            let page = 1;
+            let totalPages = 1;
+            do {
+              const runs = await getPayRuns({ page, limit: 10 });
+              runs.items.forEach((r) => {
+                if (r.permanentEmployeeCount > 0 && r.externalPayeeCount === 0) ids.add(r.id);
+              });
+              totalPages = runs.pagination?.totalPages ?? 1;
+              page += 1;
+            } while (page <= totalPages && page <= 10);
+            setPayableRunIds(ids);
+          } catch {
+            setPayableRunIds(new Set());
+          }
+        }
       } else {
         setApiObligations([]);
       }
@@ -663,6 +683,10 @@ export default function PayrollWalletPage() {
                 obligation={obligation}
                 onPay={() => handlePayObligation(obligation)}
                 isPaying={payingObligationId === obligation.id}
+                canPay={
+                  !obligation.id.startsWith("PAYROLL_RUN:") ||
+                  payableRunIds.has(obligation.id.replace("PAYROLL_RUN:", ""))
+                }
               />
             ))}
           </div>
@@ -895,12 +919,14 @@ type ObligationCardProps = {
   obligation: Obligation;
   onPay: () => void;
   isPaying?: boolean;
+  canPay?: boolean;
 };
 
 function ObligationCard({
   obligation,
   onPay,
   isPaying = false,
+  canPay = true,
 }: ObligationCardProps) {
   return (
     <div className="flex items-start justify-between gap-4 rounded-lg border border-[#e5e9ed] px-5 py-4">
@@ -921,15 +947,21 @@ function ObligationCard({
           {naira(obligation.amount)}
         </p>
 
-        <button
-          type="button"
-          onClick={onPay}
-          disabled={isPaying}
-          className="mt-2.5 flex h-8 items-center justify-center gap-1.5 rounded-md bg-[#1683d8] px-4 text-[12.5px] font-semibold text-white transition hover:bg-[#1274c2] disabled:opacity-60"
-        >
-          {isPaying && <Loader2 size={12} className="animate-spin" />}
-          <span>{isPaying ? "Paying..." : "Pay Now"}</span>
-        </button>
+             {canPay ? (
+          <button
+            type="button"
+            onClick={onPay}
+            disabled={isPaying}
+            className="mt-2.5 flex h-8 items-center justify-center gap-1.5 rounded-md bg-[#1683d8] px-4 text-[12.5px] font-semibold text-white transition hover:bg-[#1274c2] disabled:opacity-60"
+          >
+            {isPaying && <Loader2 size={12} className="animate-spin" />}
+            <span>{isPaying ? "Paying..." : "Pay Now"}</span>
+          </button>
+        ) : (
+          <p className="mt-2.5 text-[11.5px] text-[#a3aeb9]">
+            Payment not available for this run type yet
+          </p>
+        )}
       </div>
     </div>
   );
