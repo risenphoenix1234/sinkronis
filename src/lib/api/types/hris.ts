@@ -1,3 +1,4 @@
+// src/lib/api/types/hris.ts
 export type LifecycleStatus =
   "PROBATION" | "ACTIVE" | "TERMINATED" | "ON_LEAVE";
 export type OperationalStatus = "ACTIVE" | "INACTIVE";

@@ -568,3 +568,129 @@ export interface HistoricalAppraisalDetailResponse {
   message: string;
   data: HistoricalAppraisalDetailData;
 }
+
+// src/lib/api/types/employeeTypes.ts
+export interface EmployeeApiEnvelope<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
+export type EmployeeAppraisalDetailData = HistoricalAppraisalDetailData;
+export type EmployeeAppraisalDetailResponse =
+  EmployeeApiEnvelope<EmployeeAppraisalDetailData>;
+
+export interface EmployeeAppraisalOverviewData {
+  currentAppraisal?: EmployeeAppraisalDetailData | null;
+  [key: string]: unknown;
+}
+
+export interface EmployeeAppraisalGoalsData {
+  appraisalId?: string;
+  goals?: HistoricalAppraisalGoal[];
+  goalsConfirmed?: boolean;
+  goalsConfirmedAt?: string | null;
+  editable?: boolean;
+  [key: string]: unknown;
+}
+export type EmployeeAppraisalGoalsResponse =
+  EmployeeApiEnvelope<EmployeeAppraisalGoalsData>;
+
+export interface CreateEmployeeAppraisalGoalPayload {
+  title: string;
+  description: string;
+  successCriteria: string;
+  targetDate: string;
+}
+export type CreateEmployeeAppraisalGoalResponse =
+  EmployeeApiEnvelope<HistoricalAppraisalGoal>;
+
+export type EmployeeGoalAssessmentStatus =
+  | "NOT_STARTED"
+  | "IN_PROGRESS"
+  | "COMPLETED";
+export interface UpdateEmployeeAppraisalGoalPayload {
+  status: EmployeeGoalAssessmentStatus;
+  rating?: number;
+  comment?: string;
+}
+export interface UpdateEmployeeAppraisalGoalResponse {
+  success: boolean;
+  message: string;
+  data?: unknown;
+}
+
+export interface EmployeeSelfAssessmentReflectionQuestion {
+  id: string;
+  question: string;
+  required?: boolean;
+}
+
+export interface EmployeeSelfAssessmentData {
+  appraisalId?: string;
+  stage?: string;
+  quarter?: string | null;
+  header?: {
+    employee?: { id?: string; name?: string; role?: string };
+    supervisor?: { id?: string; name?: string; role?: string };
+    [key: string]: unknown;
+  };
+  goals?: HistoricalAppraisalGoal[];
+  reflectionQuestions?: EmployeeSelfAssessmentReflectionQuestion[];
+  ratingScale?: HistoricalAppraisalRatingScaleItem[];
+  [key: string]: unknown;
+}
+export type EmployeeSelfAssessmentResponse =
+  EmployeeApiEnvelope<EmployeeSelfAssessmentData>;
+
+export interface SelfAssessmentDraftSection {
+  section: string;
+  totalWeight: number;
+  objectives: {
+    title: string;
+    weight: number;
+    keyResults: {
+      keyResult: string;
+      kpiWeight: number;
+      target: number;
+      achieved?: number;
+      comment?: string;
+    }[];
+  }[];
+}
+
+export interface SaveSelfAssessmentDraftPayload {
+  sections: SelfAssessmentDraftSection[];
+  reflections?: { questionId: string; response: string }[];
+}
+export type SaveSelfAssessmentDraftData = Record<string, unknown>;
+export type SaveSelfAssessmentDraftResponse =
+  EmployeeApiEnvelope<SaveSelfAssessmentDraftData>;
+
+export interface SubmitSelfAssessmentPayload {
+  sections: SelfAssessmentDraftSection[];
+  reflections?: { questionId: string; response: string }[];
+  submit?: boolean;
+}
+export interface SubmitSelfAssessmentData {
+  appraisalId?: string;
+  stage?: string;
+  status?: string;
+  [key: string]: unknown;
+}
+export type SubmitSelfAssessmentResponse =
+  EmployeeApiEnvelope<SubmitSelfAssessmentData>;
+
+export interface AcknowledgeAppraisalPayload {
+  response?: string;
+}
+export interface AcknowledgeAppraisalData {
+  appraisalId?: string;
+  acknowledgedResponse?: string;
+  acknowledgedAt?: string;
+  stage?: string;
+  status?: string;
+  [key: string]: unknown;
+}
+export type AcknowledgeAppraisalResponse =
+  EmployeeApiEnvelope<AcknowledgeAppraisalData>;

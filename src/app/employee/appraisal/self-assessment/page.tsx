@@ -84,21 +84,20 @@ export default function SelfAssessmentPage() {
     : [];
 
   const activeObjectives = selfAssessmentData?.goals?.length
-    ? selfAssessmentData.goals.map((g, idx) => ({
+      ? selfAssessmentData.goals.map((g, idx) => ({
         id: idx + 1,
-        title: g.title,
-        weight: "100%",
-        kpis: [
-          {
-            id: idx + 1,
-            description: g.description || g.successCriteria || "",
-            kpiWeight: "100%",
-            target: g.targetDate || "—",
-            q1Ach: g.employeeRating ? `${g.employeeRating}` : "—",
-            q2Ach: g.managerRating ? `${g.managerRating}` : "—",
-            comment: g.employeeComment || g.managerComment || "—",
-          },
-        ],
+        objective: g.title,
+        wt: "100%",
+        keyResult: g.description || g.successCriteria || "",
+        kpis: 100,
+        target: 0,
+        weight: 100,
+        selfRating: g.employeeRating ?? 0,
+        q1Ach: g.employeeRating ?? 0,
+        q1Percent: 0,
+        q2Acgh: g.managerRating ?? 0,
+        q2Percent: 0,
+        comment: g.employeeComment || g.managerComment || "",
       }))
     : [];
 

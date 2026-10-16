@@ -1,3 +1,4 @@
+// src/lib/api/hris.ts
 import axios from "axios";
 import api from "../api/axios";
 import { ActiveAppraisalCycle, ApplyForLeavePayload, ApplyForLeaveResponse, AppraisalCycle, AppraisalTemplate, ApproveLeaveRequestPayload, ApproveLeaveRequestResp, ArchiveAppraisalTemplateResponse, AttendanceDispute, ClockInPayload, ClockInResponse, ClockOutPayload, 
@@ -45,6 +46,36 @@ import { ActiveAppraisalCycle, ApplyForLeavePayload, ApplyForLeaveResponse, Appr
         SelfAssessmentPayload,
          HrisDashboardData,
          AttendanceMetric,
+         AppraisalDetail,
+         SubmitSelfAssessmentData,
+         SubmitSelfAssessmentResponse,
+         GetAppraisalsParams,
+         GetAppraisalsResponse,
+         ProposeAppraisalGoalPayload,
+         ProposeAppraisalGoalResponse,
+         CreatedAppraisalGoalData,
+         CompleteAppraisalGoalsResponse,
+         UpdateAppraisalGoalScorePayload,
+         UpdateAppraisalGoalScoreResponse,
+         UpdatedAppraisalGoalScoreData,
+         GetSelfAssessmentData,
+         GetSelfAssessmentResponse,
+         GetManagerReviewData,
+         GetManagerReviewResponse,
+         SubmitManagerReviewPayload,
+         SubmitManagerReviewData,
+         SubmitManagerReviewResponse,
+         GetHrApprovalData,
+         GetHrApprovalResponse,
+         SubmitHrApprovalPayload,
+         SubmitHrApprovalData,
+         SubmitHrApprovalResponse,
+         AcknowledgeAppraisalPayload,
+         AcknowledgeAppraisalData,
+         AcknowledgeAppraisalResponse,
+         SignOffAppraisalPayload,
+         SignOffAppraisalData,
+         SignOffAppraisalResponse,
         } from "./types/hrisTypes";
 
 // Re-export so consumers can import from "@/lib/api/hris" directly
@@ -414,9 +445,10 @@ export const getAppraisalReviews = async (
   });
   return response.data;
 };
-
-export const getAppraisalCycles = async (): Promise<ListAppraisalCyclesResponse> => {
-  const response = await api.get<ListAppraisalCyclesResponse>("/hris/appraisals/cycles");
+export const getAppraisalCycles = async (
+  params?: { status?: string; page?: number; limit?: number }
+): Promise<ListAppraisalCyclesResponse> => {
+  const response = await api.get<ListAppraisalCyclesResponse>("/hris/appraisals/cycles", { params });
   return response.data;
 };
 
@@ -446,7 +478,7 @@ export const completeAppraisalCycle = async (cycleId: string): Promise<Appraisal
 
 export const getAppraisalCycleReviews = async (
   cycleId: string,
-  params?: { page?: number; limit?: number }
+  params?: { page?: number; limit?: number; search?: string; status?: string }
 ): Promise<GetAppraisalCycleReviewsResponse> => {
   const response = await api.get<GetAppraisalCycleReviewsResponse>(
     `/hris/appraisals/cycles/${cycleId}/reviews`,
@@ -670,8 +702,8 @@ export const getCycleReviewsDebug = async (cycleId: string): Promise<unknown> =>
   return response.data;
 };
 
-export const getAppraisalDetail = async (appraisalId: string): Promise<Record<string, unknown>> => {
-  const response = await api.get<{ success: boolean; message: string; data: Record<string, unknown> }>(
+export const getAppraisalDetail = async (appraisalId: string): Promise<AppraisalDetail> => {
+  const response = await api.get<{ success: boolean; message: string; data: AppraisalDetail }>(
     `/hris/appraisals/${appraisalId}`
   );
   return response.data.data;
@@ -803,12 +835,12 @@ export const signOffAppraisalDebug = async (appraisalId: string): Promise<unknow
 export const submitSelfAssessment = async (
   appraisalId: string,
   payload: SelfAssessmentPayload
-): Promise<unknown> => {
-  const response = await api.post(
+): Promise<SubmitSelfAssessmentData> => {
+  const response = await api.post<SubmitSelfAssessmentResponse>(
     `/hris/appraisals/${appraisalId}/self-assessment`,
     payload
   );
-  return response.data;
+  return response.data.data;
 };
 
 // Add these near getEmployeeActivity in hris.ts
@@ -858,4 +890,135 @@ export const downloadEmployeeDocument = async (
     { responseType: "blob" },
   );
   return response.data;
+};
+
+export const getAppraisals = async (
+  params?: GetAppraisalsParams,
+): Promise<GetAppraisalsResponse> => {
+  const response = await api.get<GetAppraisalsResponse>("/hris/appraisals", {
+    params,
+  });
+  return response.data;
+};
+
+export const proposeAppraisalGoal = async (
+  appraisalId: string,
+  payload: ProposeAppraisalGoalPayload,
+): Promise<CreatedAppraisalGoalData> => {
+  const response = await api.post<ProposeAppraisalGoalResponse>(
+    `/hris/appraisals/${appraisalId}/goals`,
+    payload,
+  );
+  return response.data.data;
+};
+
+export const completeAppraisalGoals = async (
+  appraisalId: string,
+): Promise<CompleteAppraisalGoalsResponse["data"]> => {
+  const response = await api.post<CompleteAppraisalGoalsResponse>(
+    `/hris/appraisals/${appraisalId}/goals/complete`,
+  );
+  return response.data.data;
+};
+
+export const confirmEmployeeGoals = async (
+  appraisalId: string,
+): Promise<unknown> => {
+  const response = await api.post(
+    `/employee/appraisal/${appraisalId}/goals/confirm`,
+  );
+  return response.data;
+};
+
+export const deleteAppraisalGoal = async (
+  appraisalId: string,
+  goalId: string,
+): Promise<unknown> => {
+  const response = await api.delete(
+    `/hris/appraisals/${appraisalId}/goals/${goalId}`,
+  );
+  return response.data;
+};
+
+export const updateAppraisalGoalScore = async (
+  appraisalId: string,
+  goalId: string,
+  payload: UpdateAppraisalGoalScorePayload,
+): Promise<UpdatedAppraisalGoalScoreData> => {
+  const response = await api.patch<UpdateAppraisalGoalScoreResponse>(
+    `/hris/appraisals/${appraisalId}/goals/${goalId}`,
+    payload,
+  );
+  return response.data.data;
+};
+
+export const getSelfAssessment = async (
+  appraisalId: string,
+): Promise<GetSelfAssessmentData> => {
+  const response = await api.get<GetSelfAssessmentResponse>(
+    `/hris/appraisals/${appraisalId}/self-assessment`,
+  );
+  return response.data.data;
+};
+
+export const getManagerReview = async (
+  appraisalId: string,
+): Promise<GetManagerReviewData> => {
+  const response = await api.get<GetManagerReviewResponse>(
+    `/hris/appraisals/${appraisalId}/manager-review`,
+  );
+  return response.data.data;
+};
+
+export const submitManagerReview = async (
+  appraisalId: string,
+  payload: SubmitManagerReviewPayload,
+): Promise<SubmitManagerReviewData> => {
+  const response = await api.post<SubmitManagerReviewResponse>(
+    `/hris/appraisals/${appraisalId}/manager-review`,
+    payload,
+  );
+  return response.data.data;
+};
+
+export const getHrApproval = async (
+  appraisalId: string,
+): Promise<GetHrApprovalData> => {
+  const response = await api.get<GetHrApprovalResponse>(
+    `/hris/appraisals/${appraisalId}/hr-approval`,
+  );
+  return response.data.data;
+};
+
+export const submitHrApproval = async (
+  appraisalId: string,
+  payload: SubmitHrApprovalPayload,
+): Promise<SubmitHrApprovalData> => {
+  const response = await api.post<SubmitHrApprovalResponse>(
+    `/hris/appraisals/${appraisalId}/hr-approval`,
+    payload,
+  );
+  return response.data.data;
+};
+
+export const acknowledgeAppraisal = async (
+  appraisalId: string,
+  payload?: AcknowledgeAppraisalPayload,
+): Promise<AcknowledgeAppraisalData> => {
+  const response = await api.post<AcknowledgeAppraisalResponse>(
+    `/hris/appraisals/${appraisalId}/acknowledge`,
+    payload ?? {},
+  );
+  return response.data.data;
+};
+
+export const signOffAppraisal = async (
+  appraisalId: string,
+  payload: SignOffAppraisalPayload,
+): Promise<SignOffAppraisalData> => {
+  const response = await api.post<SignOffAppraisalResponse>(
+    `/hris/appraisals/${appraisalId}/sign-off`,
+    payload,
+  );
+  return response.data.data;
 };

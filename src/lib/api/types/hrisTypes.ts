@@ -1078,7 +1078,7 @@ export interface AppraisalsAnalytics {
 
 export interface AppraisalsOverviewData {
   analytics: AppraisalsAnalytics;
-  activeCycle: Record<string, unknown> | null;
+  activeCycle: AppraisalsOverviewActiveCycle | null;
   workflow: Record<string, unknown>;
 }
 
@@ -1392,7 +1392,7 @@ export interface AppraisalTemplateQuestion {
 export interface AppraisalSettings {
   id: string;
   organizationId: string;
-  defaultReviewFrequency: "MONTHLY" | "QUARTERLY" | "BIANNUAL" | "ANNUAL"; // only MONTHLY confirmed; others inferred from UI
+  defaultReviewFrequency: "MONTHLY" | "QUARTERLY" | "BIANNUAL" | "BI_ANNUAL" | "ANNUAL";  
   updatedById: string;
   createdAt: string;
   updatedAt: string;
@@ -1540,7 +1540,7 @@ export interface AppraisalSummary {
   overallRatingLabel: string;  // e.g. "Below Expectation"
 }
 
-export type GoalStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED";
+export type GoalStatus = "PENDING" | "IN_PROGRESS" | "ACTIVE" | "LOCKED" | "COMPLETED";
 
 export interface Goal {
   id: string;
@@ -1576,10 +1576,296 @@ export interface SelfAssessmentPayload {
         keyResult: string;
         kpiWeight: number;
         target: number;
-        comment: string;
-        // add "achieved" field here once confirmed from GET
+        achieved?: number;
+        comment?: string;
       }[];
     }[];
   }[];
+  reflections?: { questionId: string; response: string }[];
   submit: boolean;
 }
+
+// src/lib/api/types/hrisTypes.ts
+export interface GetAppraisalsParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  cycleId?: string;
+  departmentId?: string;
+  quarter?: "Q1" | "Q2" | "Q3" | "Q4";
+  year?: number;
+  status?: string;
+  stage?: string;
+}
+
+export type GetAppraisalsResponse = GetAppraisalReviewsResponse;
+
+export interface ApiEnvelope<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
+export interface AppraisalGoalRecord {
+  id: string;
+  title: string;
+  description?: string | null;
+  successCriteria?: string | null;
+  targetDate?: string | null;
+  status?: string;
+  employeeRating?: number | null;
+  employeeComment?: string | null;
+  managerRating?: number | null;
+  managerComment?: string | null;
+  rating?: number | null;
+  comment?: string | null;
+}
+
+export interface AppraisalDetailPerson {
+  id?: string;
+  name?: string;
+  role?: string;
+}
+
+export interface AppraisalDetailSelfAssessment {
+  status?: string;
+  reflections?: { questionId: string; response: string }[];
+  submittedAt?: string | null;
+  overallScore?: number | null;
+}
+
+export interface AppraisalDetailManagerReview {
+  status?: string;
+  overallFeedback?: string | null;
+  recommendation?: string | null;
+  submittedAt?: string | null;
+}
+
+export interface AppraisalDetail {
+  appraisalId: string;
+  employee?: {
+    id?: string;
+    employeeCode?: string;
+    name?: string;
+    role?: string;
+    department?: string;
+    manager?: AppraisalDetailPerson | null;
+  };
+  reviewer?: AppraisalDetailPerson | null;
+  cycle?: {
+    id?: string;
+    name?: string;
+    periodFrom?: string;
+    periodTo?: string;
+    submissionDeadline?: string;
+    quarter?: string;
+    year?: number;
+  };
+  template?: { id?: string; name?: string; version?: number };
+  criteria?: TemplateSection[];
+  ratingScale?: { value: number; key: string }[];
+  stage: string;
+  status?: string;
+  goalsConfirmedAt?: string | null;
+  awaitingEmployeeConfirmation?: boolean;
+  finalScore?: number | null;
+  ratingValue?: number | null;
+  rating?: string | null;
+  goals?: AppraisalGoalRecord[];
+  selfAssessment?: AppraisalDetailSelfAssessment | null;
+  managerReview?: AppraisalDetailManagerReview | null;
+  hrApproval?: { decision?: string; approvedAt?: string | null } | null;
+  acknowledgement?: {
+    acknowledged?: boolean;
+    response?: string | null;
+    acknowledgedAt?: string | null;
+  } | null;
+  workflowHistory?: { stage: string; completedAt: string | null }[];
+  signOffs?: { signOffType?: string; signedAt?: string; signedBy?: string }[];
+  hrNotes?: string | null;
+  acknowledgedResponse?: string | null;
+  timestamps?: { acknowledgedAt?: string | null; [key: string]: unknown };
+}
+
+export interface AppraisalDetailCycle {
+  id?: string;
+  name?: string;
+  periodFrom?: string;
+  periodTo?: string;
+  submissionDeadline?: string;
+  quarter?: string;
+  year?: number;
+}
+
+export type GetAppraisalDetailResponse = ApiEnvelope<AppraisalDetail>;
+
+export interface ProposeAppraisalGoalPayload {
+  title: string;
+  description?: string;
+  successCriteria?: string;
+  targetDate?: string;
+}
+
+export type CreatedAppraisalGoalData = AppraisalGoalRecord;
+export type ProposeAppraisalGoalResponse = ApiEnvelope<CreatedAppraisalGoalData>;
+
+export type CompleteAppraisalGoalsResponse = ApiEnvelope<AppraisalDetail>;
+
+export interface UpdateAppraisalGoalScorePayload {
+  status?: string;
+  rating?: number;
+  comment?: string;
+}
+
+export type UpdatedAppraisalGoalScoreData = AppraisalGoalRecord;
+export type UpdateAppraisalGoalScoreResponse =
+  ApiEnvelope<UpdatedAppraisalGoalScoreData>;
+
+export interface SelfAssessmentTemplateSection extends TemplateSection {
+  [key: string]: unknown;
+}
+
+export interface ReflectionQuestion {
+  id: string;
+  question: string;
+  required?: boolean;
+}
+
+export interface GetSelfAssessmentData {
+  appraisalId?: string;
+  stage?: string;
+  quarter?: string | null;
+  goals?: AppraisalGoalRecord[];
+  reflectionQuestions?: ReflectionQuestion[];
+  template?: {
+    configuration?: {
+      sections?: SelfAssessmentTemplateSection[];
+      reflectionQuestions?: ReflectionQuestion[];
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  };
+  selfAssessment?: Record<string, unknown> | null;
+  [key: string]: unknown;
+}
+export type GetSelfAssessmentResponse = ApiEnvelope<GetSelfAssessmentData>;
+export interface SubmitSelfAssessmentData {
+  appraisalId?: string;
+  stage?: string;
+  [key: string]: unknown;
+}
+export type SubmitSelfAssessmentResponse = ApiEnvelope<SubmitSelfAssessmentData>;
+
+export type ManagerReviewRecommendation =
+  | "ON_TRACK"
+  | "EXCEEDS_EXPECTATION"
+  | "NEEDS_IMPROVEMENT";
+
+export interface ManagerReviewGoalRating {
+  goalId: string;
+  rating?: number | null;
+  comment?: string | null;
+}
+
+export interface ManagerReviewQuestionResponse {
+  questionId: string;
+  response: string;
+}
+
+export interface GetManagerReviewData {
+  appraisalId?: string;
+  stage?: string;
+  quarter?: string;
+  template?: {
+    configuration?: {
+      sections?: SelfAssessmentTemplateSection[];
+      managerReviewQuestions?: ReflectionQuestion[];
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  };
+  selfAssessment?: {
+    overallScore?: number | null;
+    sections?: SelfAssessmentTemplateSection[];
+    reflections?: ManagerReviewQuestionResponse[];
+    [key: string]: unknown;
+  } | null;
+  managerReview?: {
+    status?: string;
+    overallFeedback?: string | null;
+    recommendation?: ManagerReviewRecommendation | string | null;
+    goalRatings?: ManagerReviewGoalRating[];
+    responses?: ManagerReviewQuestionResponse[];
+    managerReviewResponses?: ManagerReviewQuestionResponse[];
+    submittedAt?: string | null;
+  } | null;
+  [key: string]: unknown;
+}
+export type GetManagerReviewResponse = ApiEnvelope<GetManagerReviewData>;
+
+export interface SubmitManagerReviewGoalRating {
+  goalId: string;
+  rating: number;
+  comment?: string;
+}
+export interface SubmitManagerReviewQuestionResponse {
+  questionId: string;
+  response: string;
+}
+export interface SubmitManagerReviewPayload {
+  goalRatings?: SubmitManagerReviewGoalRating[];
+  responses?: SubmitManagerReviewQuestionResponse[];
+  overallFeedback?: string;
+  recommendation?: ManagerReviewRecommendation;
+  submit: boolean;
+}
+export interface SubmitManagerReviewData {
+  stage?: string;
+  recommendation?: string | null;
+  managerReviewSubmittedAt?: string | null;
+  [key: string]: unknown;
+}
+export type SubmitManagerReviewResponse = ApiEnvelope<SubmitManagerReviewData>;
+
+export type HrApprovalDecision = "APPROVED" | "RETURNED_FOR_REVIEW";
+export interface GetHrApprovalData {
+  appraisalId?: string;
+  stage?: string;
+  decision?: HrApprovalDecision | string | null;
+  hrNotes?: string | null;
+  returnedAt?: string | null;
+  approvedAt?: string | null;
+  [key: string]: unknown;
+}
+export type GetHrApprovalResponse = ApiEnvelope<GetHrApprovalData>;
+export interface SubmitHrApprovalPayload {
+  decision: HrApprovalDecision;
+  hrNotes?: string;
+}
+export interface SubmitHrApprovalData {
+  appraisalId?: string;
+  stage?: string;
+  decision?: HrApprovalDecision | string | null;
+  hrNotes?: string | null;
+  returnedAt?: string | null;
+  approvedAt?: string | null;
+}
+export type SubmitHrApprovalResponse = ApiEnvelope<SubmitHrApprovalData>;
+
+export interface AcknowledgeAppraisalPayload {
+  response?: string;
+}
+export type AcknowledgeAppraisalData = Record<string, unknown>;
+export type AcknowledgeAppraisalResponse = ApiEnvelope<AcknowledgeAppraisalData>;
+
+export interface SignOffAppraisalPayload {
+  signOffType: SignOffType;
+}
+export type SignOffAppraisalData = Record<string, unknown>;
+export type SignOffAppraisalResponse = ApiEnvelope<SignOffAppraisalData>;
+
+export type AppraisalsOverviewActiveCycle = {
+  id?: string;
+  name?: string;
+  [key: string]: unknown;
+};

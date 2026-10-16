@@ -946,11 +946,3 @@ export interface ReminderSettings {
   inAppEnabled: boolean;
   emailEnabled: boolean;
 }
-
-
- canApprove?: boolean;
-  canReject?: boolean;
-  canInitiatePayment?: boolean;
-  approvalBlockedReason?: string | null;
-  requiresIndependentApprover?: boolean;
- 

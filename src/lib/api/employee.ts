@@ -1,3 +1,4 @@
+// src/lib/api/employee.ts
 import api from "@/lib/api/axios";
 import {
   AttendanceDisputeResponse,
@@ -29,6 +30,27 @@ import {
   GetEmployeeLeaveParams,
   GetEmployeePayslipsParams,
   GetEmployeeRelieversParams,
+  AcknowledgeAppraisalResponse,
+  CreateEmployeeAppraisalGoalPayload,
+  CreateEmployeeAppraisalGoalResponse,
+  EmployeeAppraisalDetailResponse,
+  EmployeeAppraisalGoalsResponse,
+  EmployeeSelfAssessmentResponse,
+  SaveSelfAssessmentDraftResponse,
+  SubmitSelfAssessmentResponse,
+  EmployeeAppraisalDetailData,
+  EmployeeAppraisalOverviewData,
+  EmployeeAppraisalGoalsData,
+  UpdateEmployeeAppraisalGoalPayload,
+  UpdateEmployeeAppraisalGoalResponse,
+  EmployeeSelfAssessmentData,
+  SaveSelfAssessmentDraftPayload,
+  SaveSelfAssessmentDraftData,
+  SubmitSelfAssessmentPayload,
+  SubmitSelfAssessmentData,
+  AcknowledgeAppraisalPayload,
+  AcknowledgeAppraisalData,
+  HistoricalAppraisalGoal,
 } from "./types/employeeTypes";
 
 export async function getEmployeeDashboard() {
@@ -364,3 +386,100 @@ export const SWAGGER_SAMPLE_EMPLOYEE_PROFILE: EmployeeProfile = {
     },
   },
 };
+
+export async function getEmployeeAppraisalDetail(
+  appraisalId: string,
+): Promise<EmployeeAppraisalDetailData> {
+  const res = await api.get<EmployeeAppraisalDetailResponse>(
+    `/employee/appraisal/${appraisalId}`,
+  );
+  return res.data.data;
+}
+ 
+export async function getEmployeeAppraisalOverview(): Promise<EmployeeAppraisalOverviewData> {
+  const res = await api.get<{
+    success: boolean;
+    data: EmployeeAppraisalOverviewData;
+  }>("/employee/appraisal");
+  return res.data.data;
+}
+ 
+export async function getEmployeeAppraisalGoals(
+  appraisalId: string,
+): Promise<EmployeeAppraisalGoalsData> {
+  const res = await api.get<EmployeeAppraisalGoalsResponse>(
+    `/employee/appraisal/${appraisalId}/goals`,
+  );
+  return res.data.data;
+}
+ 
+export async function createEmployeeAppraisalGoal(
+  appraisalId: string,
+  payload: CreateEmployeeAppraisalGoalPayload,
+): Promise<HistoricalAppraisalGoal> {
+  const formattedPayload: CreateEmployeeAppraisalGoalPayload = {
+    ...payload,
+    targetDate: payload.targetDate.includes("T")
+      ? payload.targetDate.split("T")[0]
+      : payload.targetDate,
+  };
+  const res = await api.post<CreateEmployeeAppraisalGoalResponse>(
+    `/employee/appraisal/${appraisalId}/goals`,
+    formattedPayload,
+  );
+  return res.data.data;
+}
+ 
+export async function updateEmployeeAppraisalGoal(
+  appraisalId: string,
+  goalId: string,
+  payload: UpdateEmployeeAppraisalGoalPayload,
+): Promise<UpdateEmployeeAppraisalGoalResponse> {
+  const res = await api.patch<UpdateEmployeeAppraisalGoalResponse>(
+    `/employee/appraisal/${appraisalId}/goals/${goalId}`,
+    payload,
+  );
+  return res.data;
+}
+ 
+export async function getEmployeeSelfAssessment(
+  appraisalId: string,
+): Promise<EmployeeSelfAssessmentData> {
+  const res = await api.get<EmployeeSelfAssessmentResponse>(
+    `/employee/appraisal/${appraisalId}/self-assessment`,
+  );
+  return res.data.data;
+}
+ 
+export async function saveEmployeeSelfAssessmentDraft(
+  appraisalId: string,
+  payload: SaveSelfAssessmentDraftPayload,
+): Promise<SaveSelfAssessmentDraftData> {
+  const res = await api.put<SaveSelfAssessmentDraftResponse>(
+    `/employee/appraisal/${appraisalId}/self-assessment/draft`,
+    payload,
+  );
+  return res.data.data;
+}
+ 
+export async function submitEmployeeSelfAssessment(
+  appraisalId: string,
+  payload: SubmitSelfAssessmentPayload,
+): Promise<SubmitSelfAssessmentData> {
+  const res = await api.post<SubmitSelfAssessmentResponse>(
+    `/employee/appraisal/${appraisalId}/self-assessment/submit`,
+    payload,
+  );
+  return res.data.data;
+}
+ 
+export async function acknowledgeEmployeeAppraisal(
+  appraisalId: string,
+  payload: AcknowledgeAppraisalPayload,
+): Promise<AcknowledgeAppraisalData> {
+  const res = await api.post<AcknowledgeAppraisalResponse>(
+    `/employee/appraisal/${appraisalId}/acknowledge`,
+    payload,
+  );
+  return res.data.data;
+}
