@@ -568,8 +568,13 @@ export interface PaymentRequestItem {
   disbursedAt: string | null;
   createdAt: string;
   updatedAt: string;
-  requester: PaymentRequestPerson;
+    requester: PaymentRequestPerson;
   bankDetails: PaymentRequestBankDetails;
+  canApprove?: boolean;
+  canReject?: boolean;
+  canInitiatePayment?: boolean;
+  approvalBlockedReason?: string | null;
+  requiresIndependentApprover?: boolean;
 }
 
 export interface PaymentRequestsListResponse {
@@ -941,3 +946,11 @@ export interface ReminderSettings {
   inAppEnabled: boolean;
   emailEnabled: boolean;
 }
+
+
+ canApprove?: boolean;
+  canReject?: boolean;
+  canInitiatePayment?: boolean;
+  approvalBlockedReason?: string | null;
+  requiresIndependentApprover?: boolean;
+ 

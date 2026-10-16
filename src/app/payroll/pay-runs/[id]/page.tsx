@@ -29,6 +29,13 @@ function Overlay({ children, onClose }: { children: ReactNode; onClose: () => vo
 
 type Modal = null | "approve" | "decline" | "cancel";
 
+const blockedText = (code: string | null | undefined) => {
+  if (!code) return null;
+  if (code === "INDEPENDENT_APPROVER_REQUIRED") return "A different user must approve this. You created it, so you can't approve it yourself.";
+  const t = code.replace(/_/g, " ").toLowerCase();
+  return t.charAt(0).toUpperCase() + t.slice(1);
+};
+
 export default function PayRunDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [run, setRun] = useState<PayrollPayRun | null>(null);
@@ -111,8 +118,9 @@ export default function PayRunDetailPage() {
   if (loading && !run) return <div className="p-6 text-sm text-slate-400">Loading payroll…</div>;
   if (!run) return <div className="p-6 text-sm text-red-600">{error || "Payroll not found."}</div>;
 
-  const canApprove = run.availableActions.includes("APPROVE");
-  const canDecline = run.availableActions.includes("REJECT_FOR_REWORK");
+  const canApprove = run.canApprove ?? run.availableActions.includes("APPROVE");
+  const canDecline = run.canReject ?? run.availableActions.includes("REJECT_FOR_REWORK");
+  const blockedReason = run.status === "PENDING_APPROVAL" && !canApprove ? blockedText(run.approvalBlockedReason) : null;
   const cancellable = run.status === "DRAFT" || run.status === "REJECTED_FOR_REWORK";
 
   const stats = [
@@ -136,6 +144,7 @@ export default function PayRunDetailPage() {
         <p className="mt-2 text-xs text-red-500">Declined: {run.rejectionReason}</p>
       )}
       {run.status === "FAILED" && run.failureReason && <p className="mt-2 text-xs text-red-500">{run.failureReason}</p>}
+      {blockedReason && <p className="mt-2 text-xs text-amber-600">{blockedReason}</p>}
 
       <div className="mt-4 flex flex-wrap items-stretch justify-between gap-4 rounded-lg border border-slate-200 bg-white">
         <div className="grid flex-1 grid-cols-2 divide-slate-200 sm:grid-cols-5 sm:divide-x">
@@ -187,7 +196,7 @@ export default function PayRunDetailPage() {
               </tr>
             )}
             {items.map((i, idx) => {
-              const pending = i.resultStatus === "PENDING";
+              const pending = i.netPay === null || i.netPay === undefined;
               const cell = (v: number) => (pending ? "Pending" : naira(v));
               return (
                 <tr key={i.participantId ?? i.payeeId ?? i.employeeId ?? idx} className={idx % 2 === 1 ? "bg-slate-50" : ""}>

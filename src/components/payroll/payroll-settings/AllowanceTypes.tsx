@@ -1,79 +1,68 @@
+// src/components/payroll/payroll-settings/AllowanceTypes.tsx
 "use client";
 
-import { useState } from "react";
-
-type Allowance = {
-  id: number;
-  name: string;
-  taxTreatment: "Taxable" | "Tax-exempt";
-};
-
-const initialAllowances: Allowance[] = [
-  {
-    id: 1,
-    name: "Basic Salary",
-    taxTreatment: "Taxable",
-  },
-  {
-    id: 2,
-    name: "Housing Allowance",
-    taxTreatment: "Tax-exempt",
-  },
-  {
-    id: 3,
-    name: "Transport Allowance",
-    taxTreatment: "Tax-exempt",
-  },
-  {
-    id: 4,
-    name: "Medical Allowance",
-    taxTreatment: "Tax-exempt",
-  },
-  {
-    id: 5,
-    name: "Responsibility Allowance",
-    taxTreatment: "Taxable",
-  },
-  {
-    id: 6,
-    name: "Commission Allowance",
-    taxTreatment: "Taxable",
-  },
-  {
-    id: 7,
-    name: "Bar Practice Allowance",
-    taxTreatment: "Tax-exempt",
-  },
-];
+import { useCallback, useEffect, useState } from "react";
+import {
+  createAllowanceTypeRow,
+  deleteAllowanceTypeRow,
+  getAllowanceTypeRows,
+  getApiErrorMessage,
+} from "@/lib/api/payroll";
+import type { CreateAllowanceTypeBody, PayrollSettingTypeRow } from "@/lib/api/types/payroll.types";
 
 export default function AllowanceTypes() {
-  const [allowances, setAllowances] = useState<Allowance[]>(initialAllowances);
+  const [allowances, setAllowances] = useState<PayrollSettingTypeRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [name, setName] = useState("");
   const [taxTreatment, setTaxTreatment] =
-    useState<Allowance["taxTreatment"]>("Taxable");
+    useState<CreateAllowanceTypeBody["taxTreatment"]>("TAXABLE");
 
-  const handleAddAllowance = () => {
-    if (!name.trim()) return;
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const rows = await getAllowanceTypeRows();
+      setAllowances(rows.filter((r) => r.active !== false));
+      setError("");
+    } catch (e) {
+      setError(getApiErrorMessage(e, "Could not load allowance types."));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    const newAllowance: Allowance = {
-      id: Date.now(),
-      name: name.trim(),
-      taxTreatment,
-    };
+  useEffect(() => {
+    load();
+  }, [load]);
 
-    setAllowances((current) => [...current, newAllowance]);
-
-    setName("");
-    setTaxTreatment("Taxable");
-    setShowAddForm(false);
+  const handleAddAllowance = async () => {
+    if (name.trim().length < 2) return setError("Allowance name must be at least 2 characters.");
+    setSaving(true);
+    setError("");
+    try {
+      await createAllowanceTypeRow({ name: name.trim(), taxTreatment });
+      setName("");
+      setTaxTreatment("TAXABLE");
+      setShowAddForm(false);
+      await load();
+    } catch (e) {
+      setError(getApiErrorMessage(e, "Could not add this allowance type."));
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDelete = (id: number) => {
-    setAllowances((current) =>
-      current.filter((allowance) => allowance.id !== id),
-    );
+  const handleDelete = async (allowance: PayrollSettingTypeRow) => {
+    if (!window.confirm(`Remove ${allowance.name}?`)) return;
+    try {
+      await deleteAllowanceTypeRow(allowance.id);
+      await load();
+    } catch (e) {
+      setError(getApiErrorMessage(e, "Could not remove this allowance type."));
+    }
   };
 
   return (
@@ -100,6 +89,8 @@ export default function AllowanceTypes() {
           Add Type
         </button>
       </div>
+
+      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
       {/* Add form */}
       {showAddForm && (
@@ -131,12 +122,12 @@ export default function AllowanceTypes() {
               <select
                 value={taxTreatment}
                 onChange={(e) =>
-                  setTaxTreatment(e.target.value as Allowance["taxTreatment"])
+                  setTaxTreatment(e.target.value as CreateAllowanceTypeBody["taxTreatment"])
                 }
                 className="h-10 w-full rounded-md border border-[#dce3e8] bg-white px-3 text-sm text-[#45596c] outline-none focus:border-[#2189cb] focus:ring-2 focus:ring-[#2189cb]/10"
               >
-                <option value="Taxable">Taxable</option>
-                <option value="Tax-exempt">Tax-exempt</option>
+                <option value="TAXABLE">Taxable</option>
+                <option value="TAX_EXEMPT">Tax-exempt</option>
               </select>
             </div>
           </div>
@@ -145,9 +136,10 @@ export default function AllowanceTypes() {
             <button
               type="button"
               onClick={handleAddAllowance}
-              className="rounded-md bg-[#2189cb] px-4 py-2 text-sm font-medium text-white hover:bg-[#197dbd]"
+              disabled={saving}
+              className="rounded-md bg-[#2189cb] px-4 py-2 text-sm font-medium text-white hover:bg-[#197dbd] disabled:opacity-60"
             >
-              Save
+              {saving ? "Saving..." : "Save"}
             </button>
 
             <button
@@ -176,42 +168,53 @@ export default function AllowanceTypes() {
           <div className="text-sm font-medium text-[#8191a1]">Action</div>
         </div>
 
+        {loading && (
+          <div className="px-4 py-6 text-center text-sm text-[#8191a1]">Loading...</div>
+        )}
+
+        {!loading && allowances.length === 0 && (
+          <div className="px-4 py-6 text-center text-sm text-[#8191a1]">No allowance types yet.</div>
+        )}
+
         {/* Rows */}
-        {allowances.map((allowance, index) => (
-          <div
-            key={allowance.id}
-            className={`grid h-[43px] grid-cols-[1.4fr_1fr_80px] items-center px-4 ${
-              index % 2 === 0 ? "bg-white" : "bg-[#f1f2f6]"
-            }`}
-          >
-            <div className="text-sm font-medium text-[#29394a]">
-              {allowance.name}
-            </div>
+        {!loading &&
+          allowances.map((allowance, index) => (
+            <div
+              key={allowance.id}
+              className={`grid h-[43px] grid-cols-[1.4fr_1fr_80px] items-center px-4 ${
+                index % 2 === 0 ? "bg-white" : "bg-[#f1f2f6]"
+              }`}
+            >
+              <div className="text-sm font-medium text-[#29394a]">
+                {allowance.name}
+              </div>
 
-            <div>
-              <span
-                className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
-                  allowance.taxTreatment === "Taxable"
-                    ? "bg-[#fff1c9] text-[#a67800]"
-                    : "bg-[#d5f3df] text-[#218447]"
-                }`}
-              >
-                {allowance.taxTreatment}
-              </span>
-            </div>
+              <div>
+                <span
+                  className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+                    allowance.taxTreatment === "TAXABLE"
+                      ? "bg-[#fff1c9] text-[#a67800]"
+                      : "bg-[#d5f3df] text-[#218447]"
+                  }`}
+                >
+                  {allowance.taxTreatment === "TAXABLE" ? "Taxable" : "Tax-exempt"}
+                </span>
+              </div>
 
-            <div>
-              <button
-                type="button"
-                onClick={() => handleDelete(allowance.id)}
-                aria-label={`Delete ${allowance.name}`}
-                className="text-sm font-medium text-[#94a5b4] transition hover:text-[#d9534f]"
-              >
-                ×
-              </button>
+              <div>
+                {allowance.removable && (
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(allowance)}
+                    aria-label={`Delete ${allowance.name}`}
+                    className="text-sm font-medium text-[#94a5b4] transition hover:text-[#d9534f]"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
     </div>
   );

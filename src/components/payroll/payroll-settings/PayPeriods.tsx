@@ -1,16 +1,53 @@
+// src/components/payroll/payroll-settings/PayPeriods.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getApiErrorMessage, getPayPeriodSettings, updatePayPeriodSettings } from "@/lib/api/payroll";
 
 const PayPeriods = () => {
   const [payFrequency, setPayFrequency] = useState("");
   const [payDay, setPayDay] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
-    console.log({
-      payFrequency,
-      payDay,
-    });
+  useEffect(() => {
+    let cancelled = false;
+    getPayPeriodSettings()
+      .then((s) => {
+        if (cancelled) return;
+        setPayFrequency(s.payFrequency === "MONTHLY" ? "Monthly" : s.payFrequency);
+        setPayDay(String(s.defaultPayDay));
+      })
+      .catch((e) => {
+        if (!cancelled) setError(getApiErrorMessage(e, "Could not load pay period settings."));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleSave = async () => {
+    const day = Number(payDay);
+    if (!Number.isInteger(day) || day < 1 || day > 31) {
+      setSaved(false);
+      return setError("Enter a pay day between 1 and 31.");
+    }
+    setSaving(true);
+    setError("");
+    setSaved(false);
+    try {
+      await updatePayPeriodSettings({ payFrequency: "MONTHLY", defaultPayDay: day });
+      setSaved(true);
+    } catch (e) {
+      setError(getApiErrorMessage(e, "Could not save pay period settings."));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -41,8 +78,8 @@ const PayPeriods = () => {
             <input
               id="payFrequency"
               type="text"
-              value={payFrequency}
-              onChange={(e) => setPayFrequency(e.target.value)}
+              value={loading ? "Loading..." : payFrequency}
+              readOnly
               className="h-[44px] w-full rounded-[4px] border border-[#d9dee5] bg-white px-3 text-[14px] text-[#263238] outline-none transition focus:border-[#2588c9] focus:ring-1 focus:ring-[#2588c9]"
             />
           </div>
@@ -59,22 +96,31 @@ const PayPeriods = () => {
             <input
               id="payDay"
               type="text"
+              inputMode="numeric"
               value={payDay}
-              onChange={(e) => setPayDay(e.target.value)}
+              onChange={(e) => {
+                setPayDay(e.target.value.replace(/[^0-9]/g, ""));
+                setSaved(false);
+              }}
+              disabled={loading}
               className="h-[44px] w-full rounded-[4px] border border-[#d9dee5] bg-white px-3 text-[14px] text-[#263238] outline-none transition focus:border-[#2588c9] focus:ring-1 focus:ring-[#2588c9]"
             />
           </div>
         </div>
       </div>
 
+      {error && <p className="mt-3 text-[13px] text-red-600">{error}</p>}
+      {saved && <p className="mt-3 text-[13px] text-green-700">Settings saved.</p>}
+
       {/* Save Button */}
       <div className="mt-[16px]">
         <button
           type="button"
           onClick={handleSave}
-          className="h-[50px] rounded-[4px] bg-[#2588c9] px-[21px] text-[15px] font-semibold text-white transition hover:bg-[#197bb9] active:scale-[0.99]"
+          disabled={saving || loading}
+          className="h-[50px] rounded-[4px] bg-[#2588c9] px-[21px] text-[15px] font-semibold text-white transition hover:bg-[#197bb9] active:scale-[0.99] disabled:opacity-60"
         >
-          Save Settings
+          {saving ? "Saving..." : "Save Settings"}
         </button>
       </div>
     </section>

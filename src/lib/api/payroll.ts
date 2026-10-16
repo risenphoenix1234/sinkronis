@@ -53,6 +53,11 @@ import type {
   UpdatePayeeGroupBody,
   UpdatePayrollPayeeBody,
   PayrollDeductionTypeItem,
+  CreateAllowanceTypeBody,
+  PayPeriodSettings,
+  PayrollSettingTypeRow,
+  StatutoryRatesData,
+  UpdatePayPeriodBody,
 } from "./types/payroll.types";
 
 const BASE = "/payroll";
@@ -548,5 +553,42 @@ export const getPayrollDeductionTypeList = async (): Promise<PayrollDeductionTyp
 
 export const createPayrollDeductionTypeItem = async (name: string): Promise<PayrollDeductionTypeItem> => {
   const { data } = await api.post<{ data: PayrollDeductionTypeItem }>(`${BASE}/settings/deduction-types`, { name });
+  return data.data;
+};
+
+ 
+export const getPayPeriodSettings = async (): Promise<PayPeriodSettings> => {
+  const { data } = await api.get<{ data: PayPeriodSettings }>(`${BASE}/settings/pay-period`);
+  return data.data;
+};
+
+export const updatePayPeriodSettings = async (body: UpdatePayPeriodBody): Promise<void> => {
+  await api.put(`${BASE}/settings/pay-period`, body);
+};
+
+export const getAllowanceTypeRows = async (): Promise<PayrollSettingTypeRow[]> => {
+  const { data } = await api.get<{ data: PayrollSettingTypeRow[] }>(`${BASE}/settings/allowance-types`);
+  return Array.isArray(data.data) ? data.data : [];
+};
+
+export const createAllowanceTypeRow = async (body: CreateAllowanceTypeBody): Promise<void> => {
+  await api.post(`${BASE}/settings/allowance-types`, body);
+};
+
+export const deleteAllowanceTypeRow = async (id: string): Promise<void> => {
+  await api.delete(`${BASE}/settings/allowance-types/${id}`);
+};
+
+export const getDeductionTypeRows = async (): Promise<PayrollSettingTypeRow[]> => {
+  const { data } = await api.get<{ data: PayrollSettingTypeRow[] }>(`${BASE}/settings/deduction-types`);
+  return Array.isArray(data.data) ? data.data : [];
+};
+
+export const deleteDeductionTypeRow = async (id: string): Promise<void> => {
+  await api.delete(`${BASE}/settings/deduction-types/${id}`);
+};
+
+export const getStatutoryRates = async (): Promise<StatutoryRatesData> => {
+  const { data } = await api.get<{ data: StatutoryRatesData }>(`${BASE}/settings/statutory-rates`);
   return data.data;
 };

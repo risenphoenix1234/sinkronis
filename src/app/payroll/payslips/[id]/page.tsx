@@ -13,30 +13,30 @@ import type { PayrollRecord } from "@/lib/api/types/payroll.types";
 
 const naira = (n: number) => `₦${n.toLocaleString("en-NG")}`;
 
-const earnings: [string, string[]][] = [
-  ["Base Compensation", ["baseCompensation", "basicSalary", "baseSalary"]],
-  ["Bonus", ["bonus", "totalBonus"]],
-  ["Gross Pay", ["cashGross", "grossPay", "gross"]],
-];
+type Row = { label: string; value: number };
 
-const deductions: [string, string[]][] = [
-  ["PAYE", ["paye"]],
-  ["Withholding Tax", ["wht"]],
-  ["Employee Pension", ["employeePension", "pension"]],
-  ["NHF", ["nhf"]],
-  ["AVC", ["avc"]],
-  ["Loans", ["loans"]],
-  ["Other Deductions", ["customDeductions", "otherDeductions"]],
-];
+const asRec = (v: unknown): PayrollRecord | undefined => (v && typeof v === "object" && !Array.isArray(v) ? (v as PayrollRecord) : undefined);
 
-const employer: [string, string[]][] = [
-  ["Employer Pension", ["employerPension"]],
-  ["NSITF", ["nsitf"]],
-];
+const itemRows = (v: unknown): Row[] => {
+  if (!Array.isArray(v)) return [];
+  return v
+    .map((i) => {
+      const rec = asRec(i);
+      const label = pickText(rec, ["name", "label", "code"]);
+      const value = pickNum(rec, ["amount", "value"]);
+      return label && value !== null ? { label, value } : null;
+    })
+    .filter((x): x is Row => x !== null);
+};
 
-function Section({ title, rows, r }: { title: string; rows: [string, string[]][]; r: PayrollRecord }) {
-  const shown = rows.map(([label, keys]) => ({ label, value: pickNum(r, keys) })).filter((x) => x.value !== null);
-  if (shown.length === 0) return null;
+const keyRows = (rec: PayrollRecord | undefined, rows: [string, string][]): Row[] =>
+  rows
+    .map(([label, key]) => ({ label, value: pickNum(rec, [key]) }))
+    .filter((x): x is Row => x.value !== null);
+
+function Section({ title, rows, total }: { title: string; rows: Row[]; total?: Row }) {
+  const shown = rows.filter((x) => x.value !== 0);
+  if (shown.length === 0 && !total) return null;
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-5">
       <h2 className="mb-3 text-sm font-semibold text-slate-900">{title}</h2>
@@ -44,9 +44,15 @@ function Section({ title, rows, r }: { title: string; rows: [string, string[]][]
         {shown.map((x) => (
           <div key={x.label} className="flex items-center justify-between py-2.5 text-sm">
             <dt className="text-slate-500">{x.label}</dt>
-            <dd className="font-medium text-slate-800">{naira(x.value as number)}</dd>
+            <dd className="font-medium text-slate-800">{naira(x.value)}</dd>
           </div>
         ))}
+        {total && (
+          <div className="flex items-center justify-between py-2.5 text-sm">
+            <dt className="font-semibold text-slate-900">{total.label}</dt>
+            <dd className="font-semibold text-slate-900">{naira(total.value)}</dd>
+          </div>
+        )}
       </dl>
     </div>
   );
@@ -81,6 +87,32 @@ export default function PayslipDetailPage() {
   const periodObj = slip?.period as PayrollRecord | undefined;
   const period = pickText(slip, ["periodLabel", "payPeriod"]) ?? pickText(periodObj, ["label"]) ?? (typeof slip?.period === "string" ? slip.period : "-");
   const net = slip ? pickNum(slip, ["netPay", "net"]) : null;
+  const earningsRec = asRec(slip?.earnings);
+  const deductionsRec = asRec(slip?.deductions);
+  const employerRec = asRec(slip?.employerContributions);
+  const paymentRec = asRec(slip?.payment);
+  const earningRows = itemRows(earningsRec?.items);
+  const deductionRows = [
+    ...keyRows(deductionsRec, [
+      ["PAYE", "paye"],
+      ["Employee Pension", "employeePension"],
+      ["NHF", "nhf"],
+      ["Loans", "loans"],
+      ["Other Deductions", "customDeductions"],
+    ]),
+    ...itemRows(deductionsRec?.items),
+  ];
+  const employerRows = [
+    ...keyRows(employerRec, [
+      ["Employer Pension", "employerPension"],
+      ["NSITF", "nsitf"],
+    ]),
+    ...itemRows(employerRec?.others),
+  ];
+  const gross = pickNum(earningsRec, ["grossSalary"]) ?? pickNum(slip, ["grossPay"]);
+  const totalDeductions = pickNum(deductionsRec, ["totalDeductions"]) ?? pickNum(slip, ["totalDeductions"]);
+  const paidAt = pickText(paymentRec, ["paidAt"]);
+  const reference = pickText(paymentRec, ["reference"]);
 
   const download = async () => {
     try {
@@ -122,10 +154,30 @@ export default function PayslipDetailPage() {
           )}
 
           <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <Section title="Earnings" rows={earnings} r={slip} />
-            <Section title="Deductions" rows={deductions} r={slip} />
-            <Section title="Employer Contributions" rows={employer} r={slip} />
+            <Section title="Earnings" rows={earningRows} total={gross !== null ? { label: "Gross Pay", value: gross } : undefined} />
+            <Section title="Deductions" rows={deductionRows} total={totalDeductions !== null ? { label: "Total Deductions", value: totalDeductions } : undefined} />
+            <Section title="Employer Contributions" rows={employerRows} />
           </div>
+
+          {(paidAt || reference) && (
+            <div className="mt-4 rounded-lg border border-slate-200 bg-white p-5 text-sm">
+              <h2 className="mb-3 text-sm font-semibold text-slate-900">Payment</h2>
+              <dl className="divide-y divide-slate-100">
+                {paidAt && (
+                  <div className="flex items-center justify-between py-2.5">
+                    <dt className="text-slate-500">Paid On</dt>
+                    <dd className="font-medium text-slate-800">{new Date(paidAt).toLocaleDateString("en-GB")}</dd>
+                  </div>
+                )}
+                {reference && (
+                  <div className="flex items-center justify-between py-2.5">
+                    <dt className="text-slate-500">Reference</dt>
+                    <dd className="font-medium text-slate-800">{reference}</dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+          )}
         </>
       )}
     </div>

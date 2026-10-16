@@ -182,7 +182,7 @@ export default function PayslipsListPage() {
             )}
             {!loading && items.length === 0 && (
               <tr>
-                <td colSpan={7} className="py-10 text-center text-slate-400">No payslips yet. They appear after a pay run is approved.</td>
+                <td colSpan={7} className="py-10 text-center text-slate-400">No payslips yet.</td>
               </tr>
             )}
             {!loading &&

@@ -1,3 +1,4 @@
+// src/app/accounting/payment-requests/page.tsx
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -26,6 +27,13 @@ const statusLabels: Record<string, string> = {
 };
 
 type Filter = "All" | "PENDING" | "APPROVED" | "COMPLETED" | "DECLINED";
+
+const blockedText = (code: string | null | undefined) => {
+  if (!code) return null;
+  if (code === "INDEPENDENT_APPROVER_REQUIRED") return "A different user must approve this. You created it, so you can't approve it yourself.";
+  const t = code.replace(/_/g, " ").toLowerCase();
+  return t.charAt(0).toUpperCase() + t.slice(1);
+};
 
 function naira(value: number) {
   return `₦${value.toLocaleString()}`;
@@ -201,36 +209,54 @@ export default function PaymentRequestsPage() {
                 </td>
                 <td className="px-6 py-3 text-base text-slate-600 whitespace-nowrap">{formatDate(req.createdAt)}</td>
                 <td className="px-6 py-3 text-right whitespace-nowrap">
-                  {req.status === "PENDING" && (
-                    <>
-                      <button
-                        onClick={() => handleApprove(req.id)}
-                        disabled={actionLoading === req.id}
-                        className="mr-2 rounded-md bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-60"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => handleDecline(req.id)}
-                        disabled={actionLoading === req.id}
-                        className="rounded-md border border-rose-200 px-3 py-1.5 text-sm font-medium text-rose-500 hover:bg-rose-50 disabled:opacity-60"
-                      >
-                        Decline
-                      </button>
-                    </>
-                  )}
-                  {req.status === "APPROVED" && (
-                    <button
-                      onClick={() => handleDisburse(req.id)}
-                      disabled={actionLoading === req.id}
-                      className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
-                    >
-                      {actionLoading === req.id ? "Disbursing..." : "Disburse"}
-                    </button>
-                  )}
-                  {(req.status === "COMPLETED" || req.status === "DECLINED") && (
-                    <span className="text-sm text-slate-400">—</span>
-                  )}
+                  {(() => {
+                    const canApprove = req.canApprove ?? req.status === "PENDING";
+                    const canDecline = req.canReject ?? req.status === "PENDING";
+                    const canDisburse = req.canInitiatePayment ?? req.status === "APPROVED";
+                    const blockedReason =
+                      (req.status === "PENDING" && !canApprove) || (req.status === "APPROVED" && !canDisburse)
+                        ? blockedText(req.approvalBlockedReason)
+                        : null;
+                    return (
+                      <>
+                        {canApprove && (
+                          <button
+                            onClick={() => handleApprove(req.id)}
+                            disabled={actionLoading === req.id}
+                            className="mr-2 rounded-md bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-60"
+                          >
+                            Approve
+                          </button>
+                        )}
+                        {canDecline && (
+                          <button
+                            onClick={() => handleDecline(req.id)}
+                            disabled={actionLoading === req.id}
+                            className="rounded-md border border-rose-200 px-3 py-1.5 text-sm font-medium text-rose-500 hover:bg-rose-50 disabled:opacity-60"
+                          >
+                            Decline
+                          </button>
+                        )}
+                        {canDisburse && (
+                          <button
+                            onClick={() => handleDisburse(req.id)}
+                            disabled={actionLoading === req.id}
+                            className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+                          >
+                            {actionLoading === req.id ? "Disbursing..." : "Disburse"}
+                          </button>
+                        )}
+                        {blockedReason && (
+                          <span className="ml-auto block max-w-[220px] whitespace-normal text-right text-xs text-amber-600">
+                            {blockedReason}
+                          </span>
+                        )}
+                        {!canApprove && !canDecline && !canDisburse && !blockedReason && (
+                          <span className="text-sm text-slate-400">—</span>
+                        )}
+                      </>
+                    );
+                  })()}
                 </td>
               </tr>
             ))}

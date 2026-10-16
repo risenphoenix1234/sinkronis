@@ -1,74 +1,65 @@
+// src/components/payroll/payroll-settings/DeductionTypes.tsx
 "use client";
 
-import { useState } from "react";
-
-type DeductionType = {
-  id: number;
-  name: string;
-  type: "Statutory" | "Voluntary";
-};
-
-const initialDeductions: DeductionType[] = [
-  {
-    id: 1,
-    name: "PAYE (Income Tax)",
-    type: "Statutory",
-  },
-  {
-    id: 2,
-    name: "Employee Pension",
-    type: "Statutory",
-  },
-  {
-    id: 3,
-    name: "NHF",
-    type: "Statutory",
-  },
-  {
-    id: 4,
-    name: "Loan Repayment",
-    type: "Voluntary",
-  },
-  {
-    id: 5,
-    name: "Cooperative Dues",
-    type: "Voluntary",
-  },
-  {
-    id: 6,
-    name: "Union Dues",
-    type: "Voluntary",
-  },
-];
+import { useCallback, useEffect, useState } from "react";
+import {
+  createPayrollDeductionTypeItem,
+  deleteDeductionTypeRow,
+  getApiErrorMessage,
+  getDeductionTypeRows,
+} from "@/lib/api/payroll";
+import type { PayrollSettingTypeRow } from "@/lib/api/types/payroll.types";
 
 export default function DeductionTypes() {
-  const [deductions, setDeductions] =
-    useState<DeductionType[]>(initialDeductions);
+  const [deductions, setDeductions] = useState<PayrollSettingTypeRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [name, setName] = useState("");
-  const [type, setType] = useState<DeductionType["type"]>("Voluntary");
 
-  const handleAddDeduction = () => {
-    if (!name.trim()) return;
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const rows = await getDeductionTypeRows();
+      setDeductions(rows.filter((r) => r.active !== false));
+      setError("");
+    } catch (e) {
+      setError(getApiErrorMessage(e, "Could not load deduction types."));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    const newDeduction: DeductionType = {
-      id: Date.now(),
-      name: name.trim(),
-      type,
-    };
+  useEffect(() => {
+    load();
+  }, [load]);
 
-    setDeductions((current) => [...current, newDeduction]);
-
-    setName("");
-    setType("Voluntary");
-    setShowAddForm(false);
+  const handleAddDeduction = async () => {
+    if (name.trim().length < 2) return setError("Deduction name must be at least 2 characters.");
+    setSaving(true);
+    setError("");
+    try {
+      await createPayrollDeductionTypeItem(name.trim());
+      setName("");
+      setShowAddForm(false);
+      await load();
+    } catch (e) {
+      setError(getApiErrorMessage(e, "Could not add this deduction type."));
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDelete = (id: number) => {
-    setDeductions((current) =>
-      current.filter((deduction) => deduction.id !== id),
-    );
+  const handleDelete = async (deduction: PayrollSettingTypeRow) => {
+    if (!window.confirm(`Remove ${deduction.name}?`)) return;
+    try {
+      await deleteDeductionTypeRow(deduction.id);
+      await load();
+    } catch (e) {
+      setError(getApiErrorMessage(e, "Could not remove this deduction type."));
+    }
   };
 
   return (
@@ -94,6 +85,8 @@ export default function DeductionTypes() {
           Add Type
         </button>
       </div>
+
+      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
       {/* Add form */}
       {showAddForm && (
@@ -124,9 +117,10 @@ export default function DeductionTypes() {
             <button
               type="button"
               onClick={handleAddDeduction}
-              className="rounded-md bg-[#2189cb] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#197dbd]"
+              disabled={saving}
+              className="rounded-md bg-[#2189cb] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#197dbd] disabled:opacity-60"
             >
-              Save
+              {saving ? "Saving..." : "Save"}
             </button>
 
             <button
@@ -153,47 +147,59 @@ export default function DeductionTypes() {
           <div className="text-sm font-medium text-[#8191a1]">Action</div>
         </div>
 
-        {/* Table rows */}
-        {deductions.map((deduction, index) => (
-          <div
-            key={deduction.id}
-            className={`grid h-[43px] grid-cols-[1.4fr_1fr_80px] items-center px-4 ${
-              index % 2 === 0 ? "bg-white" : "bg-[#f1f2f6]"
-            }`}
-          >
-            {/* Name */}
-            <div className="text-sm font-medium text-[#29394a]">
-              {deduction.name}
-            </div>
+        {loading && (
+          <div className="px-4 py-6 text-center text-sm text-[#8191a1]">Loading...</div>
+        )}
 
-            {/* Type */}
-            <div>
-              <span
-                className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
-                  deduction.type === "Statutory"
-                    ? "bg-[#ffe0e0] text-[#ff5757]"
-                    : "bg-[#f2f5f7] text-[#718396]"
+        {!loading && deductions.length === 0 && (
+          <div className="px-4 py-6 text-center text-sm text-[#8191a1]">No deduction types yet.</div>
+        )}
+
+        {/* Table rows */}
+        {!loading &&
+          deductions.map((deduction, index) => {
+            const statutory = deduction.category === "STATUTORY";
+            return (
+              <div
+                key={deduction.id}
+                className={`grid h-[43px] grid-cols-[1.4fr_1fr_80px] items-center px-4 ${
+                  index % 2 === 0 ? "bg-white" : "bg-[#f1f2f6]"
                 }`}
               >
-                {deduction.type}
-              </span>
-            </div>
+                {/* Name */}
+                <div className="text-sm font-medium text-[#29394a]">
+                  {deduction.name}
+                </div>
 
-            {/* Action */}
-            <div>
-              {deduction.type === "Voluntary" && (
-                <button
-                  type="button"
-                  onClick={() => handleDelete(deduction.id)}
-                  aria-label={`Delete ${deduction.name}`}
-                  className="text-base font-normal leading-none text-[#94a5b4] transition hover:text-[#d9534f]"
-                >
-                  ×
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
+                {/* Type */}
+                <div>
+                  <span
+                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+                      statutory
+                        ? "bg-[#ffe0e0] text-[#ff5757]"
+                        : "bg-[#f2f5f7] text-[#718396]"
+                    }`}
+                  >
+                    {statutory ? "Statutory" : "Voluntary"}
+                  </span>
+                </div>
+
+                {/* Action */}
+                <div>
+                  {deduction.removable && (
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(deduction)}
+                      aria-label={`Delete ${deduction.name}`}
+                      className="text-base font-normal leading-none text-[#94a5b4] transition hover:text-[#d9534f]"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
       </div>
     </div>
   );

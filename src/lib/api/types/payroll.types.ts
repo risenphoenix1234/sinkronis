@@ -432,6 +432,11 @@ export interface PayrollPayRun {
   status: PayrollPayRunStatus;
   paymentState: string;
   availableActions: string[];
+  canApprove?: boolean;
+  canReject?: boolean;
+  canInitiatePayment?: boolean;
+  approvalBlockedReason?: string | null;
+  requiresIndependentApprover?: boolean;
 }
 
 export type PayrollPayRunRef = PayrollPayRun;
@@ -696,4 +701,44 @@ export interface CreatePayrollLoanBody {
   attestation: true;
   externalReference?: string;
   notes?: string;
+}
+
+ 
+export interface PayPeriodSettings {
+  payFrequency: string;
+  defaultPayDay: number;
+  version?: number;
+  updatedAt?: string | null;
+}
+
+export interface UpdatePayPeriodBody {
+  payFrequency: "MONTHLY";
+  defaultPayDay: number;
+}
+
+export interface PayrollSettingTypeRow {
+  id: string;
+  code?: string;
+  name: string;
+  category?: string;
+  taxTreatment?: "TAXABLE" | "TAX_EXEMPT";
+  systemDefined?: boolean;
+  active?: boolean;
+  removable?: boolean;
+  editable?: boolean;
+}
+
+export interface CreateAllowanceTypeBody {
+  name: string;
+  taxTreatment: "TAXABLE" | "TAX_EXEMPT";
+}
+
+export interface StatutoryRatesData {
+  paye: {
+    bands: { threshold: number | null; rate: string }[];
+    remittanceDueDay?: number;
+  };
+  pension: { employeeRate: string; employerRate: string; basis: string[] };
+  nhf: { employeeRate: string; basis: string };
+  nsitf: { employerRate: string; basis: string };
 }
