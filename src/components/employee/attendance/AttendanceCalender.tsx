@@ -2,17 +2,10 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-export interface AttendanceCalendarDayItem {
-  date: string;
-  attendanceStatus?: string | null;
-  dayType?: string;
-  [key: string]: unknown;
-}
-
-export interface AttendanceCalendarData {
-  days?: AttendanceCalendarDayItem[];
-  [key: string]: unknown;
-}
+import type {
+  AttendanceCalendarData,
+  AttendanceCalendarDayItem,
+} from "@/lib/api/types/employeeTypes";
 
 const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 

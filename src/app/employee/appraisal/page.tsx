@@ -32,6 +32,7 @@ import {
   submitEmployeeSelfAssessment,
   acknowledgeEmployeeAppraisal,
 } from "@/lib/api/employee";
+import { confirmEmployeeGoals } from "@/lib/api/hris";
 import {
   EmployeeAppraisalDetailData,
   EmployeeAppraisalGoalsData,
@@ -160,6 +161,7 @@ export default function EmployeeAppraisalPage() {
     useState<AppraisalDetailData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddGoalOpen, setIsAddGoalOpen] = useState(false);
+  const [confirmingGoals, setConfirmingGoals] = useState(false);
   const [isRateGoalOpen, setIsRateGoalOpen] = useState(false);
   const [isAcknowledgeModalOpen, setIsAcknowledgeModalOpen] = useState(false);
   const [selectedGoalForRating, setSelectedGoalForRating] =
@@ -387,15 +389,51 @@ export default function EmployeeAppraisalPage() {
 
       const overview = await getEmployeeAppraisalOverview();
       const current = overview?.currentAppraisal;
-      if (current?.appraisalId) {
-        const detail = await getEmployeeAppraisalDetail(current.appraisalId);
-        setActiveAppraisal(detail);
-        getEmployeeAppraisalGoals(current.appraisalId)
-          .then((gRes) => setActiveGoalsData(gRes))
-          .catch(() => setActiveGoalsData(null));
-        getEmployeeSelfAssessment(current.appraisalId)
-          .then((saRes) => setSelfAssessmentData(saRes))
-          .catch(() => setSelfAssessmentData(null));
+      const raw = current as
+        | {
+            id?: string;
+            appraisalId?: string;
+            cycleName?: string;
+            periodStart?: string;
+            periodEnd?: string;
+            deadline?: string;
+            status?: string;
+            currentPhase?: string;
+            goalsConfirmed?: boolean;
+            goalsConfirmedAt?: string | null;
+            goals?: HistoricalAppraisalGoal[];
+            actions?: { canEditGoals?: boolean };
+          }
+        | null
+        | undefined;
+      const currentId = raw?.appraisalId ?? raw?.id;
+      if (raw && currentId) {
+        setActiveAppraisal({
+          ...(current as EmployeeAppraisalDetailData),
+          appraisalId: currentId,
+          stage: raw.currentPhase,
+          status: raw.status,
+          cycle: {
+            name: raw.cycleName,
+            periodFrom: raw.periodStart,
+            periodTo: raw.periodEnd,
+            submissionDeadline: raw.deadline,
+          },
+        } as EmployeeAppraisalDetailData);
+        setActiveGoalsData({
+          appraisalId: currentId,
+          goals: raw.goals ?? [],
+          goalsConfirmed: raw.goalsConfirmed ?? false,
+          goalsConfirmedAt: raw.goalsConfirmedAt ?? null,
+          editable: raw.actions?.canEditGoals ?? false,
+        });
+        if (raw.currentPhase && raw.currentPhase !== "GOAL_SETTING") {
+          getEmployeeSelfAssessment(currentId)
+            .then((saRes) => setSelfAssessmentData(saRes))
+            .catch(() => setSelfAssessmentData(null));
+        } else {
+          setSelfAssessmentData(null);
+        }
       } else if (current) {
         setActiveAppraisal(current);
         setActiveGoalsData(null);
@@ -886,6 +924,43 @@ export default function EmployeeAppraisalPage() {
                   </div>
                 </div>
               )}
+
+              {activeGoalsData &&
+                !activeGoalsData.goalsConfirmed &&
+                (activeGoalsData.goals?.length ?? 0) > 0 && (
+                  <div className="mt-6 flex items-center justify-between rounded-lg border border-[#FEDF89] bg-[#FFFAEB] p-4">
+                    <p className="text-xs font-medium text-[#B54708]">
+                      Your manager has proposed these goals. Confirm them to
+                      start your self-assessment.
+                    </p>
+                    <button
+                      type="button"
+                      disabled={confirmingGoals}
+                      onClick={async () => {
+                        const id = activeGoalsData.appraisalId;
+                        if (!id || confirmingGoals) return;
+                        setConfirmingGoals(true);
+                        try {
+                          await confirmEmployeeGoals(id);
+                          toast.success("Goals confirmed.");
+                          await fetchActiveAppraisal();
+                        } catch (err: unknown) {
+                          const apiMsg = (
+                            err as {
+                              response?: { data?: { message?: string } };
+                            }
+                          )?.response?.data?.message;
+                          toast.error(apiMsg || "Failed to confirm goals.");
+                        } finally {
+                          setConfirmingGoals(false);
+                        }
+                      }}
+                      className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-[#1683D8] px-3.5 py-2 text-xs font-medium text-white shadow-xs transition hover:bg-[#1270B8] disabled:opacity-60"
+                    >
+                      {confirmingGoals ? "Confirming..." : "Confirm Goals"}
+                    </button>
+                  </div>
+                )}
 
               {/* Empty Goals Banner with Add Goal Button */}
               {activeAppraisal &&

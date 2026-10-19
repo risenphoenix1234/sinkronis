@@ -488,7 +488,9 @@ export interface GetEmployeeDetailResponse {
   data: GetEmployeeDetail;
 }
 
-export type UpdateEmployeePayload = Partial<CreateEmployeePayload>;
+export type UpdateEmployeePayload = Partial<CreateEmployeePayload> & {
+  managerId?: string | null;
+};
 
 export interface UpdateEmployeeResponse {
   success: boolean;
@@ -554,6 +556,8 @@ export interface AttendanceRecord {
   clockIn: string | null;
   clockOut: string | null;
   status: string; // e.g. "ON_TIME" | "LATE" | "ABSENT" — unconfirmed enum
+  flags?: string[];
+  workingHours?: number;
 }
 
 export interface GetEmployeeAttendanceResponse {
@@ -630,6 +634,12 @@ export interface DailyAttendanceAnalytics {
   absent: number;
   onLeave: number;
   noClockOut: number;
+  overtime?: number;
+  totalOvertimeHours?: number;
+  totalHoursWorked?: number;
+  attendanceRate?: number;
+  shiftsActive?: number;
+  pendingDisputes?: number;
   // there may be more fields here (e.g. noClockIn, earlyClockIn) — this
   // object had 5 keys visible in the console but was truncated; expand
   // this interface if more turn up once records exist
@@ -684,11 +694,32 @@ export interface ClockOutResponse {
 // but both response codes are now confirmed: 200 "Tenant-local clock,
 // shift, and attendance", 404 "User has no linked employee" (matches the
 // error we saw from clock-in when testing an unlinked account).
-export interface MyTodayAttendance {
+export interface MyAttendanceRecord {
+  id: string;
+  organizationId: string;
   employeeId: string;
-  // remaining fields unconfirmed — inspect via a real response before
-  // relying on anything beyond employeeId
-  [key: string]: unknown;
+  attendanceDate: string;
+  clockInAt: string | null;
+  clockOutAt: string | null;
+  source: string;
+  note: string | null;
+  manualStatus: string | null;
+  taskCompleted: boolean | null;
+  overriddenAt: string | null;
+  overriddenById: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MyTodayAttendance {
+  currentTime: string;
+  timeZone: string;
+  shift: {
+    name: string;
+    startTime: string;
+    endTime: string;
+  } | null;
+  attendance: MyAttendanceRecord | null;
 }
 
 export interface GetMyTodayAttendanceResponse {
@@ -714,6 +745,20 @@ export interface ConductRecord {
   status: string;
   history?: string[];
   notes?: unknown[];
+  employee?: {
+    id?: string;
+    employeeId?: string;
+    name?: string;
+    firstName?: string;
+    lastName?: string;
+    role?: string;
+    email?: string;
+  } | null;
+  duration?: {
+    startDate?: string;
+    endDate?: string;
+    [key: string]: unknown;
+  } | null;
 }
 
 export interface GetConductRecordsResponse {
@@ -752,6 +797,8 @@ export interface CreateSuspensionPayload {
   durationValue: number;
   durationUnit: string;
   notes: string;
+  status?: string;
+  startDate?: string;
 }
 
 export interface ConductOverviewData {
@@ -845,6 +892,45 @@ export interface GetMonthlyAttendanceResponse {
 }
 
 export interface AttendanceDispute {
+  id: string;
+  employeeId?: string;
+  employeeName?: string;
+  department?: string;
+  issue?: string;
+  description?: string;
+  status?: string;
+  date?: string;
+  createdAt?: string;
+  claimedClockIn?: string | null;
+  claimedClockOut?: string | null;
+  resolution?: string | null;
+  [key: string]: unknown;
+}
+
+export interface AttendanceDisputeDetail {
+  id: string;
+  disputeNo?: string;
+  employeeId?: string;
+  issueType: string;
+  description?: string;
+  status?: string;
+  createdAt?: string;
+  claimedClockIn?: string | null;
+  claimedClockOut?: string | null;
+  resolutionNote?: string | null;
+  resolvedAt?: string | null;
+  employee?: {
+    firstName?: string;
+    lastName?: string;
+    employeeNo?: string;
+    jobTitle?: string;
+    department?: { name?: string } | null;
+  } | null;
+  attendance?: {
+    attendanceDate?: string;
+    clockInAt?: string | null;
+    clockOutAt?: string | null;
+  } | null;
   [key: string]: unknown;
 }
 
@@ -875,7 +961,7 @@ export interface GetAttendanceDisputesResponse {
 export interface GetAttendanceDisputeResponseId {
   success: boolean;
   message: string;
-  data: AttendanceDispute;
+  data: AttendanceDisputeDetail;
 }
 
 export interface ResolveDisputePayload {
@@ -1869,3 +1955,4 @@ export type AppraisalsOverviewActiveCycle = {
   name?: string;
   [key: string]: unknown;
 };
+

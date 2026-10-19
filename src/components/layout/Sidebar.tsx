@@ -58,6 +58,8 @@ const sidebarIcons = {
   settings: FiSettings,
 
   // HRIS
+  overview: FiGrid,
+  "hris-employee": FiUsers,
   attendance: FiCalendar,
   leave: FiCalendar,
   appraisal: FiBarChart2,

@@ -219,6 +219,14 @@ export default function ManagerReview({
         );
         return;
       }
+      const goalsToRate = (data?.goals ?? []) as { id: string }[];
+      const unrated = goalsToRate.filter(
+        (g) => typeof inputRatings[g.id]?.rating !== "number",
+      );
+      if (unrated.length > 0) {
+        setSubmitError("Rate every goal from 1 to 5 before submitting.");
+        return;
+      }
     }
 
     // Build goalRatings
@@ -490,6 +498,12 @@ export default function ManagerReview({
     return sum;
   };
 
+  const managerGoals = (data?.goals ?? []) as {
+    id: string;
+    title: string;
+    description?: string | null;
+  }[];
+
   const kraSum = calculateResultSum(kraSection);
   const behSum = calculateResultSum(behaviouralSection);
   const dynamicTotal = kraSum + behSum;
@@ -498,15 +512,26 @@ export default function ManagerReview({
       ? Math.round(dynamicTotal)
       : overallScore != null
         ? overallScore
-        : 91;
+        : 0;
   const grandTotalRating =
-    grandTotalScore >= 90
-      ? "Meets Expectation"
-      : grandTotalScore >= 70
-        ? "Meets Expectation"
-        : grandTotalScore >= 50
-          ? "Needs Improvement"
-          : "Unsatisfactory";
+    grandTotalScore > 120
+      ? "Outstanding"
+      : grandTotalScore > 100
+        ? "Above Expectation"
+        : grandTotalScore >= 80
+          ? "Meets Expectation"
+          : grandTotalScore >= 60
+            ? "Below Expectation"
+            : "Poor Performance";
+    grandTotalScore > 120
+      ? "Outstanding"
+      : grandTotalScore > 100
+        ? "Above Expectation"
+        : grandTotalScore >= 80
+          ? "Meets Expectation"
+          : grandTotalScore >= 60
+            ? "Below Expectation"
+            : "Poor Performance";
 
   return (
     <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
@@ -556,6 +581,69 @@ export default function ManagerReview({
           onCommentChange={handleCommentChange}
           inputRatings={inputRatings}
         />
+
+        {managerGoals.length > 0 && (
+          <div className="rounded-xl border border-slate-200 p-5">
+            <h3 className="text-sm font-semibold text-slate-800">
+              Goal Ratings
+            </h3>
+            <p className="mt-1 text-xs text-slate-500">
+              Rate each goal from 1 to 5.
+            </p>
+            <div className="mt-4 space-y-4">
+              {managerGoals.map((goal) => {
+                const saved = data?.managerReview?.goalRatings?.find(
+                  (g) => g.goalId === goal.id,
+                );
+                const shown = inputRatings[goal.id]?.rating ?? saved?.rating;
+                return (
+                  <div
+                    key={goal.id}
+                    className="rounded-lg border border-slate-100 bg-slate-50/50 p-4"
+                  >
+                    <p className="text-sm font-medium text-slate-800">
+                      {goal.title}
+                    </p>
+                    {goal.description && (
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {goal.description}
+                      </p>
+                    )}
+                    <div className="mt-3 flex items-center gap-2">
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          disabled={isSubmitted}
+                          onClick={() => handleRatingChange(goal.id, n)}
+                          className={`h-8 w-8 rounded-md border text-sm font-semibold transition disabled:cursor-not-allowed ${
+                            shown === n
+                              ? "border-[#2183C6] bg-[#2183C6] text-white"
+                              : "border-slate-200 bg-white text-slate-600 hover:border-[#2183C6]"
+                          }`}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                    <input
+                      type="text"
+                      disabled={isSubmitted}
+                      value={
+                        inputRatings[goal.id]?.comment ?? saved?.comment ?? ""
+                      }
+                      onChange={(e) =>
+                        handleCommentChange(goal.id, e.target.value)
+                      }
+                      placeholder="Comment (optional)"
+                      className="mt-3 w-full rounded border border-slate-200 px-3 py-1.5 text-sm text-slate-700 placeholder:text-slate-400 focus:border-[#2183C6] focus:outline-none focus:ring-1 focus:ring-[#2183C6]/20"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Grand Total Banner */}
         <GrandTotal
@@ -611,6 +699,15 @@ export default function ManagerReview({
             >
               {submitting && <Loader2 size={16} className="animate-spin text-white" />}
               Submit Manager Review
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSaveOrSubmit(false)}
+              disabled={savingDraft || submitting}
+              className="ml-3 inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {savingDraft && <Loader2 size={16} className="animate-spin" />}
+              Save Draft
             </button>
           </div>
         )}

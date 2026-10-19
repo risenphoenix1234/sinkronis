@@ -6,6 +6,11 @@ const config: Config = {
     extend: {
       colors: {
         primary: '#2183C6',
+        blue: {
+          500: '#2183C6',
+          600: '#2183C6',
+          700: '#1B6CA8',
+        },
         muted: { DEFAULT: '#f3f4f6', foreground: '#6b7280' },
         card: { DEFAULT: '#ffffff', foreground: '#111827' },
         border: '#e5e7eb',

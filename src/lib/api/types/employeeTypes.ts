@@ -98,18 +98,56 @@ export interface InboxItem {
   id: string;
   type: string;
   title: string;
-  summary: string;
+  description?: string;
+  summary?: string;
   body?: string;
-  isRead: boolean;
-  actionRequired: boolean;
+  status?: string;
+  isRead?: boolean;
+  actionRequired?: boolean;
   actionUrl?: string | null;
+  dueDate?: string | null;
+  eventDate?: string | null;
   createdAt: string;
-  category?: string;
+  category?: InboxCategory;
+  navigation?: InboxItemNavigation | null;
+  source?: InboxItemSource | null;
+}
+
+export type InboxCategory = string;
+
+export interface InboxCounts {
+  all?: number;
+  pending?: number;
+  done?: number;
+}
+
+export interface InboxItemNavigation {
+  target?: string;
+  action?: string;
+  available?: boolean;
+  [key: string]: unknown;
+}
+
+export interface InboxItemSource {
+  module?: string;
+  recordId?: string;
+  [key: string]: unknown;
+}
+
+export interface InboxPagination {
+  page?: number;
+  limit?: number;
+  total?: number;
+  totalPages?: number;
+  hasNextPage?: boolean;
+  hasPreviousPage?: boolean;
 }
 
 export interface EmployeeInboxData {
-  unreadCount: number;
+  unreadCount?: number;
+  counts?: InboxCounts;
   items: InboxItem[];
+  pagination?: InboxPagination;
 }
 
 export interface EmployeeInboxResponse {
@@ -119,6 +157,7 @@ export interface EmployeeInboxResponse {
 }
 
 export interface GetEmployeeInboxParams {
+  status?: "all" | "pending" | "done";
   filter?: "ALL" | "UNREAD" | "ACTION_REQUIRED";
   page?: number;
   limit?: number;
@@ -146,10 +185,76 @@ export interface AttendanceLogItem {
   notes?: string | null;
 }
 
+export type ClockState = "NOT_CLOCKED_IN" | "CLOCKED_IN" | "CLOCKED_OUT";
+
+export type DayType = "WORKDAY" | "WEEKEND" | "HOLIDAY" | "LEAVE" | string;
+
+export type AttendanceItemStatus =
+  | "PRESENT"
+  | "LATE"
+  | "ABSENT"
+  | "ON_LEAVE"
+  | "HALF_DAY"
+  | string;
+
+export interface AttendanceShift {
+  id?: string;
+  name?: string;
+  startTime?: string;
+  endTime?: string;
+  [key: string]: unknown;
+}
+
+export interface AttendanceTodayData {
+  clockState?: ClockState;
+  clockInAt?: string | null;
+  clockOutAt?: string | null;
+  workedMinutes?: number;
+  canClockIn?: boolean;
+  canClockOut?: boolean;
+  shift?: AttendanceShift | null;
+  [key: string]: unknown;
+}
+
+export interface AttendanceSummaryData {
+  presentDays?: number;
+  lateDays?: number;
+  absentDays?: number;
+  workingDays?: number;
+  totalWorkingDays?: number;
+  attendanceRate?: number;
+  [key: string]: unknown;
+}
+
+export interface AttendanceCalendarDayItem {
+  date: string;
+  attendanceStatus?: string | null;
+  dayType?: DayType;
+  [key: string]: unknown;
+}
+
+export interface AttendanceCalendarData {
+  days?: AttendanceCalendarDayItem[];
+  [key: string]: unknown;
+}
+
+export interface AttendanceDispute {
+  id?: string;
+  issueType?: AttendanceDisputeIssueType;
+  description?: string;
+  status?: string;
+  claimedClockIn?: string | null;
+  claimedClockOut?: string | null;
+  createdAt?: string;
+  [key: string]: unknown;
+}
+
 export interface EmployeeAttendanceData {
-  summary: AttendanceSummary;
-  today: AttendanceToday;
-  history: AttendanceLogItem[];
+  summary: AttendanceSummaryData;
+  today: AttendanceTodayData;
+  calendar?: AttendanceCalendarData | null;
+  attendanceLog?: AttendanceLogItem[];
+  history?: AttendanceLogItem[];
 }
 
 export interface EmployeeAttendanceResponse {
@@ -209,12 +314,37 @@ export interface AttendanceDisputeResponse {
 // ==========================================
 
 export interface LeaveBalanceItem {
-  id: string;
+  id?: string;
   leaveTypeId: string;
-  leaveTypeName: string;
-  allocatedDays: number;
+  leaveTypeName?: string;
+  code?: string;
+  name?: string;
+  allocatedDays?: number;
+  totalDays: number;
   usedDays: number;
   remainingDays: number;
+  pendingDays?: number;
+  entitlementYear?: number;
+}
+
+export type EmployeeLeaveBalanceItem = LeaveBalanceItem;
+
+export interface EmployeeLeaveTypeRef {
+  id?: string;
+  name?: string;
+  code?: string;
+}
+
+export interface LeaveEntitlementPeriod {
+  year?: number;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface LeaveDayCalculation {
+  days?: number;
+  workingDays?: number;
+  [key: string]: unknown;
 }
 
 export interface LeaveTypeItem {
@@ -243,11 +373,36 @@ export interface LeaveRequestItem {
   createdAt: string;
 }
 
+export type EmployeeLeaveHistoryItem = LeaveRequestItem;
+
+export interface EmployeeLeaveHistoryPagination {
+  page?: number;
+  limit?: number;
+  total?: number;
+  totalPages?: number;
+}
+
+export interface EmployeeLeaveCalendarEntry {
+  status?: string;
+  dates?: string[];
+  startDate?: string;
+  endDate?: string;
+  [key: string]: unknown;
+}
+
+export interface EmployeeLeaveCalendarData {
+  month?: string;
+  entries?: EmployeeLeaveCalendarEntry[];
+  [key: string]: unknown;
+}
+
 export interface EmployeeLeavePageData {
-  balances: LeaveBalanceItem[];
+  balances: EmployeeLeaveBalanceItem[];
   requests: LeaveRequestItem[];
+  history?: EmployeeLeaveHistoryItem[];
+  historyPagination?: EmployeeLeaveHistoryPagination;
   pendingRequestsCount: number;
-  calendar?: Record<string, unknown>;
+  calendar?: EmployeeLeaveCalendarData | null;
 }
 
 export interface EmployeeLeaveResponse {

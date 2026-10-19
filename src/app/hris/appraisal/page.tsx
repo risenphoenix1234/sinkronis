@@ -87,7 +87,7 @@ export default function AppraisalPage() {
       })
       .finally(() => setCycleLoading(false));
 
-    getAppraisals({ limit: 5 })
+    getAppraisals({ limit: 100 })
       .then((res) => {
         setOverviewReviews(Array.isArray(res?.data) ? res.data : []);
       })

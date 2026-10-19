@@ -6,7 +6,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { Search, Download, Plus, Filter, Pencil, RefreshCw } from "lucide-react";
 
-import { getConductOverview, getConductRecords, normalizeConductRecord } from "@/lib/api/hris";
+import { getConductOverview, getConductRecords } from "@/lib/api/hris";
 import { ConductOverviewData, ConductRecord } from "@/lib/api/types/hrisTypes";
 
 import QueryDetailsDrawer from "@/components/hris/conduct/QueryDetailsDrawer";
@@ -34,7 +34,7 @@ function extractConductRecords(res: unknown): ConductRecord[] {
       if (Array.isArray(nested)) list = nested as ConductRecord[];
     }
   }
-  return list.map(normalizeConductRecord);
+  return list;
 }
 
 export default function HRISConductPage() {

@@ -1,7 +1,5 @@
 // src/app/payroll/layout.tsx
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { PayeeProvider } from "@/context/payroll/PayeeContext";
-import { DeductionProvider } from "@/context/payroll/DeductionContext";
 import { WalletProvider } from "@/context/payroll/WalletContext";
 import type { SidebarItem } from "@/components/layout/Sidebar";
 
@@ -51,14 +49,10 @@ const sidebarItems: SidebarItem[] = [
 
 export default function PayrollLayout({ children }: { children: React.ReactNode }) {
   return (
-    <PayeeProvider>
-      <DeductionProvider>
-        <WalletProvider>
-          <DashboardLayout sidebarTitle="Payroll" sidebarItems={sidebarItems}>
-            {children}
-          </DashboardLayout>
-        </WalletProvider>
-      </DeductionProvider>
-    </PayeeProvider>
+    <WalletProvider>
+      <DashboardLayout sidebarTitle="Payroll" sidebarItems={sidebarItems}>
+        {children}
+      </DashboardLayout>
+    </WalletProvider>
   );
 }

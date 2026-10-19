@@ -6,6 +6,7 @@ export interface LoginPayload {
 }
 
 export interface EmployeeLoginPayload {
+  organizationSlug?: string;
   email: string;
   password: string;
 }
@@ -19,6 +20,8 @@ export interface LoginUser {
   role: string;
   accountType: "PLATFORM_ADMIN" | "TENANT_USER";
   isPlatformAdmin: boolean;
+  isManager?: boolean;
+  reporteeCount?: number;
   lastLoginAt: string;
 }
 

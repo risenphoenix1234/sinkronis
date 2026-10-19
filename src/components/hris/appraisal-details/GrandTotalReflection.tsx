@@ -49,10 +49,9 @@ const RECOMMENDATION_OPTIONS: Array<{
   value: string;
   label: string;
 }> = [
-  { value: "PROMOTE", label: "Promote" },
+  { value: "EXCEEDS_EXPECTATION", label: "Exceeds Expectation" },
   { value: "ON_TRACK", label: "On Track" },
   { value: "NEEDS_IMPROVEMENT", label: "Needs Improvement" },
-  { value: "PERFORMANCE_REVIEW", label: "Performance Review" },
 ];
 
 export default function GrandTotalReflection({
@@ -220,7 +219,7 @@ export default function GrandTotalReflection({
                       opt.value === upper,
                   )?.label ||
                   currentRecommendationValue ||
-                  "Promote";
+                  "—";
 
                 if (upper === "NEEDS_IMPROVEMENT" || upper === "NEEDS IMPROVEMENT") {
                   return (

@@ -1,16 +1,7 @@
-export interface EmployeeLeaveCalendarEntry {
-  status?: string;
-  dates?: string[];
-  startDate?: string;
-  endDate?: string;
-  [key: string]: unknown;
-}
-
-export interface EmployeeLeaveCalendarData {
-  month?: string;
-  entries?: EmployeeLeaveCalendarEntry[];
-  [key: string]: unknown;
-}
+import type {
+  EmployeeLeaveCalendarData,
+  EmployeeLeaveCalendarEntry,
+} from "@/lib/api/types/employeeTypes";
 
 interface MiniCalendarProps {
   calendar?: EmployeeLeaveCalendarData | null;

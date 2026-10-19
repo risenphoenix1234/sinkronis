@@ -55,7 +55,14 @@ export default function PayrollOverviewPage() {
   const stats = [
     { label: "Employees on Payroll", value: String(data.summary.employeesOnPayroll), note: "permanent staff" },
     { label: "External Payees", value: String(data.summary.externalPayeesOnPayroll), note: "contract and consultants" },
-    { label: "Monthly Cost", value: naira(data.summary.totalMonthlyCost.amount), note: periodLabel(data.period) },
+    {
+      label: "Monthly Cost",
+      value: naira(data.summary.totalMonthlyCost.amount),
+      note:
+        data.summary.totalMonthlyCost.amount === 0 && data.pendingApproval && Number(data.pendingApproval.totalNet) > 0
+          ? `${naira(Number(data.pendingApproval.totalNet))} net awaiting approval`
+          : periodLabel(data.period),
+    },
     { label: "Last Run Net Pay", value: lastNet === null ? "-" : naira(lastNet), note: "most recent payroll" },
   ];
 

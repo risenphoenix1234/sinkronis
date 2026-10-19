@@ -8,10 +8,8 @@ import {
   WalletTransaction,
 } from "@/types/payroll/wallet-data";
 
-import {
-  pendingObligations as initialObligations,
-  walletTransactions as initialTransactions,
-} from "@/data/payroll/wallet-data";
+const initialObligations: Obligation[] = [];
+const initialTransactions: WalletTransaction[] = [];
 
 type WalletContextType = {
   transactions: WalletTransaction[];

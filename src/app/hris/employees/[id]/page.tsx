@@ -30,6 +30,7 @@ import {
   downloadEmployeeDocument,
   updateEmployeeStatus,
   updateEmployee,
+  getEmployees,
 } from "@/lib/api/hris";
 import { getDepartmentsTable } from "@/lib/api/admin";
 import type {
@@ -388,6 +389,20 @@ export default function EmployeeProfilePage({
     { id: string; name: string }[]
   >([]);
   const [loadingDepartments, setLoadingDepartments] = useState(false);
+  const [managers, setManagers] = useState<{ id: string; name: string }[]>([]);
+  const [selectedManagerId, setSelectedManagerId] = useState("");
+
+  useEffect(() => {
+    getEmployees({ limit: 100 })
+      .then((list) =>
+        setManagers(
+          list
+            .filter((e) => e.id !== params.id)
+            .map((e) => ({ id: e.id, name: e.name })),
+        ),
+      )
+      .catch(() => setManagers([]));
+  }, [params.id]);
 
   // In-card Edit Mode for Bank Details
   const [isEditingBankDetails, setIsEditingBankDetails] = useState(false);
@@ -612,7 +627,11 @@ export default function EmployeeProfilePage({
           editForm.earnings !== "" && !isNaN(Number(editForm.earnings))
             ? Number(editForm.earnings)
             : undefined,
-        position: editForm.position.trim() || undefined,
+         position: editForm.position.trim() || undefined,
+        managerId:
+          selectedManagerId === "__none__"
+            ? null
+            : selectedManagerId || undefined,
       };
 
       await updateEmployee(params.id, payload);
@@ -1329,7 +1348,19 @@ export default function EmployeeProfilePage({
                   value={editForm.departmentId}
                   onChange={(v) => updateField("departmentId", v)}
                   disabled={submittingEdit}
-                  options={departmentOptions}
+                                  options={departmentOptions}
+                />
+
+                <FormSelect
+                  label="Line Manager"
+                  value={selectedManagerId}
+                  onChange={(v) => setSelectedManagerId(v)}
+                  disabled={submittingEdit}
+                  options={[
+                    { value: "", label: "Select Line Manager" },
+                    { value: "__none__", label: "No manager (remove)" },
+                    ...managers.map((m) => ({ value: m.id, label: m.name })),
+                  ]}
                 />
 
                 {/* 2. Phone Number */}

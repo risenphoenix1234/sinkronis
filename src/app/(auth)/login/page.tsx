@@ -12,6 +12,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState<LoginMode>("admin");
   const [organizationSlug, setOrganizationSlug] = useState("");
+  const [needsCompanyId, setNeedsCompanyId] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -32,6 +33,10 @@ export default function LoginPage() {
   const switchMode = (next: LoginMode) => {
     if (loading || next === mode) return;
     setMode(next);
+    setEmail("");
+    setPassword("");
+    setOrganizationSlug("");
+    setShowPassword(false);
     setError(null);
     setEmailError(null);
     setPasswordError(null);
@@ -81,7 +86,10 @@ export default function LoginPage() {
               email: email.trim(),
               password,
             })
-          : await employeeLogin({
+               : await employeeLogin({
+              ...(organizationSlug.trim()
+                ? { organizationSlug: organizationSlug.trim() }
+                : {}),
               email: email.trim(),
               password,
             });
@@ -104,9 +112,15 @@ export default function LoginPage() {
         }
       }
     } catch (err: any) {
-      setError(
-        err?.response?.data?.message || "Invalid credentials. Please try again."
-      );
+      const apiMessage: string | undefined = err?.response?.data?.message;
+      if (apiMessage && /multiple organizations/i.test(apiMessage)) {
+        setNeedsCompanyId(true);
+        setError(
+          "This email is used in more than one company. Enter your Company ID below.",
+        );
+      } else {
+        setError(apiMessage || "Invalid credentials. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -161,7 +175,7 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleSignIn} className="space-y-4">
-          {mode === "admin" && (
+          {(mode === "admin" || needsCompanyId) && (
             <div>
               <label className="mb-1.5 block text-[13px] font-medium text-[#344054]">
                 Company ID

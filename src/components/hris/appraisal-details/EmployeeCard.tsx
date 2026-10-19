@@ -1,9 +1,15 @@
-import { AppraisalSummary, AppraisalEmployee } from "@/lib/api/types/hrisTypes";
+"use client";
 
+import { useState } from "react";
+import ReassignReviewerModal from "./ReassignReviewerModal";
+import { AppraisalSummary, AppraisalEmployee } from "@/lib/api/types/hrisTypes";
 interface EmployeeCardProps {
   employee: AppraisalEmployee;
   appraisal: AppraisalSummary;
   statusOverride?: string;
+  appraisalId?: string;
+  canReassign?: boolean;
+  onReassigned?: () => void;
 }
 
 function renderStatusBadge(status: string) {
@@ -67,7 +73,11 @@ export default function EmployeeCard({
   employee,
   appraisal,
   statusOverride,
+  appraisalId,
+  canReassign = false,
+  onReassigned,
 }: EmployeeCardProps) {
+  const [reassignOpen, setReassignOpen] = useState(false);
   const displayStatus = statusOverride || appraisal.statusLabel || "Not Started";
   const showScore =
     appraisal.overallScorePercent > 0 &&
@@ -102,6 +112,15 @@ export default function EmployeeCard({
             <p className="mt-0.5 text-xs text-gray-500">
               {employee.title} · {employee.department} · Manager:{" "}
               {employee.managerName}
+              {canReassign && appraisalId && (
+                <button
+                  type="button"
+                  onClick={() => setReassignOpen(true)}
+                  className="ml-2 font-semibold text-[#2183C6] hover:underline"
+                >
+                  Change reviewer
+                </button>
+              )}
             </p>
           </div>
         </div>
@@ -125,9 +144,19 @@ export default function EmployeeCard({
                 {appraisal.overallRatingLabel}
               </p>
             </div>
-          )}
+                   )}
         </div>
       </div>
+
+      {canReassign && appraisalId && (
+        <ReassignReviewerModal
+          open={reassignOpen}
+          onClose={() => setReassignOpen(false)}
+          appraisalId={appraisalId}
+          currentManagerName={employee.managerName}
+          onReassigned={onReassigned}
+        />
+      )}
     </div>
   );
 }

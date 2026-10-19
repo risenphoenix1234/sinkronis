@@ -3,10 +3,10 @@
 
 import { useState } from "react";
 import { FiAlertTriangle } from "react-icons/fi";
-import { currentPlan } from "@/lib/plan-data";
 
 type CancelSubscriptionModalProps = {
   open: boolean;
+  renewalDate: string;
   onClose: () => void;
   onConfirm: () => void;
 };
@@ -15,6 +15,7 @@ const CONFIRM_PHRASE = "CANCEL";
 
 export default function CancelSubscriptionModal({
   open,
+  renewalDate,
   onClose,
   onConfirm,
 }: CancelSubscriptionModalProps) {
@@ -45,7 +46,7 @@ export default function CancelSubscriptionModal({
           <h2 className="mt-3 text-base font-semibold text-slate-900">Cancel Subscription</h2>
           <p className="mt-1.5 text-sm text-slate-500">
             All users will lose access at the end of your current billing period
-            ({currentPlan.renewalDate}). Your data will be retained for 30 days. Type{" "}
+            ({renewalDate}). Your data will be retained for 30 days. Type{" "}
             <span className="font-semibold text-slate-700">{CONFIRM_PHRASE}</span> to confirm.
           </p>
         </div>

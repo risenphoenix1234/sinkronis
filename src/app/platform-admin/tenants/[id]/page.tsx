@@ -314,6 +314,7 @@ const handleDisableModule = async (moduleKey: string, moduleName: string) => {
         </div>
       )}
 
+{activeTab === "modules" && modules && (
 <div className="mt-4  grid gap-4 sm:grid-cols-3">
   {modules.modules.map((mod) => {
     const isOn = mod.status === "ACTIVE";
@@ -355,6 +356,7 @@ const handleDisableModule = async (moduleKey: string, moduleName: string) => {
     );
   })}
 </div>
+)}
       {activeTab === "billing" && billing && (
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <h3 className="text-sm font-semibold text-slate-900">Billing</h3>

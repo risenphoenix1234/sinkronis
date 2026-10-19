@@ -588,7 +588,7 @@ export default function PayrollWalletPage() {
 
           {walletError && (
             <p className="mt-1 text-[11px] text-white/60">
-              {walletError} — showing cached data.
+              {walletError}
             </p>
           )}
 
@@ -651,7 +651,7 @@ export default function PayrollWalletPage() {
 
           {obligationsError && (
             <p className="mt-1 text-[12px] text-[#e8384f]">
-              {obligationsError} — showing cached obligations.
+              {obligationsError}
             </p>
           )}
         </header>
@@ -707,7 +707,7 @@ export default function PayrollWalletPage() {
 
             {transactionsError ? (
               <p className="mt-0.5 text-[12px] text-[#e8384f]">
-                {transactionsError} — showing cached transactions.
+                {transactionsError}
               </p>
             ) : (
               <p className="mt-0.5 text-[12px] text-[#8994a3]">

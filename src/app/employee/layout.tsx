@@ -4,6 +4,7 @@
 import { usePathname } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { SidebarItem } from "@/components/layout/Sidebar";
+import { useIsManager } from "@/hooks/useIsManager";
 
 const sidebarItems: SidebarItem[] = [
   {
@@ -23,9 +24,14 @@ const sidebarItems: SidebarItem[] = [
     href: "/employee/appraisal",
     icon: "appraisal",
   },
-  { label: "My Payslip", href: "/employee/payslip", icon: "payslip" },
+  { label: "My Payslip", href: "/employee/payslip", icon: "payslips" },
   { label: "My Inbox", href: "/employee/inbox", icon: "inbox" },
 ];
+
+const managerPortalItem: SidebarItem = {
+  label: "Manager Portal",
+  href: "/manager/overview",
+};
 
 export default function EmployeeLayout({
   children,
@@ -33,13 +39,17 @@ export default function EmployeeLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const isLogin = pathname === "/employee/login";
+  const isManager = useIsManager(!isLogin);
 
-  if (pathname === "/employee/login") {
+  if (isLogin) {
     return <>{children}</>;
   }
 
+  const items = isManager ? [...sidebarItems, managerPortalItem] : sidebarItems;
+
   return (
-    <DashboardLayout sidebarTitle="Employee" sidebarItems={sidebarItems}>
+    <DashboardLayout sidebarTitle="Employee" sidebarItems={items}>
       {children}
     </DashboardLayout>
   );

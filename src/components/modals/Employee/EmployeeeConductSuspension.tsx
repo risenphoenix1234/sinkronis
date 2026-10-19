@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import StatusBadge from "@/components/ui/StatusBadge";
 import EmptyState from "@/components/shared/EmptyState";
 import { ConductRecord } from "@/lib/api/types/hrisTypes";
-import { getConductRecords, normalizeConductRecord } from "@/lib/api/hris";
+import { getConductRecords } from "@/lib/api/hris";
 import { resolveDepartmentName } from "@/utils/department";
 import SuspensionDrawer from "@/components/hris/conduct/SuspensionDrawer";
 
@@ -32,7 +32,7 @@ function extractConductRecords(res: unknown): ConductRecord[] {
       if (Array.isArray(nested)) list = nested as ConductRecord[];
     }
   }
-  return list.map(normalizeConductRecord);
+  return list;
 }
 
 export default function EmployeeConductSuspension({

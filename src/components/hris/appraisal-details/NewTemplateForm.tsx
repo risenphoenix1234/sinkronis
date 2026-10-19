@@ -476,7 +476,7 @@ export default function NewTemplateForm({
                             updateObjectiveName(objective.id, e.target.value)
                           }
                           placeholder={`Objective ${index + 1} name`}
-                          className="border-none bg-transparent text-sm font-medium text-blue-700 placeholder-blue-400 outline-none"
+                          className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-medium text-blue-700 placeholder-blue-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                         />
                         <span className="text-sm text-slate-600">
                           {weight}%

@@ -437,3 +437,8 @@ export const exportPdf = (filters?: ReportFilters) => downloadReport("pdf", filt
 export function naira(value: number | null | undefined): string {
   return `₦${(value ?? 0).toLocaleString()}`;
 }
+
+export const finalizeFinancialSettlementOtp = async (settlementId: string, otp: string) => {
+  const { data } = await api.post(`${BASE}/financial-settlements/${settlementId}/finalize-otp`, { otp });
+  return data;
+};

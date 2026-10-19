@@ -90,6 +90,12 @@ export default function MyPlanOverviewPage() {
                 {currentPlan.status}
               </span>
               <span className="text-xs text-sky-100">Renews {formatDate(currentPlan.renewalDate)}</span>
+              <Link
+                href="/tenant-admin/my-plan/renew"
+                className="mt-1 rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-sky-700 hover:bg-sky-50"
+              >
+                Renew subscription
+              </Link>
             </div>
           </div>
 
@@ -256,6 +262,7 @@ export default function MyPlanOverviewPage() {
 
       <CancelSubscriptionModal
         open={cancelModalOpen}
+        renewalDate={formatDate(currentPlan.renewalDate)}
         onClose={() => setCancelModalOpen(false)}
         onConfirm={handleConfirmCancel}
       />

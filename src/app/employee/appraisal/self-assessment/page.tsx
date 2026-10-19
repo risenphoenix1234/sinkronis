@@ -1,21 +1,23 @@
+// src/app/employee/appraisal/self-assessment/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 
 import ConfirmSubmitModal from "@/components/employee/appraisal/ConfirmSubmitModal";
-import { useSelfAssessment } from "@/components/employee/appraisal/UseSelfAssessment";
 import SelfAssessmentHeader from "@/components/employee/appraisal/SelfAssessmentHeader";
 import InfoBanner from "@/components/employee/appraisal/InfoBanner";
 import EmployeeInformation from "@/components/employee/appraisal/EmployeeInfo";
-import ObjectiveTable from "@/components/employee/appraisal/ObjectiveTable";
-import BehaviourTable from "@/components/employee/appraisal/BehaviourTable";
-import GrandTotal from "@/components/employee/appraisal/GrandTotal";
+import GrandTotal from "@/components/hris/appraisal-details/GrandTotal";
 import OverallRating from "@/components/employee/appraisal/OverallRating";
-import ReflectionQuestions from "@/components/employee/appraisal/ReflectionQuestion";
 import SignOff from "@/components/employee/appraisal/SignOff";
 import FooterAction from "@/components/employee/appraisal/FooterActions";
+import ObjectivesTable from "@/components/hris/appraisal-details/ObjectivesTable";
+import BehaviourTable from "@/components/hris/appraisal-details/BehaviourTable";
+import ReflectionQuestions from "@/components/hris/appraisal-details/ReflectionQuestions";
+import type { ReflectionQuestionDef } from "@/components/hris/appraisal-details/ReflectionQuestions";
+import type { TemplateSection } from "@/lib/api/types/hrisTypes";
 import {
   getEmployeeSelfAssessment,
   saveEmployeeSelfAssessmentDraft,
@@ -23,222 +25,266 @@ import {
 } from "@/lib/api/employee";
 import {
   EmployeeSelfAssessmentData,
-  SaveSelfAssessmentDraftPayload,
-  SubmitSelfAssessmentPayload,
+  SelfAssessmentDraftSection,
 } from "@/lib/api/types/employeeTypes";
+
+interface TemplateKeyResult {
+  id: string;
+  description: string;
+  initiatives?: string | null;
+  kpiWeight: number;
+  target: number | string;
+}
+
+interface TemplateObjective {
+  id: string;
+  title: string;
+  weight: number;
+  keyResults?: TemplateKeyResult[];
+}
+
+interface TemplateConfigSection {
+  section: string;
+  weight: number;
+  objectives: TemplateObjective[];
+}
+
+interface HeaderEmployee {
+  id?: string;
+  name?: string;
+  role?: string;
+  department?: string;
+  startDate?: string;
+}
+
+const formatDate = (value?: string) => {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
 
 export default function SelfAssessmentPage() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const { loading, saveDraft, submit } = useSelfAssessment();
-  const [selfAssessmentData, setSelfAssessmentData] =
-    useState<EmployeeSelfAssessmentData | null>(null);
+  const [appraisalId, setAppraisalId] = useState("");
+  const [data, setData] = useState<EmployeeSelfAssessmentData | null>(null);
+  const [sections, setSections] = useState<TemplateSection[]>([]);
+  const [questions, setQuestions] = useState<ReflectionQuestionDef[]>([]);
   const [loadingData, setLoadingData] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [savingDraft, setSavingDraft] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    const params =
-      typeof window !== "undefined"
-        ? new URLSearchParams(window.location.search)
-        : null;
-    const appraisalId = params?.get("appraisalId");
-    if (appraisalId) {
-      setLoadingData(true);
-      getEmployeeSelfAssessment(appraisalId)
-        .then((data) => setSelfAssessmentData(data))
-        .catch((err) => {
-          console.error("Could not fetch self-assessment from API:", err);
-        })
-        .finally(() => setLoadingData(false));
-    }
-  }, []);
+  const [achievedById, setAchievedById] = useState<Record<string, string>>({});
+  const [commentById, setCommentById] = useState<Record<string, string>>({});
+  const [behaviouralAchievedById, setBehaviouralAchievedById] = useState<
+    Record<string, string>
+  >({});
+  const [behaviouralCommentById, setBehaviouralCommentById] = useState<
+    Record<string, string>
+  >({});
+  const [responseById, setResponseById] = useState<Record<string, string>>({});
 
-  const activeEmployee = selfAssessmentData?.header
-    ? {
-        id: selfAssessmentData.header.employee?.id || "",
-        name: selfAssessmentData.header.employee?.name || "",
-        department: "—",
-        jobTitle: "—",
-        supervisor: selfAssessmentData.header.supervisor?.name || "",
-        employmentDate: "—",
-        reviewPeriod: selfAssessmentData.quarter || "",
-      }
-    : {
-        id: "",
-        name: "",
-        department: "—",
-        jobTitle: "—",
-        supervisor: "",
-        employmentDate: "—",
-        reviewPeriod: "",
-      };
-
-  const activeQuestions = selfAssessmentData?.reflectionQuestions?.length
-    ? selfAssessmentData.reflectionQuestions.map((q, idx) => ({
-        id: idx + 1,
-        title: q.question,
-        description: `Question ID: ${q.id}`,
-        answer: "",
-      }))
-    : [];
-
-  const activeObjectives = selfAssessmentData?.goals?.length
-      ? selfAssessmentData.goals.map((g, idx) => ({
-        id: idx + 1,
-        objective: g.title,
-        wt: "100%",
-        keyResult: g.description || g.successCriteria || "",
-        kpis: 100,
-        target: 0,
-        weight: 100,
-        selfRating: g.employeeRating ?? 0,
-        q1Ach: g.employeeRating ?? 0,
-        q1Percent: 0,
-        q2Acgh: g.managerRating ?? 0,
-        q2Percent: 0,
-        comment: g.employeeComment || g.managerComment || "",
-      }))
-    : [];
-
-  const handleSaveDraft = async () => {
-    const params =
-      typeof window !== "undefined"
-        ? new URLSearchParams(window.location.search)
-        : null;
-    const appraisalId =
-      selfAssessmentData?.appraisalId || params?.get("appraisalId");
-
-    if (appraisalId) {
-      setSavingDraft(true);
-      try {
-        const payload: SaveSelfAssessmentDraftPayload = {
-          sections: [
-            {
-              section: "KRA",
-              totalWeight: 100,
-              objectives: (selfAssessmentData?.goals || []).map((obj) => ({
-                title: obj.title,
-                weight: 100,
-                keyResults: [
-                  {
-                    keyResult:
-                      obj.successCriteria ||
-                      obj.description ||
-                      obj.title,
-                    kpiWeight: 100,
-                    target: typeof obj.targetDate === "number" ? obj.targetDate : 100,
-                    comment: obj.employeeComment || undefined,
-                  },
-                ],
-              })),
-            },
-          ],
-          reflections: activeQuestions.map((q) => ({
-            questionId: String(q.id).startsWith("question_")
-              ? String(q.id)
-              : `question_${q.id}`,
-            response: q.answer || "",
+  const load = useCallback((id: string) => {
+    setLoadingData(true);
+    setLoadError(null);
+    getEmployeeSelfAssessment(id)
+      .then((res) => {
+        setData(res);
+        const template = res.template as
+          | { configuration?: { sections?: TemplateConfigSection[] } }
+          | undefined;
+        const mapped: TemplateSection[] = (
+          template?.configuration?.sections ?? []
+        ).map((s) => ({
+          section: s.section as "KRA" | "BEHAVIOURAL",
+          weight: s.weight,
+          objectives: s.objectives.map((obj) => ({
+            id: obj.id,
+            title: obj.title,
+            weight: obj.weight,
+            keyResults: (obj.keyResults ?? []).map((kr) => ({
+              id: kr.id,
+              description: kr.description,
+              initiatives: kr.initiatives ?? "",
+              kpiWeight: kr.kpiWeight,
+              target: kr.target,
+            })),
           })),
-        };
-
-        await saveEmployeeSelfAssessmentDraft(appraisalId, payload);
-        toast.success("Employee self-assessment draft saved successfully.");
-      } catch (err: unknown) {
-        console.error("Failed to save draft:", err);
+        })) as TemplateSection[];
+        setSections(mapped);
+        setQuestions(
+          (res.reflectionQuestions ?? []).map((q) => ({
+            questionId: q.id,
+            title: q.question,
+          })) as ReflectionQuestionDef[],
+        );
+      })
+      .catch((err: unknown) => {
         const apiMsg = (err as { response?: { data?: { message?: string } } })
           ?.response?.data?.message;
-        toast.error(
-          apiMsg ||
-            (err instanceof Error
-              ? err.message
-              : "Failed to save draft. Please try again."),
-        );
-      } finally {
-        setSavingDraft(false);
+        setLoadError(apiMsg || "Failed to load self-assessment.");
+      })
+      .finally(() => setLoadingData(false));
+  }, []);
+
+  useEffect(() => {
+    const id =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("appraisalId") || ""
+        : "";
+    setAppraisalId(id);
+    if (id) load(id);
+  }, [load]);
+
+  const kraSection = sections.find((s) => s.section === "KRA");
+  const behaviouralSection = sections.find((s) => s.section === "BEHAVIOURAL");
+
+  const buildSection = (
+    section: TemplateSection,
+    achById: Record<string, string>,
+    cmtById: Record<string, string>,
+  ): SelfAssessmentDraftSection => ({
+    section: section.section,
+    totalWeight: section.weight,
+    objectives: section.objectives.map((objective) => ({
+      title: objective.title,
+      weight: objective.weight,
+      keyResults: objective.keyResults.map((kr) => ({
+        keyResult: kr.description,
+        kpiWeight: kr.kpiWeight,
+        target: Number(kr.target) || 0,
+        achieved: Number(achById[kr.id] ?? 0) || 0,
+        comment: cmtById[kr.id] ?? "",
+      })),
+    })),
+  });
+
+  const buildPayload = () => {
+    const payloadSections: SelfAssessmentDraftSection[] = [
+      ...(kraSection ? [buildSection(kraSection, achievedById, commentById)] : []),
+      ...(behaviouralSection
+        ? [
+            buildSection(
+              behaviouralSection,
+              behaviouralAchievedById,
+              behaviouralCommentById,
+            ),
+          ]
+        : []),
+    ];
+    const reflections = Object.entries(responseById)
+      .filter(([, response]) => response.trim().length > 0)
+      .map(([questionId, response]) => ({
+        questionId,
+        response: response.trim(),
+      }));
+    return {
+      sections: payloadSections,
+      ...(reflections.length > 0 ? { reflections } : {}),
+    };
+  };
+
+  const errorMessage = (err: unknown, fallback: string) => {
+    const detail = (
+      err as {
+        response?: {
+          data?: {
+            message?: string;
+            validationErrors?: { field: string; message: string }[];
+          };
+        };
       }
-    } else {
-      try {
-        await saveDraft();
-        toast.success("Draft saved successfully.");
-      } catch {
-        toast.error("Failed to save draft.");
-      }
+    )?.response?.data;
+    return (
+      detail?.validationErrors
+        ?.map((v) => `${v.field}: ${v.message}`)
+        .join("; ") ||
+      detail?.message ||
+      fallback
+    );
+  };
+
+  const handleSaveDraft = async () => {
+    if (!appraisalId) return;
+    setSavingDraft(true);
+    try {
+      await saveEmployeeSelfAssessmentDraft(appraisalId, buildPayload());
+      toast.success("Draft saved successfully.");
+    } catch (err: unknown) {
+      toast.error(errorMessage(err, "Failed to save draft."));
+    } finally {
+      setSavingDraft(false);
     }
   };
 
   const handleSubmit = async () => {
-    const params =
-      typeof window !== "undefined"
-        ? new URLSearchParams(window.location.search)
-        : null;
-    const appraisalId =
-      selfAssessmentData?.appraisalId || params?.get("appraisalId");
-
+    if (!appraisalId) return;
     setSubmitting(true);
     try {
-      if (appraisalId) {
-        const payload: SubmitSelfAssessmentPayload = {
-          sections: [
-            {
-              section: "KRA",
-              totalWeight: 100,
-              objectives: (selfAssessmentData?.goals || []).map((obj) => ({
-                title: obj.title || "Goal",
-                weight: 100,
-                keyResults: [
-                  {
-                    keyResult:
-                      obj.successCriteria ||
-                      obj.description ||
-                      obj.title,
-                    kpiWeight: 100,
-                    target: typeof obj.targetDate === "number" ? obj.targetDate : 100,
-                    achieved: obj.employeeRating || 0,
-                    comment: obj.employeeComment || undefined,
-                  },
-                ],
-              })),
-            },
-          ],
-          reflections: selfAssessmentData?.reflectionQuestions?.length
-            ? selfAssessmentData.reflectionQuestions.map((rq, idx) => ({
-                questionId: rq.id,
-                response:
-                  activeQuestions[idx]?.answer || "",
-              }))
-            : activeQuestions.map((q) => ({
-                questionId: String(q.id).startsWith("question_")
-                  ? String(q.id)
-                  : `question_${q.id}`,
-                response: q.answer || "",
-              })),
-        };
-
-        await submitEmployeeSelfAssessment(appraisalId, payload);
-        toast.success("Employee self-assessment submitted successfully.");
-        setOpen(false);
-        router.push("/employee/appraisal?submitted=true");
-      } else {
-        await submit();
-        toast.success("Self-assessment submitted successfully.");
-        setOpen(false);
-        router.push("/employee/appraisal?submitted=true");
-      }
+      await submitEmployeeSelfAssessment(appraisalId, buildPayload());
+      toast.success("Self-assessment submitted successfully.");
+      setOpen(false);
+      router.push("/employee/appraisal?submitted=true");
     } catch (err: unknown) {
-      console.error("Failed to submit self-assessment:", err);
-      const apiMsg = (err as { response?: { data?: { message?: string } } })
-        ?.response?.data?.message;
-      toast.error(
-        apiMsg ||
-          (err instanceof Error
-            ? err.message
-            : "Failed to submit self-assessment. Please try again."),
-      );
+      setOpen(false);
+      toast.error(errorMessage(err, "Failed to submit self-assessment."));
     } finally {
       setSubmitting(false);
     }
   };
+
+  const header = data?.header as
+    | { employee?: HeaderEmployee; supervisor?: { name?: string } | null }
+    | undefined;
+
+  const activeEmployee = {
+    id: header?.employee?.id || "",
+    name: header?.employee?.name || "",
+    department: header?.employee?.department || "—",
+    jobTitle: header?.employee?.role || "—",
+    supervisor: header?.supervisor?.name || "—",
+    employmentDate: formatDate(header?.employee?.startDate),
+    reviewPeriod: data?.quarter || "",
+  };
+
+  const sectionTotal = (
+    section: TemplateSection | undefined,
+    achById: Record<string, string>,
+  ) =>
+    (section?.objectives ?? []).reduce(
+      (sum, objective) =>
+        sum +
+        objective.keyResults.reduce((s, kr) => {
+          const target = Number(kr.target) || 0;
+          const achieved = Number(achById[kr.id] ?? 0) || 0;
+          return target > 0 ? s + (achieved / target) * kr.kpiWeight : s;
+        }, 0),
+      0,
+    );
+
+  const grandScore = Math.round(
+    sectionTotal(kraSection, achievedById) +
+      sectionTotal(behaviouralSection, behaviouralAchievedById),
+  );
+
+  const grandRating =
+    grandScore > 120
+      ? "Outstanding"
+      : grandScore > 100
+        ? "Above Expectation"
+        : grandScore >= 80
+          ? "Meets Expectation"
+          : grandScore >= 60
+            ? "Below Expectation"
+            : "Poor Performance";
+
+  const busy = savingDraft || submitting;
 
   return (
     <>
@@ -249,7 +295,20 @@ export default function SelfAssessmentPage() {
           {loadingData && (
             <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-700">
               <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-              <span>Loading assigned self-assessment template snapshot...</span>
+              <span>Loading assigned self-assessment template...</span>
+            </div>
+          )}
+
+          {loadError && (
+            <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+              <span>{loadError}</span>
+              <button
+                type="button"
+                onClick={() => appraisalId && load(appraisalId)}
+                className="font-medium underline"
+              >
+                Retry
+              </button>
             </div>
           )}
 
@@ -257,15 +316,57 @@ export default function SelfAssessmentPage() {
 
           <EmployeeInformation employee={activeEmployee} />
 
-          <ObjectiveTable objectives={activeObjectives} />
+          {kraSection && (
+            <ObjectivesTable
+              section={kraSection}
+              editable
+              quarter={data?.quarter || undefined}
+              achievedById={achievedById}
+              commentById={commentById}
+              onAchievedChange={(krId, value) =>
+                setAchievedById((p) => ({ ...p, [krId]: value }))
+              }
+              onCommentChange={(krId, value) =>
+                setCommentById((p) => ({ ...p, [krId]: value }))
+              }
+            />
+          )}
 
-          <BehaviourTable behaviours={[]} />
+          {behaviouralSection && (
+            <BehaviourTable
+              section={behaviouralSection}
+              editable
+              quarter={data?.quarter || undefined}
+              achievedById={behaviouralAchievedById}
+              commentById={behaviouralCommentById}
+              onAchievedChange={(krId, value) =>
+                setBehaviouralAchievedById((p) => ({ ...p, [krId]: value }))
+              }
+              onCommentChange={(krId, value) =>
+                setBehaviouralCommentById((p) => ({ ...p, [krId]: value }))
+              }
+            />
+          )}
 
-          <GrandTotal />
+            <GrandTotal
+            quarter={data?.quarter}
+            score={grandScore > 0 ? grandScore : null}
+            ratingLabel={grandScore > 0 ? grandRating : null}
+          />
 
           <OverallRating />
 
-          <ReflectionQuestions questions={activeQuestions} />
+          {questions.length > 0 && (
+            <div className="rounded-xl border bg-white p-6">
+              <ReflectionQuestions
+                questions={questions}
+                responseById={responseById}
+                onResponseChange={(questionId, value) =>
+                  setResponseById((p) => ({ ...p, [questionId]: value }))
+                }
+              />
+            </div>
+          )}
 
           <SignOff
             employeeName={activeEmployee.name}
@@ -273,8 +374,8 @@ export default function SelfAssessmentPage() {
           />
 
           <FooterAction
-            disableSubmit={loading || savingDraft || submitting}
-            loading={loading || savingDraft || submitting}
+            disableSubmit={busy || sections.length === 0}
+            loading={busy}
             onSaveDraft={handleSaveDraft}
             onSubmit={() => setOpen(true)}
           />

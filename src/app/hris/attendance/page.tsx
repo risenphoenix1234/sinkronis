@@ -26,13 +26,7 @@ import DisputesList from "@/components/hris/attendance/DisputesList";
 import { AttendanceView, useAttendanceData } from "@/hooks/useAttendanceData";
 import ManualOverrideModal from "@/components/modals/ManualOverideModal";
 
-const DEPARTMENTS = [
-  "All Departments",
-  "Human Resources",
-  "Finance",
-  "Operations",
-  "IT & Technology",
-] as const;
+const ALL_DEPARTMENTS = "All Departments";
 
 const STATUSES = ["All", "On Time", "Late", "On Leave", "Absent"] as const;
 
@@ -42,8 +36,7 @@ export default function AttendancePage() {
   >("attendance-log");
   const [view, setView] = useState<AttendanceView>("daily-log");
   const [search, setSearch] = useState("");
-  const [department, setDepartment] =
-    useState<(typeof DEPARTMENTS)[number]>("All Departments");
+  const [department, setDepartment] = useState<string>(ALL_DEPARTMENTS);
   const [status, setStatus] = useState<(typeof STATUSES)[number]>("All");
 
   const {
@@ -77,6 +70,15 @@ export default function AttendancePage() {
     refreshDisputes,
   } = useAttendanceData(view);
 
+  const departmentOptions = useMemo(() => {
+    const names = new Set<string>();
+    attendanceLogs.forEach((employee) => {
+      const name = String(employee.department ?? "").trim();
+      if (name) names.add(name);
+    });
+    return [ALL_DEPARTMENTS, ...Array.from(names).sort()];
+  }, [attendanceLogs]);
+
   const filteredAttendance = useMemo(() => {
     const searchLower = search.toLowerCase();
     return attendanceLogs.filter((employee) => {
@@ -86,7 +88,7 @@ export default function AttendancePage() {
         name.toLowerCase().includes(searchLower) ||
         id.toLowerCase().includes(searchLower);
       const matchesDepartment =
-        department === "All Departments" || employee.department === department;
+        department === ALL_DEPARTMENTS || employee.department === department;
       const matchesStatus = status === "All" || employee.status === status;
       return matchesSearch && matchesDepartment && matchesStatus;
     });
@@ -376,12 +378,10 @@ export default function AttendancePage() {
 
               <select
                 value={department}
-                onChange={(e) =>
-                  setDepartment(e.target.value as (typeof DEPARTMENTS)[number])
-                }
+                onChange={(e) => setDepartment(e.target.value)}
                 className="border rounded-md px-4 py-2"
               >
-                {DEPARTMENTS.map((d) => (
+                {departmentOptions.map((d) => (
                   <option key={d}>{d}</option>
                 ))}
               </select>

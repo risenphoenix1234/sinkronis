@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import {
@@ -206,6 +206,7 @@ export default function ReviewPage({ appraisalId }: ReviewPageProps) {
   const [newGoalCriteria, setNewGoalCriteria] = useState("");
   const [newGoalTargetDate, setNewGoalTargetDate] = useState("");
   const [submittingGoal, setSubmittingGoal] = useState(false);
+  const submittingGoalRef = useRef(false);
   const [submittingComplete, setSubmittingComplete] = useState(false);
   const [confirmingGoals, setConfirmingGoals] = useState(false);
   const [isAwaitingConfirmation, setIsAwaitingConfirmation] = useState(false);
@@ -400,7 +401,9 @@ export default function ReviewPage({ appraisalId }: ReviewPageProps) {
   }, [appraisalId, loadManagerReview]);
 
   const handleCreateGoal = async () => {
-    if (!appraisalId || !newGoalTitle.trim()) return;
+      if (!appraisalId || !newGoalTitle.trim() || submittingGoalRef.current)
+      return;
+    submittingGoalRef.current = true;
     setSubmittingGoal(true);
     try {
       const payload: ProposeAppraisalGoalPayload = {
@@ -428,6 +431,7 @@ export default function ReviewPage({ appraisalId }: ReviewPageProps) {
           : "Failed to add goal. Please try again.";
       toast.error(msg);
     } finally {
+      submittingGoalRef.current = false;
       setSubmittingGoal(false);
     }
   };
@@ -734,6 +738,17 @@ export default function ReviewPage({ appraisalId }: ReviewPageProps) {
           <>
             {/* Employee Card */}
             <EmployeeCard
+              appraisalId={appraisalId}
+              canReassign
+              onReassigned={() => {
+                if (!appraisalId) return;
+                getAppraisalDetail(appraisalId)
+                  .then((fresh) => {
+                    setAppraisalData(fresh);
+                    loadManagerReview(appraisalId, fresh?.stage);
+                  })
+                  .catch(() => undefined);
+              }}
               employee={mapAppraisalToEmployee(appraisalData)}
               appraisal={mapAppraisalToSummary(appraisalData)}
               statusOverride={

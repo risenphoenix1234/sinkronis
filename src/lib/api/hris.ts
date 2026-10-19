@@ -1,6 +1,7 @@
 // src/lib/api/hris.ts
 import axios from "axios";
 import api from "../api/axios";
+export type { AttendanceRecord as EmployeeAttendanceRecord } from "./types/hrisTypes";
 import { ActiveAppraisalCycle, ApplyForLeavePayload, ApplyForLeaveResponse, AppraisalCycle, AppraisalTemplate, ApproveLeaveRequestPayload, ApproveLeaveRequestResp, ArchiveAppraisalTemplateResponse, AttendanceDispute, ClockInPayload, ClockInResponse, ClockOutPayload, 
   ClockOutResponse, CreateAppraisalCyclePayload, CreateAppraisalCycleResponse, CreateAppraisalTemplatePayload, CreateAppraisalTemplateResponse, CreateEmployeeFiles, CreateEmployeePayload, 
   CreateEmployeeResponse, DailyAttendanceResponse, EmployeeListItem,
@@ -967,7 +968,22 @@ export const getManagerReview = async (
   const response = await api.get<GetManagerReviewResponse>(
     `/hris/appraisals/${appraisalId}/manager-review`,
   );
-  return response.data.data;
+  const d = response.data.data;
+  return {
+    ...d,
+    managerReview:
+      d.managerReview ?? (d.review as GetManagerReviewData["managerReview"] | undefined),
+    selfAssessment:
+      d.selfAssessment ?? (d.employeeAssessment as GetManagerReviewData["selfAssessment"] | undefined),
+    template:
+      d.template ??
+      ({
+        configuration: {
+          sections: d.criteria,
+          managerReviewQuestions: d.managerReviewQuestions,
+        },
+      } as GetManagerReviewData["template"]),
+  };
 };
 
 export const submitManagerReview = async (
@@ -987,7 +1003,18 @@ export const getHrApproval = async (
   const response = await api.get<GetHrApprovalResponse>(
     `/hris/appraisals/${appraisalId}/hr-approval`,
   );
-  return response.data.data;
+  const d = response.data.data;
+  const approval = (d.approval ?? null) as {
+    decision?: string | null;
+    internalNotes?: string | null;
+    approvedAt?: string | null;
+  } | null;
+  return {
+    ...d,
+    decision: d.decision ?? approval?.decision ?? null,
+    hrNotes: d.hrNotes ?? approval?.internalNotes ?? null,
+    approvedAt: d.approvedAt ?? approval?.approvedAt ?? null,
+  };
 };
 
 export const submitHrApproval = async (
@@ -1018,6 +1045,22 @@ export const signOffAppraisal = async (
 ): Promise<SignOffAppraisalData> => {
   const response = await api.post<SignOffAppraisalResponse>(
     `/hris/appraisals/${appraisalId}/sign-off`,
+    payload,
+  );
+  return response.data.data;
+};
+
+export interface ReassignAppraisalManagerPayload {
+  managerId: string;
+  reason: string;
+}
+
+export const reassignAppraisalManager = async (
+  appraisalId: string,
+  payload: ReassignAppraisalManagerPayload,
+): Promise<unknown> => {
+  const response = await api.patch(
+    `/hris/appraisals/${appraisalId}/manager`,
     payload,
   );
   return response.data.data;

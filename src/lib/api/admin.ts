@@ -1,4 +1,5 @@
 import api from "../api/axios";
+import { RenewSubscriptionBody } from "./types/renewal.types";
 import {
   CreateGroupPayload,
   CreateInvitationPayload,
@@ -536,5 +537,20 @@ export const requestOrganizationDeletion = async (payload: OrganizationDeletionR
     `${BASE}/general-settings/data-privacy/deletion-request`,
     payload
   );
+  return data;
+};
+
+export const renewSubscription = async (payload: RenewSubscriptionBody) => {
+  const { data } = await api.post(`${BASE}/my-plan/subscription/renew`, payload);
+  return data;
+};
+
+export const getSubscriptionPayment = async (reference: string) => {
+  const { data } = await api.get(`${BASE}/my-plan/subscription-payments/${encodeURIComponent(reference)}`);
+  return data;
+};
+
+export const verifySubscriptionPayment = async (reference: string) => {
+  const { data } = await api.post(`${BASE}/my-plan/subscription-payments/${encodeURIComponent(reference)}/verify`);
   return data;
 };

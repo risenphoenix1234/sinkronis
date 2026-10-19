@@ -18,11 +18,7 @@ import BehaviourTable from "@/components/hris/appraisal-details/BehaviourTable";
 import ReflectionQuestions from "@/components/hris/appraisal-details/ReflectionQuestions";
 import { getSelfAssessment, submitSelfAssessment } from "@/lib/api/hris";
 
-interface SelfAssessmentFormProps {
-  appraisalId?: string;
-}
-
-export default function SelfAssessmentPage(props: SelfAssessmentFormProps) {
+export default function SelfAssessmentPage() {
   const params = useParams();
   const router = useRouter();
 
@@ -33,7 +29,7 @@ export default function SelfAssessmentPage(props: SelfAssessmentFormProps) {
         ? params.id[0]
         : "";
 
-  const appraisalId = props.appraisalId || routeAppraisalId;
+  const appraisalId = routeAppraisalId;
 
   // Data from GET /self-assessment
   const [sections, setSections] = useState<TemplateSection[]>([]);
@@ -279,6 +275,7 @@ export default function SelfAssessmentPage(props: SelfAssessmentFormProps) {
             {kraSection && (
               <ObjectivesTable
                 section={kraSection}
+                editable
                 achievedById={achievedById}
                 commentById={commentById}
                 onAchievedChange={(krId, value) =>
@@ -294,6 +291,7 @@ export default function SelfAssessmentPage(props: SelfAssessmentFormProps) {
             {behaviouralSection && (
               <BehaviourTable
                 section={behaviouralSection}
+                editable
                 achievedById={behaviouralAchievedById}
                 commentById={behaviouralCommentById}
                 onAchievedChange={(krId, value) =>

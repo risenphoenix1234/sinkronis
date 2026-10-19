@@ -229,7 +229,8 @@ export default function CreatePayrollPage() {
   const chosen = payees.filter((p) => selected.has(p.id));
   const totals = {
     salary: chosen.reduce((s, p) => s + (p.grossSalary ?? 0), 0),
-    tax: chosen.reduce((s, p) => s + (p.taxAmount ?? 0), 0),
+       tax: chosen.reduce((s, p) => s + (p.taxAmount ?? 0), 0),
+    hasTax: chosen.some((p) => p.taxAmount !== undefined && p.taxAmount !== null),
     net: chosen.reduce((s, p) => s + (p.estimatedNetSalary ?? 0), 0),
   };
   const selectable = filtered.filter((p) => p.eligible !== false);
@@ -297,7 +298,7 @@ export default function CreatePayrollPage() {
 
   const stats = [
     { label: "Total Salary", value: naira(totals.salary) },
-    { label: "Total Tax", value: naira(totals.tax) },
+       { label: "Total Tax", value: totals.hasTax ? naira(totals.tax) : "—" },
     { label: "Total Employees", value: String(chosen.length) },
     { label: "Estimated Net Pay", value: naira(totals.net) },
   ];
@@ -424,7 +425,7 @@ export default function CreatePayrollPage() {
                   </td>
                   <td className="py-3 text-slate-700">{groupName(p)}</td>
                   <td className="py-3 text-slate-700">{naira(p.grossSalary ?? 0)}</td>
-                  <td className="py-3 text-red-500">{signed(p.taxAmount ?? 0)}</td>
+                  <td className="py-3 text-red-500">{p.taxAmount === undefined || p.taxAmount === null ? "—" : signed(p.taxAmount)}</td>
                   <td className="py-3 text-slate-700">{naira(p.estimatedNetSalary ?? 0)}</td>
                 </tr>
               ))}
