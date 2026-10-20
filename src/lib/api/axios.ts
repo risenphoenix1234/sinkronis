@@ -43,7 +43,11 @@ api.interceptors.response.use(
     const isAuthCall = url.includes("/auth/login") || url.includes("/auth/refresh");
 
 
-if (!error.response && original && !original._coldStartRetry) {
+const retryMethod = String(original?.method ?? "get").toLowerCase();
+const isSafeToRetry =
+  retryMethod === "get" || retryMethod === "head" || url.includes("/auth/login");
+
+if (!error.response && original && isSafeToRetry && !original._coldStartRetry) {
       original._coldStartRetry = true;
       try {
         return await api(original);
