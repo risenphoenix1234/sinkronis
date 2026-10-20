@@ -1,12 +1,10 @@
+// src/app/employee/leave/page.tsx
 "use client";
 
 import { ApplyModal } from "@/components/employee/leave/ApplyModal";
 import { MiniCalendar } from "@/components/employee/leave/Minicalender";
 import { getEmployeeLeave } from "@/lib/api/employee";
-import {
-  EmployeeLeaveBalanceItem,
-  EmployeeLeavePageData,
-} from "@/lib/api/types/employeeTypes";
+import { EmployeeLeavePageData } from "@/lib/api/types/employeeTypes";
 import { useCallback, useEffect, useState } from "react";
 
 // ── Palette Themes for Dynamic Balances ────────────────────────────────────
@@ -16,49 +14,6 @@ const BALANCE_COLOR_THEMES = [
   { dotColor: "bg-green-500", barColor: "bg-green-500" },
   { dotColor: "bg-purple-500", barColor: "bg-purple-400" },
   { dotColor: "bg-amber-500", barColor: "bg-amber-400" },
-];
-
-const DEFAULT_BALANCES: EmployeeLeaveBalanceItem[] = [
-  {
-    leaveTypeId: "default-annual",
-    code: "ANNUAL",
-    name: "Annual",
-    totalDays: 0,
-    usedDays: 0,
-    remainingDays: 0,
-    pendingDays: 0,
-    entitlementYear: new Date().getFullYear(),
-  },
-  {
-    leaveTypeId: "default-sick",
-    code: "SICK",
-    name: "Sick",
-    totalDays: 0,
-    usedDays: 0,
-    remainingDays: 0,
-    pendingDays: 0,
-    entitlementYear: new Date().getFullYear(),
-  },
-  {
-    leaveTypeId: "default-casual",
-    code: "CASUAL",
-    name: "Casual",
-    totalDays: 0,
-    usedDays: 0,
-    remainingDays: 0,
-    pendingDays: 0,
-    entitlementYear: new Date().getFullYear(),
-  },
-  {
-    leaveTypeId: "default-maternity",
-    code: "MATERNITY",
-    name: "Maternity/Paternity",
-    totalDays: 0,
-    usedDays: 0,
-    remainingDays: 0,
-    pendingDays: 0,
-    entitlementYear: new Date().getFullYear(),
-  },
 ];
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -142,7 +97,7 @@ export default function MyLeave() {
 
   const pendingCount = data?.pendingRequestsCount ?? 0;
   const balances = data?.balances ?? [];
-  const displayBalances = balances.length > 0 ? balances : DEFAULT_BALANCES;
+  const noBalances = !loading && !error && balances.length === 0;
   const history = data?.history ?? data?.requests ?? [];
 
   return (
@@ -157,7 +112,13 @@ export default function MyLeave() {
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors shadow-sm"
+          disabled={noBalances}
+          title={
+            noBalances
+              ? "Your leave balances haven't been set up yet. Please contact HR."
+              : undefined
+          }
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
         >
           <svg
             viewBox="0 0 24 24"
@@ -221,9 +182,19 @@ export default function MyLeave() {
             </div>
           ))}
         </div>
+      ) : noBalances ? (
+        <div className="mb-6 rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-8 text-center">
+          <p className="text-sm font-medium text-gray-700">
+            Your leave balances haven&apos;t been set up yet
+          </p>
+          <p className="mt-1 text-xs text-gray-400">
+            Please contact HR to set up your leave entitlements. You can apply
+            for leave once they&apos;re in place.
+          </p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {displayBalances.map((b, idx) => {
+          {balances.map((b, idx) => {
             const theme =
               BALANCE_COLOR_THEMES[idx % BALANCE_COLOR_THEMES.length];
             const pct =

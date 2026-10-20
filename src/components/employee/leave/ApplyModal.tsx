@@ -1,3 +1,4 @@
+// src/components/employee/leave/ApplyModal.tsx
 "use client";
 
 import {
@@ -55,85 +56,23 @@ export function ApplyModal({
     "w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition bg-white";
   const labelClass = "block text-xs font-medium text-gray-500 mb-1.5";
 
-  // Derive leave options ensuring requested types are always present:
-  // [sick, annual, maternity/paternity, emergency]
-  const leaveOptions = useMemo(() => {
-    const requiredTypes = [
-      {
-        slug: "SICK_LEAVE",
-        label: "Sick",
-        matches: ["sick"],
-      },
-      {
-        slug: "ANNUAL_LEAVE",
-        label: "Annual",
-        matches: ["annual"],
-      },
-      {
-        slug: "MATERNITY_LEAVE",
-        label: "Maternity/Paternity",
-        matches: ["maternity", "paternity"],
-      },
-      {
-        slug: "COMPASSIONATE_LEAVE",
-        label: "Emergency",
-        matches: ["emergency", "compassionate"],
-      },
-    ];
-
-    const matchedBalanceIds = new Set<string>();
-
-    const options = requiredTypes.map((req) => {
-      // Find matching live balance if present
-      const match = balances?.find((b) => {
-        const text = `${b.leaveTypeName || ""} ${b.name || ""} ${b.code || ""}`.toLowerCase();
-        return req.matches.some((m) => text.includes(m));
-      });
-
-      if (match) {
-        const typeId =
-          match.leaveTypeId || match.code || match.id || req.slug;
-        if (match.leaveTypeId || match.code || match.id) {
-          matchedBalanceIds.add(
-            match.leaveTypeId || match.code || match.id || "",
-          );
-        }
-        const remaining = match.remainingDays;
+  const leaveOptions = useMemo(
+    () =>
+      (balances ?? []).flatMap((b) => {
+        if (!b.leaveTypeId) return [];
+        const name = b.leaveTypeName || b.name || b.code || "Leave";
         const remainingText =
-          remaining !== undefined ? ` (${remaining} days left)` : "";
-        return {
-          id: req.slug,
-          label: `${match.leaveTypeName || match.name || req.label}${remainingText}`,
-          value: typeId,
-        };
-      }
-
-      return {
-        id: req.slug,
-        label: req.label,
-        value: req.slug,
-      };
-    });
-
-    // Also include any other live balances that don't match the 4 standard types
-    if (balances && balances.length > 0) {
-      balances.forEach((b) => {
-        const typeId = b.leaveTypeId || b.id;
-        if (typeId && !matchedBalanceIds.has(typeId)) {
-          const name = b.leaveTypeName || b.name || "Leave";
-          const remainingText =
-            b.remainingDays !== undefined ? ` (${b.remainingDays} days left)` : "";
-          options.push({
-            id: typeId,
+          b.remainingDays !== undefined ? ` (${b.remainingDays} days left)` : "";
+        return [
+          {
+            id: b.leaveTypeId,
             label: `${name}${remainingText}`,
-            value: typeId,
-          });
-        }
-      });
-    }
-
-    return options;
-  }, [balances]);
+            value: b.leaveTypeId,
+          },
+        ];
+      }),
+    [balances],
+  );
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -177,10 +116,22 @@ export function ApplyModal({
       onSubmitted?.();
       onClose();
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ||
-        "Failed to submit leave request. Please check your details.";
+      const response = (
+        err as {
+          response?: {
+            status?: number;
+            data?: { message?: string; errorCode?: string | null };
+          };
+        }
+      )?.response;
+      const notConfigured =
+        response?.status === 409 &&
+        (response.data?.errorCode === "LEAVE_BALANCE_NOT_CONFIGURED" ||
+          /not configured/i.test(response.data?.message ?? ""));
+      const msg = notConfigured
+        ? "Your leave balance for this type hasn't been set up yet. Please contact HR."
+        : response?.data?.message ||
+          "Failed to submit leave request. Please check your details.";
       toast.error(msg);
     } finally {
       setSubmitting(false);
@@ -228,7 +179,9 @@ export function ApplyModal({
                   className={inputClass + " appearance-none"}
                 >
                   <option value="">
-                    Select type
+                    {leaveOptions.length === 0
+                      ? "No leave types available"
+                      : "Select type"}
                   </option>
                   {leaveOptions.map((opt) => (
                     <option key={opt.id} value={opt.value}>
