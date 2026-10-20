@@ -3,7 +3,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { banks, Field, ghostBtn, inputCls, primaryBtn, SectionTitle } from "@/components/payroll/payee-edit/ui";
+import BankSelect from "@/components/ui/BankSelect";
+import { Field, ghostBtn, inputCls, primaryBtn, SectionTitle } from "@/components/payroll/payee-edit/ui";
 import {
   assignPayeeGroup,
   createPayrollPayee,
@@ -32,6 +33,7 @@ const initial = {
   phone: "",
   email: "",
   bank: "",
+  bankCode: "",
   accountNumber: "",
   grossSalary: "",
   taxId: "",
@@ -100,6 +102,7 @@ export default function PayeeFormPage() {
         ...(form.email.trim() ? { email: form.email.trim() } : {}),
         ...(form.phone.trim() ? { phone: form.phone.trim() } : {}),
         ...(form.bank ? { bankName: form.bank } : {}),
+        ...(form.bankCode ? { bankCode: form.bankCode } : {}),
         ...(form.accountNumber ? { accountNumber: form.accountNumber } : {}),
         ...(form.taxId.trim() ? { tin: form.taxId.trim() } : {}),
       };
@@ -205,10 +208,16 @@ export default function PayeeFormPage() {
             <SectionTitle>Salary Information</SectionTitle>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Bank Name">
-                <select className={inputCls} value={form.bank} onChange={set("bank")}>
-                  <option value="">-select bank-</option>
-                  {banks.map((b) => <option key={b}>{b}</option>)}
-                </select>
+                <BankSelect
+                  className={inputCls}
+                  code={form.bankCode}
+                  name={form.bank}
+                  onChange={(bank) => {
+                    setError("");
+                    setForm((f) => (f.bankCode === bank.code && f.bank === bank.name ? f : { ...f, bank: bank.name, bankCode: bank.code }));
+                  }}
+                  placeholder="-select bank-"
+                />
               </Field>
               <Field label="Account Number"><input className={inputCls} placeholder="Account Number" inputMode="numeric" maxLength={10} value={form.accountNumber} onChange={set("accountNumber")} /></Field>
               <Field label="Gross Salary"><input className={inputCls} placeholder="-input gross salary-" inputMode="numeric" value={form.grossSalary} onChange={set("grossSalary")} /></Field>

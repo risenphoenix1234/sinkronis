@@ -1,7 +1,9 @@
+// src/components/payroll/employee/AddEmployeeModal.tsx
 "use client";
 
 import { useState } from "react";
 import { X } from "lucide-react";
+import BankSelect from "@/components/ui/BankSelect";
 
 type AddEmployeeModalProps = {
   open: boolean;
@@ -19,6 +21,7 @@ type EmployeeFormData = {
   employmentType: string;
   taxStatus: string;
   bankName: string;
+  bankCode: string;
   accountNumber: string;
   basicSalary: string;
   housingAllowance: string;
@@ -36,6 +39,7 @@ const initialFormData: EmployeeFormData = {
   employmentType: "",
   taxStatus: "",
   bankName: "",
+  bankCode: "",
   accountNumber: "",
   basicSalary: "",
   housingAllowance: "",
@@ -168,12 +172,26 @@ export default function AddEmployeeModal({
                 onChange={handleChange}
               />
 
-              <FormField
-                label="Bank Name"
-                name="bankName"
-                value={formData.bankName}
-                onChange={handleChange}
-              />
+              <div className="min-w-0">
+                <label
+                  htmlFor="bankName"
+                  className="mb-1.5 block text-xs font-medium text-[#667085]"
+                >
+                  Bank Name
+                </label>
+                <BankSelect
+                  code={formData.bankCode}
+                  name={formData.bankName}
+                  onChange={(bank) =>
+                    setFormData((prev) =>
+                      prev.bankCode === bank.code && prev.bankName === bank.name
+                        ? prev
+                        : { ...prev, bankCode: bank.code, bankName: bank.name },
+                    )
+                  }
+                  className="h-9 w-full rounded border border-[#D0D5DD] bg-white px-3 text-sm text-[#344054] outline-none transition focus:border-[#2388D0] focus:ring-1 focus:ring-[#2388D0]"
+                />
+              </div>
 
               <FormField
                 label="Account Number"

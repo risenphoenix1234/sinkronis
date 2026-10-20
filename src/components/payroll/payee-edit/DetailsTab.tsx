@@ -3,7 +3,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { banks, Field, inputCls, primaryBtn, SectionTitle } from "./ui";
+import { Field, inputCls, primaryBtn, SectionTitle } from "./ui";
+import BankSelect from "@/components/ui/BankSelect";
 import { assignPayeeGroup, deletePayrollPayee, getApiErrorMessage, updatePayrollPayee } from "@/lib/api/payroll";
 import type { PayrollPayee, PayrollPayeeGroup, UpdatePayrollPayeeBody } from "@/lib/api/types/payroll.types";
 
@@ -18,6 +19,7 @@ export default function DetailsTab({ payee, groups }: { payee: PayrollPayee; gro
     phone: payee.phone ?? "",
     email: payee.email ?? "",
     bank: payee.bank?.bankName ?? "",
+    bankCode: payee.bank?.bankCode ?? "",
     accountNumber: "",
     accountName: payee.bank?.accountName ?? "",
     groupId: payee.group?.id ?? "",
@@ -28,13 +30,17 @@ export default function DetailsTab({ payee, groups }: { payee: PayrollPayee; gro
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
 
+  const setBank = (bank: { code: string; name: string }) => {
+    setSaved(false);
+    setError("");
+    setForm((f) => (f.bankCode === bank.code && f.bank === bank.name ? f : { ...f, bank: bank.name, bankCode: bank.code }));
+  };
+
   const set = (k: keyof typeof initial) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setSaved(false);
     setError("");
     setForm((f) => ({ ...f, [k]: e.target.value }));
   };
-
-  const bankOptions = payee.bank?.bankName && !banks.includes(payee.bank.bankName) ? [payee.bank.bankName, ...banks] : banks;
 
   const save = async () => {
     const body: UpdatePayrollPayeeBody = {};
@@ -43,7 +49,10 @@ export default function DetailsTab({ payee, groups }: { payee: PayrollPayee; gro
       if (name && name !== (payee.name ?? "")) body.name = name;
       if (form.phone.trim() !== (payee.phone ?? "")) body.phone = form.phone.trim() || null;
       if (form.email.trim() !== (payee.email ?? "")) body.email = form.email.trim() || null;
-      if (form.bank !== (payee.bank?.bankName ?? "")) body.bankName = form.bank || null;
+      if (form.bank !== (payee.bank?.bankName ?? "") || form.bankCode !== (payee.bank?.bankCode ?? "")) {
+        body.bankName = form.bank || null;
+        body.bankCode = form.bankCode || null;
+      }
       if (form.accountName.trim() !== (payee.bank?.accountName ?? "")) body.accountName = form.accountName.trim() || null;
       if (form.accountNumber) {
         if (!/^\d{10}$/.test(form.accountNumber)) {
@@ -109,10 +118,14 @@ export default function DetailsTab({ payee, groups }: { payee: PayrollPayee; gro
       <SectionTitle>Salary Information</SectionTitle>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Bank Name">
-          <select className={inputCls} disabled={isPermanent} value={form.bank} onChange={set("bank")}>
-            <option value="">-select bank-</option>
-            {bankOptions.map((b) => <option key={b}>{b}</option>)}
-          </select>
+          <BankSelect
+            className={inputCls}
+            disabled={isPermanent}
+            code={form.bankCode}
+            name={form.bank}
+            onChange={setBank}
+            placeholder="-select bank-"
+          />
         </Field>
         <Field label="Account Number">
           <input

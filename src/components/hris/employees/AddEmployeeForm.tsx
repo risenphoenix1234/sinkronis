@@ -1,3 +1,4 @@
+// src/components/hris/employees/AddEmployeeForm.tsx
 "use client";
 
 import { useEffect, useState, type ChangeEvent } from "react";
@@ -7,6 +8,7 @@ import { Camera, Loader2 } from "lucide-react";
 import { toast } from "react-toastify";
 import { createEmployee, inviteEmployee, getRoles } from "@/lib/api/hris";
 import { getDepartmentsTable } from "@/lib/api/admin";
+import BankSelect from "@/components/ui/BankSelect";
 import type {
   CreateEmployeePayload,
   Gender,
@@ -661,17 +663,29 @@ export default function AddEmployeeForm() {
                 Bank Information
               </h3>
               <div className="grid gap-4 md:grid-cols-2">
-                <InputField
-                  label="Bank Name"
-                  value={personal.bankName}
-                  onChange={(e) => updatePersonal("bankName", e.target.value)}
-                  placeholder="e.g. Access Bank"
-                />
+                <div>
+                  <label className="mb-1 block text-sm text-slate-600">
+                    Bank Name
+                  </label>
+                  <BankSelect
+                    code={personal.bankCode}
+                    name={personal.bankName}
+                    onChange={(bank) =>
+                      setPersonal((prev) => ({
+                        ...prev,
+                        bankCode: bank.code,
+                        bankName: bank.name,
+                      }))
+                    }
+                    className={selectClassName}
+                  />
+                </div>
                 <InputField
                   label="Bank Code"
                   value={personal.bankCode}
-                  onChange={(e) => updatePersonal("bankCode", e.target.value)}
-                  placeholder="e.g. 044"
+                  onChange={() => {}}
+                  placeholder="Filled when you pick a bank"
+                  readOnly
                 />
                 <InputField
                   label="Account Number"
@@ -1063,12 +1077,14 @@ function InputField({
   onChange,
   type = "text",
   placeholder,
+  readOnly = false,
 }: {
   label: string;
   value: string;
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
   type?: string;
   placeholder?: string;
+  readOnly?: boolean;
 }) {
   return (
     <div>
@@ -1078,7 +1094,8 @@ function InputField({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`${inputClassName}${type === "number"
+        readOnly={readOnly}
+        className={`${inputClassName}${readOnly ? " bg-slate-50 text-slate-500" : ""}${type === "number"
             ? " [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-inner-spin-button]:m-0"
             : ""
           }`}

@@ -1,10 +1,13 @@
+// src/components/modals/ManualEntryModal.tsx
 "use client";
 
 import { useState } from "react";
 import { FiX, FiArrowLeft } from "react-icons/fi";
+import BankSelect from "@/components/ui/BankSelect";
 
 export type ManualEntryData = {
   bankName: string;
+  bankCode: string;
   accountPaidInto: string;
   amount: string;
   reference: string;
@@ -21,6 +24,7 @@ type ManualEntryModalProps = {
 
 const emptyForm: ManualEntryData = {
   bankName: "",
+  bankCode: "",
   accountPaidInto: "",
   amount: "",
   reference: "",
@@ -78,11 +82,16 @@ export default function ManualEntryModal({ open, onClose, onBack, onSubmit }: Ma
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="mb-1 block text-xs text-slate-500">Bank Name</label>
-              <input
-                type="text"
-                value={form.bankName}
-                onChange={update("bankName")}
-                placeholder="e.g. GTBank"
+              <BankSelect
+                code={form.bankCode}
+                name={form.bankName}
+                onChange={(bank) =>
+                  setForm((f) =>
+                    f.bankCode === bank.code && f.bankName === bank.name
+                      ? f
+                      : { ...f, bankCode: bank.code, bankName: bank.name },
+                  )
+                }
                 className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-sky-400"
               />
             </div>
