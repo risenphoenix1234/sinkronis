@@ -24,6 +24,7 @@ import {
   FiLoader,
 } from "react-icons/fi";
 import { toast } from "react-toastify";
+import BankSelect from "@/components/ui/BankSelect";
 import {
   getEmployee,
   getEmployeeActivity,
@@ -358,6 +359,11 @@ function getInitialFormState(
   };
 }
 
+function getCurrentManagerId(emp: GetEmployeeDetail | null): string {
+  const manager = (emp as unknown as Record<string, any> | null)?.manager;
+  return typeof manager?.id === "string" ? manager.id : "";
+}
+
 export default function EmployeeProfilePage({
   params,
 }: {
@@ -389,19 +395,33 @@ export default function EmployeeProfilePage({
     { id: string; name: string }[]
   >([]);
   const [loadingDepartments, setLoadingDepartments] = useState(false);
-  const [managers, setManagers] = useState<{ id: string; name: string }[]>([]);
+  const [managers, setManagers] = useState<
+    { id: string; name: string; employeeId: string }[]
+  >([]);
   const [selectedManagerId, setSelectedManagerId] = useState("");
 
+  const loadManagers = async () => {
+    try {
+      const list = await getEmployees({ limit: 100 });
+      const eligible = list
+        .filter(
+          (e) =>
+            e.id !== params.id &&
+            (e.operationalStatus === "ACTIVE" ||
+              e.operationalStatus === "ON_LEAVE"),
+        )
+        .map((e) => ({ id: e.id, name: e.name, employeeId: e.employeeId }));
+      setManagers(eligible);
+      return eligible;
+    } catch {
+      setManagers([]);
+      return null;
+    }
+  };
+
   useEffect(() => {
-    getEmployees({ limit: 100 })
-      .then((list) =>
-        setManagers(
-          list
-            .filter((e) => e.id !== params.id)
-            .map((e) => ({ id: e.id, name: e.name })),
-        ),
-      )
-      .catch(() => setManagers([]));
+    void loadManagers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   // In-card Edit Mode for Bank Details
@@ -446,7 +466,8 @@ export default function EmployeeProfilePage({
           };
         }),
       ]);
-      setEmployee(detail);
+        setEmployee(detail);
+      setSelectedManagerId(getCurrentManagerId(detail));
       setActivity(activityRes.data ?? []);
       setEditForm(getInitialFormState(detail));
       setBankForm(getInitialBankFormState(detail));
@@ -582,7 +603,9 @@ export default function EmployeeProfilePage({
   const handleStartEdit = () => {
     if (!employee) return;
     setEditForm(getInitialFormState(employee));
-    setEditError(null);
+      setEditError(null);
+    setSelectedManagerId(getCurrentManagerId(employee));
+    void loadManagers();
     setIsEditingWorkDetails(true);
   };
 
@@ -591,6 +614,7 @@ export default function EmployeeProfilePage({
       setEditForm(getInitialFormState(employee));
     }
     setEditError(null);
+    setSelectedManagerId(getCurrentManagerId(employee));
     setIsEditingWorkDetails(false);
   };
 
@@ -603,12 +627,29 @@ export default function EmployeeProfilePage({
 
   const handleSaveEdit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (submittingEdit) return;
+      if (submittingEdit) return;
+
+    const currentManagerId = getCurrentManagerId(employee);
+    const managerChanged =
+      selectedManagerId !== "" &&
+      selectedManagerId !== currentManagerId &&
+      !(selectedManagerId === "__none__" && currentManagerId === "");
 
     setSubmittingEdit(true);
     setEditError(null);
 
     try {
+         if (managerChanged && selectedManagerId !== "__none__") {
+        const fresh = await loadManagers();
+        if (fresh && !fresh.some((m) => m.id === selectedManagerId)) {
+          const unavailable =
+            "The selected manager is no longer eligible or available.";
+          setEditError(unavailable);
+          toast.error(unavailable);
+          return;
+        }
+      }
+
       const payload: UpdateEmployeePayload = {
         firstName: editForm.firstName.trim() || undefined,
         lastName: editForm.lastName.trim() || undefined,
@@ -628,10 +669,11 @@ export default function EmployeeProfilePage({
             ? Number(editForm.earnings)
             : undefined,
          position: editForm.position.trim() || undefined,
-        managerId:
-          selectedManagerId === "__none__"
+        managerId: managerChanged
+          ? selectedManagerId === "__none__"
             ? null
-            : selectedManagerId || undefined,
+            : selectedManagerId
+          : undefined,
       };
 
       await updateEmployee(params.id, payload);
@@ -653,6 +695,14 @@ export default function EmployeeProfilePage({
         } else if (resData?.message) {
           msg = resData.message;
         }
+      }
+           if (
+        axios.isAxiosError(err) &&
+        err.response?.status === 404 &&
+        /manager/i.test(String(err.response?.data?.message ?? ""))
+      ) {
+        msg = "The selected manager is no longer eligible or available.";
+        void loadManagers();
       }
       setEditError(msg);
       toast.error(msg);
@@ -1046,6 +1096,19 @@ export default function EmployeeProfilePage({
           : String(personal.earnings)
         : "—";
 
+    const currentManagerId = getCurrentManagerId(employee);
+  const currentManager = (employee as unknown as Record<string, any>).manager;
+  const managerOptions = managers.map((m) => ({
+    value: m.id,
+    label: `${m.name} (${m.employeeId})`,
+  }));
+  if (currentManagerId && !managers.some((m) => m.id === currentManagerId)) {
+    managerOptions.unshift({
+      value: currentManagerId,
+      label: `${currentManager?.name ?? "Current manager"} (${currentManager?.employeeId ?? "unavailable"}) - unavailable`,
+    });
+  }
+
   // Build department dropdown options, ensuring current department is included
   const departmentOptions = [
     {
@@ -1359,7 +1422,7 @@ export default function EmployeeProfilePage({
                   options={[
                     { value: "", label: "Select Line Manager" },
                     { value: "__none__", label: "No manager (remove)" },
-                    ...managers.map((m) => ({ value: m.id, label: m.name })),
+                       ...managerOptions,
                   ]}
                 />
 
@@ -1598,13 +1661,24 @@ export default function EmployeeProfilePage({
               )}
 
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                <FormInput
-                  label="Bank Name"
-                  value={bankForm.bankName}
-                  onChange={(v) => updateBankField("bankName", v)}
-                  placeholder="e.g. Access Bank"
-                  disabled={submittingBank}
-                />
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Bank Name
+                  </label>
+                  <BankSelect
+                    code={bankForm.bankCode}
+                    name={bankForm.bankName}
+                    disabled={submittingBank}
+                    onChange={(bank) =>
+                      setBankForm((prev) =>
+                        prev.bankCode === bank.code && prev.bankName === bank.name
+                          ? prev
+                          : { ...prev, bankCode: bank.code, bankName: bank.name },
+                      )
+                    }
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 transition outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 disabled:bg-slate-50 disabled:text-slate-400"
+                  />
+                </div>
                 <FormInput
                   label="Account Number"
                   value={bankForm.accountNumber}
@@ -1626,9 +1700,9 @@ export default function EmployeeProfilePage({
                 <FormInput
                   label="Bank Code"
                   value={bankForm.bankCode}
-                  onChange={(v) => updateBankField("bankCode", v)}
-                  placeholder="e.g. 044"
-                  disabled={submittingBank}
+                  onChange={() => {}}
+                  placeholder="Filled when you pick a bank"
+                  disabled
                 />
                 <FormSelect
                   label="Account Type"

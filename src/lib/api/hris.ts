@@ -1065,3 +1065,202 @@ export const reassignAppraisalManager = async (
   );
   return response.data.data;
 };
+export const getEligibleManagers = async (
+  employeeId: string,
+  params?: { search?: string; page?: number; limit?: number },
+): Promise<EmployeeListItem[]> => {
+  const response = await api.get<GetEmployeesResponse>("/hris/employees", {
+    params: {
+      eligibleManagerForEmployeeId: employeeId,
+      page: 1,
+      limit: 25,
+      ...params,
+    },
+  });
+  return response.data.data;
+};
+
+// src/lib/api/hris.ts
+export type BankUpdateRequestStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "CANCELLED";
+
+export type BankUpdateRequestFilter = "ALL" | BankUpdateRequestStatus;
+
+export interface BankUpdateRequestBank {
+  bankCode: string | null;
+  bankName: string | null;
+  accountName: string | null;
+  accountType: string | null;
+  accountNumberMasked: string | null;
+}
+
+export interface BankUpdateRequestItem {
+  id: string;
+  employee: {
+    id: string;
+    employeeId: string;
+    name: string;
+    department: { id: string; name: string } | null;
+  };
+  currentBank: BankUpdateRequestBank | null;
+  proposedBank: BankUpdateRequestBank | null;
+  reason: string | null;
+  status: BankUpdateRequestStatus;
+  submittedAt: string;
+  reviewedAt: string | null;
+}
+
+export interface BankUpdateRequestsResponse {
+  success: boolean;
+  message: string;
+  data: BankUpdateRequestItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+}
+
+export const getBankUpdateRequests = async (params?: {
+  status?: BankUpdateRequestFilter;
+  page?: number;
+  limit?: number;
+}): Promise<BankUpdateRequestsResponse> => {
+  const response = await api.get<BankUpdateRequestsResponse>(
+    "/hris/bank-details-update-requests",
+    { params },
+  );
+  return response.data;
+};
+
+export const approveBankUpdateRequest = async (
+  requestId: string,
+  reviewNote?: string,
+) => {
+  const response = await api.patch(
+    `/hris/bank-details-update-requests/${requestId}/approve`,
+    reviewNote ? { reviewNote } : {},
+  );
+  return response.data;
+};
+
+export const rejectBankUpdateRequest = async (
+  requestId: string,
+  reviewNote: string,
+) => {
+  const response = await api.patch(
+    `/hris/bank-details-update-requests/${requestId}/reject`,
+    { reviewNote },
+  );
+  return response.data;
+};
+
+// src/lib/api/hris.ts
+export interface LeaveType {
+  id: string;
+  organizationId: string;
+  code: string;
+  name: string;
+  annualAllowance: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateLeaveTypePayload {
+  code: string;
+  name: string;
+  annualAllowance: number;
+}
+
+export interface UpdateLeaveTypePayload {
+  name?: string;
+  annualAllowance?: number;
+  active?: boolean;
+}
+
+export interface EmployeeLeaveBalance {
+  id: string;
+  employeeId: string;
+  leaveType: { id: string; code: string; name: string; active: boolean };
+  year: number;
+  entitlement: number;
+  used: number;
+  pending: number;
+  available: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EmployeeLeaveBalancesData {
+  employeeId: string;
+  year: number;
+  availability: string;
+  balances: EmployeeLeaveBalance[];
+}
+
+export const getLeaveTypes = async (): Promise<LeaveType[]> => {
+  const response = await api.get<{ success: boolean; message: string; data: LeaveType[] }>(
+    "/hris/leave-types",
+  );
+  return response.data.data;
+};
+
+export const createLeaveType = async (payload: CreateLeaveTypePayload): Promise<LeaveType> => {
+  const response = await api.post<{ success: boolean; message: string; data: LeaveType }>(
+    "/hris/leave-types",
+    payload,
+  );
+  return response.data.data;
+};
+
+export const updateLeaveType = async (
+  leaveTypeId: string,
+  payload: UpdateLeaveTypePayload,
+): Promise<LeaveType> => {
+  const response = await api.patch<{ success: boolean; message: string; data: LeaveType }>(
+    `/hris/leave-types/${leaveTypeId}`,
+    payload,
+  );
+  return response.data.data;
+};
+
+export const getEmployeeLeaveBalances = async (
+  employeeId: string,
+  year?: number,
+): Promise<EmployeeLeaveBalancesData> => {
+  const response = await api.get<{ success: boolean; message: string; data: EmployeeLeaveBalancesData }>(
+    `/hris/employees/${employeeId}/leave-balances`,
+    { params: year ? { year } : undefined },
+  );
+  return response.data.data;
+};
+
+export const setEmployeeLeaveEntitlement = async (
+  employeeId: string,
+  leaveTypeId: string,
+  payload: { year: number; entitlement: number },
+): Promise<EmployeeLeaveBalance> => {
+  const response = await api.put<{ success: boolean; message: string; data: EmployeeLeaveBalance }>(
+    `/hris/employees/${employeeId}/leave-balances/${leaveTypeId}`,
+    payload,
+  );
+  return response.data.data;
+};
+
+export const provisionEmployeeLeaveBalances = async (
+  employeeId: string,
+  leaveTypeIds: string[],
+) => {
+  const response = await api.post(
+    `/hris/employees/${employeeId}/leave-balances/provision`,
+    { leaveTypeIds },
+  );
+  return response.data;
+};

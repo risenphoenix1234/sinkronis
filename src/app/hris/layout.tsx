@@ -39,10 +39,20 @@ const sidebarItems: SidebarItem[] = [
     href: "/hris/appraisal",
     icon: "appraisal",
   },
-  {
+   {
     label: "Conduct",
     href: "/hris/conduct",
     icon: "conduct",
+  },
+  {
+    label: "Bank Requests",
+    href: "/hris/bank-requests",
+    icon: "bank-requests",
+  },
+  {
+    label: "Leave Setup",
+    href: "/hris/leave-settings",
+    icon: "leave-setup",
   },
 ];
 

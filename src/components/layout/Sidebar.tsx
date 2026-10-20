@@ -12,7 +12,8 @@ import {
   FiCalendar,
   FiCheckCircle,
   FiChevronDown,
-  FiChevronRight,
+    FiChevronRight,
+  FiClock,
   FiCreditCard,
   FiDollarSign,
   FiFileMinus,
@@ -32,6 +33,7 @@ import {
   FiShield,
   FiSliders,
   FiTag,
+  FiUserCheck,
   FiUsers,
 } from "react-icons/fi";
 import {
@@ -63,7 +65,9 @@ const sidebarIcons = {
   attendance: FiCalendar,
   leave: FiCalendar,
   appraisal: FiBarChart2,
-  conduct: FiUsers,
+    conduct: FiUsers,
+  "bank-requests": FiCreditCard,
+  "leave-setup": FiSliders,
 
   // PAYROLL
   "payroll-dashboard": FiGrid,
@@ -83,7 +87,8 @@ const sidebarIcons = {
   "employee-attendance": FiCalendar,
   "employee-leave": FiCalendar,
   "employee-appraisal": FiBarChart2,
-  inbox: FiInbox,
+   inbox: FiInbox,
+  manager: FiUserCheck,
 
   // Accounting
   customer: FiUsers,
