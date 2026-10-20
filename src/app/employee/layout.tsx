@@ -31,6 +31,7 @@ const sidebarItems: SidebarItem[] = [
 const managerPortalItem: SidebarItem = {
   label: "Manager Portal",
   href: "/manager/overview",
+  icon: "manager" 
 };
 
 export default function EmployeeLayout({
