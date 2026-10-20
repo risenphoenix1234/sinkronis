@@ -1,3 +1,4 @@
+// src/lib/api/auth.ts
 import api from "../api/axios";
 import {
   EmployeeLoginPayload,
@@ -57,5 +58,60 @@ export const refreshToken = async (currentRefreshToken: string) => {
   const { data } = await api.post<RefreshTokenResponse>("/auth/refresh", {
     refreshToken: currentRefreshToken,
   });
+  return data;
+};
+
+export interface ForgotPasswordPayload {
+  email: string;
+  organizationSlug?: string;
+}
+
+export interface ForgotPasswordResponse {
+  message: string;
+  expiresInSeconds: number;
+}
+
+export const forgotPassword = async (payload: ForgotPasswordPayload) => {
+  const { data } = await api.post<ForgotPasswordResponse>(
+    "/auth/forgot-password",
+    payload,
+  );
+  return data;
+};
+
+export interface VerifyResetOtpPayload {
+  email: string;
+  otp: string;
+  organizationSlug?: string;
+}
+
+export interface VerifyResetOtpResponse {
+  message: string;
+  resetToken: string;
+}
+
+export const verifyResetOtp = async (payload: VerifyResetOtpPayload) => {
+  const { data } = await api.post<VerifyResetOtpResponse>(
+    "/auth/forgot-password/verify-otp",
+    payload,
+  );
+  return data;
+};
+
+export interface ResetPasswordPayload {
+  resetToken: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface ResetPasswordResponse {
+  message?: string;
+}
+
+export const resetPassword = async (payload: ResetPasswordPayload) => {
+  const { data } = await api.post<ResetPasswordResponse>(
+    "/auth/reset-password",
+    payload,
+  );
   return data;
 };

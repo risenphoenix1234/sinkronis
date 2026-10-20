@@ -1,21 +1,55 @@
+// src/app/(auth)/reset-password/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
+import { resetPassword } from "@/lib/api/auth";
+
+const RESET_TOKEN_KEY = "passwordResetToken";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleReset = () => {
-    if (!password || password !== confirmPassword) {
+  useEffect(() => {
+    if (!sessionStorage.getItem(RESET_TOKEN_KEY)) {
+      router.replace("/forgot-password");
+    }
+  }, [router]);
+
+  const handleReset = async () => {
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+    if (password !== confirmPassword) {
       setError("Passwords don't match.");
       return;
     }
+    const resetToken = sessionStorage.getItem(RESET_TOKEN_KEY);
+    if (!resetToken) {
+      router.replace("/forgot-password");
+      return;
+    }
     setError("");
-    router.push("/login");
+    setLoading(true);
+    try {
+      await resetPassword({ resetToken, password, confirmPassword });
+      sessionStorage.removeItem(RESET_TOKEN_KEY);
+      router.push("/login");
+    } catch (err) {
+      setError(
+        axios.isAxiosError(err)
+          ? (err.response?.data?.message ?? "Couldn't reset your password.")
+          : "Couldn't reset your password.",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -58,9 +92,10 @@ export default function ResetPasswordPage() {
           <button
             type="button"
             onClick={handleReset}
-            className="mt-2 flex h-[52px] w-full items-center justify-center rounded-lg bg-gradient-to-r from-[#1F88C7] to-[#0CB4D1] font-semibold text-white transition hover:opacity-90"
+            disabled={loading}
+            className="mt-2 flex h-[52px] w-full items-center justify-center rounded-lg bg-gradient-to-r from-[#1F88C7] to-[#0CB4D1] font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Reset password
+            {loading ? "Resetting..." : "Reset password"}
           </button>
         </div>
       </div>
