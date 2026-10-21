@@ -8,7 +8,7 @@ import NextOfKin from "@/components/employee/profile/NextOfKin";
 import Tabs from "@/components/employee/profile/Tabs";
 import Button from "@/components/ui/Button";
 import { useEmployeeProfile } from "@/hooks/useEmployeeProfile";
-import { AlertCircle, Eye, RefreshCw, UserX } from "lucide-react";
+import { AlertCircle, RefreshCw, UserX } from "lucide-react";
 
 export default function ProfilePage() {
   const {
@@ -16,7 +16,6 @@ export default function ProfilePage() {
     isLoading,
     error,
     errorCode,
-    loadSampleProfile,
     updateProfile,
     refetch,
   } = useEmployeeProfile();
@@ -76,15 +75,7 @@ export default function ProfilePage() {
               <RefreshCw className="h-4 w-4" />
               Retry Request
             </Button>
-            <Button
-              variant="primary"
-              size="md"
-              onClick={loadSampleProfile}
-              className="gap-2"
-            >
-              <Eye className="h-4 w-4" />
-              Preview Sample Profile (Swagger)
-            </Button>
+           
           </div>
         </div>
       </main>

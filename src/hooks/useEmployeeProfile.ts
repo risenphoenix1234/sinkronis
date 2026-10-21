@@ -1,11 +1,7 @@
 // hooks/useEmployeeProfile.ts
 "use client";
 
-import {
-  EmployeeProfile,
-  getEmployeeProfile,
-  SWAGGER_SAMPLE_EMPLOYEE_PROFILE,
-} from "@/lib/api/employee";
+import { EmployeeProfile, getEmployeeProfile } from "@/lib/api/employee";
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
 
@@ -14,7 +10,7 @@ interface UseEmployeeProfileResult {
   isLoading: boolean;
   error: string | null;
   errorCode: string | null;
-  loadSampleProfile: () => void;
+ 
   updateProfile: (patch: Partial<EmployeeProfile>) => void;
   refetch: () => void;
 }
@@ -84,12 +80,7 @@ export function useEmployeeProfile(): UseEmployeeProfileResult {
       cancelled = true;
     };
   }, [reloadKey]);
-
-  const loadSampleProfile = useCallback(() => {
-    setError(null);
-    setErrorCode(null);
-    setProfile(SWAGGER_SAMPLE_EMPLOYEE_PROFILE);
-  }, []);
+ 
 
   const updateProfile = useCallback((patch: Partial<EmployeeProfile>) => {
     setProfile((prev) => (prev ? { ...prev, ...patch } : prev));
@@ -102,7 +93,6 @@ export function useEmployeeProfile(): UseEmployeeProfileResult {
     isLoading,
     error,
     errorCode,
-    loadSampleProfile,
     updateProfile,
     refetch,
   };
