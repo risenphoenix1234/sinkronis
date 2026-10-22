@@ -49,11 +49,7 @@ const sidebarItems: SidebarItem[] = [
     href: "/hris/bank-requests",
     icon: "bank-requests",
   },
-  {
-    label: "Leave Setup",
-    href: "/hris/leave-settings",
-    icon: "leave-setup",
-  },
+
 ];
 
 export default function HRISLayout({

@@ -67,7 +67,7 @@ const sidebarIcons = {
   appraisal: FiBarChart2,
     conduct: FiUsers,
   "bank-requests": FiCreditCard,
-  "leave-setup": FiSliders,
+
 
   // PAYROLL
   "payroll-dashboard": FiGrid,
