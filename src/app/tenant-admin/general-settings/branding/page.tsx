@@ -1,13 +1,14 @@
-// app/tenant-admin/general-settings/branding/page.tsx
+// src/app/tenant-admin/general-settings/branding/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { FiUpload } from "react-icons/fi";
 import { getBrandingSettings, updateBrandingSettings, uploadBrandingLogo } from "@/lib/api/admin";
 import { GeneralBrandingSettings } from "@/lib/api/types/admin.types";
+import { refreshBranding } from "@/hooks/useBranding";
 
 const presetColors = [
-  "#2563EB",
+  "#2183c6",
   "#7C3AED",
   "#16A34A",
   "#A16207",
@@ -65,6 +66,7 @@ export default function BrandingPage() {
       const res = await updateBrandingSettings(payload);
       setBranding(res.data);
       setSavedMessage("Branding saved");
+      refreshBranding();
     } catch (err: any) {
       setError(err?.response?.data?.message || err?.message || "Failed to save branding");
     } finally {
@@ -80,6 +82,7 @@ export default function BrandingPage() {
       await uploadBrandingLogo(file);
       await load(); // response schema for upload is undocumented — refetch instead of trusting it
       setSavedMessage("Logo updated");
+      refreshBranding();
     } catch (err: any) {
       setError(err?.response?.data?.message || err?.message || "Failed to upload logo");
     } finally {

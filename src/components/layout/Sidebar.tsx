@@ -179,7 +179,7 @@ function SidebarChildGroup({
       {/* Animated sliding indicator */}
       {indicator && (
         <div
-          className="absolute left-[-1px] w-0.5 rounded-full bg-[#2183C6] transition-all duration-300 ease-out"
+          className="absolute left-[-1px] w-0.5 rounded-full bg-[var(--primary)] transition-all duration-300 ease-out"
           style={{
             top: indicator.top,
             height: indicator.height,
@@ -201,7 +201,7 @@ function SidebarChildGroup({
               }}
               className={`block rounded px-3 py-1.5 text-sm transition-colors ${
                 childActive
-                  ? "font-medium text-[#2183C6]"
+                  ? "font-medium text-[var(--primary)]"
                   : "text-slate-600 hover:bg-slate-100"
               }`}
             >
@@ -282,7 +282,7 @@ export default function Sidebar({ title, items }: SidebarProps) {
                   }}
                   className={`flex w-full items-center justify-between rounded px-3 py-2 transition-colors ${
                     isGroupActive
-                      ? "bg-[#2183C6] text-white"
+                      ? "bg-[var(--primary)] text-white"
                       : "text-slate-700 hover:bg-slate-100"
                   }`}
                 >
@@ -324,7 +324,7 @@ export default function Sidebar({ title, items }: SidebarProps) {
               href={item.href ?? "#"}
               className={`flex items-center gap-3 rounded px-3 py-2 transition-colors ${
                 isActive
-                  ? "bg-[#2183C6] text-white"
+                  ? "bg-[var(--primary)] text-white"
                   : "text-slate-700 hover:bg-slate-100"
               }`}
             >

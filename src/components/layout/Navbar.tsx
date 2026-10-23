@@ -1,3 +1,4 @@
+// src/components/layout/Navbar.tsx
 "use client";
 
 import { Search } from "lucide-react";
@@ -12,6 +13,7 @@ import {
   FiSliders,
 } from "react-icons/fi";
 import { logoutAndRedirectToLogin } from "@/utils/authSession";
+import { useBranding } from "@/hooks/useBranding";
 
 interface NavbarProps {
   notificationCount?: number;
@@ -44,6 +46,7 @@ export default function Navbar({
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   const settingsHref = useSettingsHref(pathname);
+  const branding = useBranding();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -74,14 +77,22 @@ export default function Navbar({
       ====================================================== */}
       <div className="flex w-1/3 items-center">
         <Link href="/" className="flex items-center">
-          <Image
-            src="/Logo.png"
-            alt="Sinkronis"
-            width={110}
-            height={110}
-            priority
-            className="h-auto w-[110px] object-contain"
-          />
+          {branding?.logoUrl ? (
+            <img
+              src={branding.logoUrl}
+              alt="Logo"
+              className="h-auto max-h-14 w-[110px] object-contain"
+            />
+          ) : (
+            <Image
+              src="/Logo.png"
+              alt="Sinkronis"
+              width={110}
+              height={110}
+              priority
+              className="h-auto w-[110px] object-contain"
+            />
+          )}
         </Link>
       </div>
 

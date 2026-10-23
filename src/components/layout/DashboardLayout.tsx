@@ -1,6 +1,8 @@
+// src/components/layout/DashboardLayout.tsx
 import type { ReactNode } from "react";
 
 import ModuleRail from "@/components/ModuleRail";
+import BrandingTheme from "./BrandingTheme";
 import Navbar from "./Navbar";
 import Sidebar, { SidebarItem } from "./Sidebar";
 
@@ -17,6 +19,8 @@ export default function DashboardLayout({
 }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-white">
+      <BrandingTheme />
+
       {/* Full-width top navigation */}
       <Navbar />
 

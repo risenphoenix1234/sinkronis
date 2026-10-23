@@ -1,3 +1,4 @@
+// src/components/ModuleRail.tsx
 "use client";
 
 import { ReactNode } from "react";
@@ -48,7 +49,7 @@ export default function ModuleRail() {
   return (
     <nav
       aria-label="Application modules"
-      className="sticky top-0 flex h-screen w-28 shrink-0 flex-col items-center bg-sky-600"
+      className="sticky top-0 flex h-screen w-28 shrink-0 flex-col items-center bg-[var(--brand-rail)]"
     >
       {/* Divider */}
       <div className="mt-2 h-px w-12 bg-white/20" />
@@ -69,7 +70,7 @@ export default function ModuleRail() {
                 "flex h-10 w-10 items-center justify-center rounded-lg",
                 "transition-colors duration-150",
                 isActive
-                  ? "bg-white text-sky-600"
+                  ? "bg-white text-[var(--brand-rail)]"
                   : "text-white/80 hover:bg-white/10 hover:text-white",
               ].join(" ")}
             >

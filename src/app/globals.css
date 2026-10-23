@@ -1,11 +1,103 @@
+/* src/app/globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* Use Tailwind defaults (no custom theme required) */
-:root { --primary: #2183c6; }
+:root { --primary: #2183c6; --brand-rail: #0284c7; }
 html, body, #__next { height: 100%; }
 body { @apply bg-gray-100 text-gray-900; }
 .card { @apply bg-white rounded-lg shadow-sm border border-gray-200; }
 .h1 { @apply text-2xl font-semibold; }
 .h2 { @apply text-xl font-semibold; }
+
+/*
+  Tenant branding.
+  Only active when BrandingTheme sets data-branded on <html>.
+  Without it none of these rules match, so the default look is unchanged.
+*/
+html[data-branded] {
+  --brand: var(--primary);
+  --brand-hover: color-mix(in srgb, var(--primary) 85%, black);
+  --brand-strong: color-mix(in srgb, var(--primary) 80%, black);
+  --brand-soft: color-mix(in srgb, var(--primary) 8%, white);
+  --brand-soft-2: color-mix(in srgb, var(--primary) 16%, white);
+}
+
+/* Solid backgrounds */
+html[data-branded] .bg-sky-600,
+html[data-branded] .bg-blue-600,
+html[data-branded] .bg-\[\#2183C6\],
+html[data-branded] .bg-\[\#2388D0\] {
+  background-color: var(--brand);
+}
+
+/* Hover backgrounds */
+html[data-branded] .hover\:bg-sky-700:hover,
+html[data-branded] .hover\:bg-blue-700:hover,
+html[data-branded] .hover\:bg-\[\#1976B8\]:hover,
+html[data-branded] .hover\:bg-\[\#2388D0\]:hover {
+  background-color: var(--brand-hover);
+}
+
+/* Soft tints */
+html[data-branded] .bg-sky-50,
+html[data-branded] .hover\:bg-sky-50:hover,
+html[data-branded] .bg-\[\#2183C6\]\/5,
+html[data-branded] .hover\:bg-\[\#2183C6\]\/5:hover {
+  background-color: var(--brand-soft);
+}
+html[data-branded] .bg-sky-100,
+html[data-branded] .hover\:bg-sky-100:hover,
+html[data-branded] .bg-\[\#2183C6\]\/10 {
+  background-color: var(--brand-soft-2);
+}
+
+/* Text */
+html[data-branded] .text-sky-600,
+html[data-branded] .text-blue-600,
+html[data-branded] .text-\[\#2183C6\],
+html[data-branded] .text-\[\#2388D0\],
+html[data-branded] .text-\[\#2089cc\],
+html[data-branded] .hover\:text-sky-600:hover,
+html[data-branded] .hover\:text-\[\#2183C6\]:hover,
+html[data-branded] .hover\:text-\[\#2388D0\]:hover {
+  color: var(--brand);
+}
+html[data-branded] .text-sky-700,
+html[data-branded] .hover\:text-sky-700:hover,
+html[data-branded] .text-blue-700,
+html[data-branded] .hover\:text-blue-700:hover {
+  color: var(--brand-strong);
+}
+
+/* Borders */
+html[data-branded] .border-sky-600,
+html[data-branded] .border-blue-600,
+html[data-branded] .border-sky-500,
+html[data-branded] .border-\[\#2183C6\],
+html[data-branded] .border-\[\#2388D0\],
+html[data-branded] .hover\:border-sky-500:hover,
+html[data-branded] .hover\:border-\[\#2183C6\]:hover,
+html[data-branded] .hover\:border-\[\#2388D0\]:hover {
+  border-color: var(--brand);
+}
+html[data-branded] .border-sky-200,
+html[data-branded] .hover\:border-sky-300:hover {
+  border-color: var(--brand-soft-2);
+}
+
+/* Focus borders */
+html[data-branded] .focus\:border-sky-400:focus,
+html[data-branded] .focus\:border-sky-500:focus,
+html[data-branded] .focus\:border-blue-500:focus,
+html[data-branded] .focus\:border-blue-400:focus,
+html[data-branded] .focus\:border-\[\#2183C6\]:focus,
+html[data-branded] .focus\:border-\[\#2388D0\]:focus {
+  border-color: var(--brand);
+}
+
+/* Disabled buttons keep a lighter shade */
+html[data-branded] .disabled\:bg-sky-300:disabled {
+  background-color: color-mix(in srgb, var(--primary) 45%, white);
+}
