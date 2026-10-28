@@ -109,9 +109,11 @@ export function logoutAndRedirectToLogin(reason = "expired"): void {
   const currentPath = window.location.pathname;
   if (!isPublicRoute(currentPath)) {
     const isEmployeePortal = currentPath.startsWith("/employee");
-    const basePath = isEmployeePortal ? "/employee/login" : "/login";
-    const query = reason === "no_token" || reason === "manual_signout" ? "" : "?expired=true";
-    window.location.href = `${basePath}${query}`;
+    const params = new URLSearchParams();
+    if (isEmployeePortal) params.set("mode", "employee");
+    if (reason !== "no_token" && reason !== "manual_signout") params.set("expired", "true");
+    const query = params.toString() ? `?${params.toString()}` : "";
+    window.location.href = `/login${query}`;
   } else {
     isRedirecting = false;
   }

@@ -1,12 +1,12 @@
 // src/app/(auth)/setup-password/page.tsx
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { acceptTenantInvitation } from "@/lib/api/auth";
 
-export default function SetupPasswordPage() {
+function SetupPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
@@ -119,5 +119,13 @@ export default function SetupPasswordPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function SetupPasswordPage() {
+  return (
+    <Suspense fallback={null}>
+      <SetupPasswordForm />
+    </Suspense>
   );
 }

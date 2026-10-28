@@ -24,6 +24,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
+      if (params.get("mode") === "employee") setMode("employee");
       if (params.get("expired") === "true") {
         setError("Your session has expired. Please sign in again.");
       }
