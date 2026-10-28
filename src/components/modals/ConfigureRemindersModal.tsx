@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { IoClose } from "react-icons/io5";
 import { getReminderConfiguration, updateReminderConfiguration } from "@/lib/api/accounting";
 import { ReminderConfiguration, OverdueReminderFrequency } from "@/types/reminder";
+import Loader from "@/components/ui/Loader";
 
 type ConfigureRemindersModalProps = {
   isOpen: boolean;
@@ -76,7 +77,7 @@ export default function ConfigureRemindersModal({ isOpen, onClose, onSaved }: Co
         </div>
 
         <div className="space-y-5 px-6 py-5">
-          {loading && <p className="text-sm text-slate-400">Loading current settings...</p>}
+          {loading && <Loader variant="section" label="Loading current settings" />}
           {error && <p className="text-sm text-rose-600">{error}</p>}
 
           {config && !loading && (

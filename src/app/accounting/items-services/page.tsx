@@ -6,6 +6,7 @@ import EditItemModal from "@/components/modals/EditItemModal";
 import DeleteItemModal from "@/components/modals/DeleteItemModal";
 import { getCatalogueItems, createCatalogueItem, updateCatalogueItem, deleteCatalogueItem } from "@/lib/api/accounting";
 import { CatalogueItem } from "@/lib/api/types/accounting.types";
+import Loader from "@/components/ui/Loader";
 
 type StatusFilter = "ALL" | "ACTIVE" | "INACTIVE";
 
@@ -157,7 +158,7 @@ export default function ItemsServicesPage() {
           <tbody className="divide-y divide-slate-100">
             {loading && (
               <tr>
-                <td colSpan={8} className="px-6 py-8 text-center text-sm text-slate-400">Loading items...</td>
+                <td colSpan={8} className="px-6 py-8 text-center text-sm text-slate-400"><Loader variant="inline" label="Loading items" /></td>
               </tr>
             )}
 

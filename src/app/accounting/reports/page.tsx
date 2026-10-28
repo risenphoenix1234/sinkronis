@@ -23,6 +23,7 @@ import {
   naira,
 } from "@/lib/api/accounting";
 import { ReportFilters, ReportGroup, ReportSummary } from "@/lib/api/types/accounting.types";
+import Loader from "@/components/ui/Loader";
 
 interface Option {
   id: string;
@@ -439,7 +440,7 @@ export default function ReportsPage() {
         )}
       </div>
 
-      {loading && <p className="text-center text-sm text-slate-400">Loading reports…</p>}
+      {loading && <Loader variant="section" label="Loading reports" />}
     </section>
   );
 }

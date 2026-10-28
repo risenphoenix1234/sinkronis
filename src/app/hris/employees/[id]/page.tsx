@@ -47,6 +47,7 @@ import type {
   DocumentType,
 } from "@/lib/api/types/hrisTypes";
 import ChangeEmployeeStatusModal from "@/components/modals/Hris/ChangeEmployeeStatusModal";
+import Loader from "@/components/ui/Loader";
 
 const STATUS_LABEL: Record<string, string> = {
   ACTIVE: "Active",
@@ -1000,7 +1001,7 @@ export default function EmployeeProfilePage({
       <div className="flex h-96 items-center justify-center space-y-4 p-6">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-sky-600 border-t-transparent" />
-          <p className="text-sm text-slate-500">Loading employee details...</p>
+          <Loader variant="section" label="Loading employee details" />
         </div>
       </div>
     );

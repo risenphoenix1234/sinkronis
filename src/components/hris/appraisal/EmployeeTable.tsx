@@ -4,6 +4,7 @@ import { AppraisalReview } from "@/lib/api/types/hrisTypes";
 import { useRouter } from "next/navigation";
 import { ClipboardList } from "lucide-react";
 import StatusBadge from "@/components/ui/StatusBadge";
+import Loader from "@/components/ui/Loader";
 
 interface EmployeeTableProps {
   reviews: AppraisalReview[];
@@ -94,9 +95,7 @@ export default function EmployeeTable({
                 <td
                   colSpan={6}
                   className="px-6 py-12 text-center text-sm text-slate-400"
-                >
-                  Loading employee reviews…
-                </td>
+                ><Loader variant="inline" label="Loading employee reviews" /></td>
               </tr>
             ) : reviews.length === 0 ? (
               <tr>

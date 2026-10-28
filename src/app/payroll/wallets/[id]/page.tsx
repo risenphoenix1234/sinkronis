@@ -13,6 +13,7 @@ import {
   apiTxToTransactionDetail,
 } from "@/lib/wallet-transaction";
 import { getPayrollWalletTransaction } from "@/lib/api/payroll";
+import Loader from "@/components/ui/Loader";
 
 export default function WalletTransactionDetailPage() {
   const params = useParams();
@@ -64,7 +65,7 @@ export default function WalletTransactionDetailPage() {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[#f8fafc] px-4 text-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#1683d8]" />
-        <p className="text-[14px] text-[#8994a3]">Loading transaction details...</p>
+        <Loader variant="section" label="Loading transaction details" />
       </main>
     );
   }

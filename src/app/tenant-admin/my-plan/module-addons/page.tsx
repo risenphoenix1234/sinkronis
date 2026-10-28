@@ -5,6 +5,7 @@ import Link from "next/link";
 import { FiUsers, FiDollarSign, FiBookOpen, FiArrowRight } from "react-icons/fi";
 import { getMyPlanActiveModules } from "@/lib/api/admin";
 import { MyPlanActiveModuleDetail } from "@/lib/api/types/admin.types";
+import Loader from "@/components/ui/Loader";
 
 const moduleIcons: Record<string, typeof FiUsers> = {
   HRIS: FiUsers,
@@ -39,7 +40,7 @@ export default function ModuleAddonsPage() {
     load();
   }, []);
 
-  if (loading) return <p className="text-sm text-slate-400">Loading modules...</p>;
+  if (loading) return <Loader variant="page" label="Loading modules" />;
   if (error) return <p className="text-sm text-red-500">{error}</p>;
 
   return (

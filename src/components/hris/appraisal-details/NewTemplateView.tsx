@@ -21,6 +21,7 @@ import type {
   TemplateSection,
   SignOffType,
 } from "@/lib/api/types/hrisTypes";
+import Loader from "@/components/ui/Loader";
 
 const previewEmployee: Employee = {
   name: "Sample Employee",
@@ -83,7 +84,7 @@ export default function TemplateView({
   if (!template) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
-        <p className="text-sm text-[#94A3B8]">Loading template…</p>
+        <Loader variant="section" label="Loading template" />
       </div>
     );
   }

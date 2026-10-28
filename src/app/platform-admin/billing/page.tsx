@@ -23,6 +23,7 @@ import {
 } from "@/lib/api/platform-admin";
 import { PlatformBillingResponse, PlatformInvoice } from "@/lib/api/types/platform-admin.types";
 import GenerateInvoiceModal, { NewInvoiceInput } from "@/components/modals/GenerateInvoiceModal";
+import Loader from "@/components/ui/Loader";
 
 function naira(value: number) {
   return `₦${value.toLocaleString()}`;
@@ -141,7 +142,7 @@ export default function BillingRevenuePage() {
   if (loading) {
     return (
       <section className="p-6">
-        <p className="text-sm text-slate-400">Loading billing data...</p>
+        <Loader variant="section" label="Loading billing data" />
       </section>
     );
   }

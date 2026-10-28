@@ -6,6 +6,7 @@ import { FiUpload } from "react-icons/fi";
 import { getBrandingSettings, updateBrandingSettings, uploadBrandingLogo } from "@/lib/api/admin";
 import { GeneralBrandingSettings } from "@/lib/api/types/admin.types";
 import { refreshBranding } from "@/hooks/useBranding";
+import Loader from "@/components/ui/Loader";
 
 const presetColors = [
   "#2183c6",
@@ -104,7 +105,7 @@ export default function BrandingPage() {
       )}
 
       {loading ? (
-        <p className="text-sm text-slate-500">Loading…</p>
+        <Loader variant="section" label="Loading" />
       ) : (
         <div className="space-y-6 rounded-xl border border-slate-200 bg-white p-6">
           {/* Logo upload */}

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getInvoiceDetail } from "@/lib/api/accounting";
 import { Invoice } from "@/lib/api/types/accounting.types";
+import Loader from "@/components/ui/Loader";
 
 const statusStyles: Record<string, string> = {
   PAID: "bg-emerald-50 text-emerald-700",
@@ -52,7 +53,7 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
   if (loading) {
     return (
       <section className="p-6">
-        <p className="text-sm text-slate-400">Loading invoice...</p>
+        <Loader variant="section" label="Loading invoice" />
       </section>
     );
   }

@@ -18,6 +18,7 @@ import StatusBadge from "@/components/ui/StatusBadge";
 import ConductSuspensionModal from "@/components/modals/Hris/ConductSuspensionModal";
 import EmptyState from "@/components/shared/EmptyState";
 import { resolveDepartmentName } from "@/utils/department";
+import Loader from "@/components/ui/Loader";
 
 function extractConductRecords(res: unknown): ConductRecord[] {
   let list: ConductRecord[] = [];
@@ -320,9 +321,7 @@ export default function HRISConductPage() {
                       <td
                         colSpan={7}
                         className="py-12 text-center text-sm text-slate-500"
-                      >
-                        Loading records...
-                      </td>
+                      ><Loader variant="inline" label="Loading records" /></td>
                     </tr>
                   ) : queryError ? (
                     <tr>

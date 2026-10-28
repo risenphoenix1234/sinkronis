@@ -19,6 +19,7 @@ import type {
   EmployeeLeaveBalancesData,
   LeaveType,
 } from "@/lib/api/hris";
+import Loader from "@/components/ui/Loader";
 
 type Tab = "types" | "entitlements";
 
@@ -242,9 +243,7 @@ function LeaveTypesPanel({
           <tbody>
             {loading && leaveTypes.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-12 text-center text-sm text-slate-500">
-                  Loading leave types...
-                </td>
+                <td colSpan={5} className="py-12 text-center text-sm text-slate-500"><Loader variant="inline" label="Loading leave types" /></td>
               </tr>
             ) : error ? (
               <tr>
@@ -631,9 +630,7 @@ function EntitlementsPanel({
               <tbody>
                 {(loading && !data) || typesLoading ? (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-sm text-slate-500">
-                      Loading balances...
-                    </td>
+                    <td colSpan={6} className="py-12 text-center text-sm text-slate-500"><Loader variant="inline" label="Loading balances" /></td>
                   </tr>
                 ) : error ? (
                   <tr>

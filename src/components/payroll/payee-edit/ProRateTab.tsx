@@ -15,6 +15,7 @@ import {
 } from "@/lib/api/payroll";
 import { pickNum, pickText } from "@/lib/payroll-pick";
 import type { PayeeProrationBasis, PayrollPayee, PayrollRecord } from "@/lib/api/types/payroll.types";
+import Loader from "@/components/ui/Loader";
 
 type Row = { id: string; justification: string; start: string; end: string; basis: PayeeProrationBasis; days: number };
 
@@ -148,7 +149,7 @@ export default function ProRateTab({ payee }: { payee: PayrollPayee }) {
         <tbody>
           {loading && (
             <tr>
-              <td colSpan={5} className="py-10 text-center text-slate-400">Loading...</td>
+              <td colSpan={5} className="py-10 text-center text-slate-400"><Loader variant="inline" label="Loading" /></td>
             </tr>
           )}
           {!loading && rows.length === 0 && (

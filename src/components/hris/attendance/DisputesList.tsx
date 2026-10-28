@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { AttendanceDispute } from "@/lib/api/types/hrisTypes";
 import { DisputeCard } from "./DisputeCard";
+import Loader from "@/components/ui/Loader";
 
 interface DisputesListProps {
   disputes: AttendanceDispute[];
@@ -77,9 +78,7 @@ export default function DisputesList({
 
       <div className="mt-5 space-y-3.5">
         {loading ? (
-          <div className="rounded-xl border border-slate-200 bg-white p-12 text-center text-xs text-slate-500">
-            Loading disputes...
-          </div>
+          <Loader variant="section" label="Loading disputes" />
         ) : error ? (
           <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center text-xs text-red-700">
             <p>{error}</p>

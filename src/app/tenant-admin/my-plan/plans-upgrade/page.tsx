@@ -5,6 +5,7 @@ import { FiCheck } from "react-icons/fi";
 import { getMyPlanPlans, switchPlan } from "@/lib/api/admin";
 import { MyPlanPlan, MyPlanPreviewData, PlanKey } from "@/lib/api/types/admin.types";
 import AddPlanConfirmModal from "@/components/modals/AddPlanConfirmModal";
+import Loader from "@/components/ui/Loader";
 
 function naira(n: number) {
   return `₦${n.toLocaleString()}`;
@@ -80,7 +81,7 @@ export default function PlansUpgradePage() {
   const pendingPlan = plans.find((p) => p.key === pendingKey);
 
   if (loading) {
-    return <p className="text-sm text-slate-400">Loading plans...</p>;
+    return <Loader variant="page" label="Loading plans" />;
   }
 
   if (error) {

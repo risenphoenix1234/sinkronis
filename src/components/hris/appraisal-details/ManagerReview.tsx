@@ -32,6 +32,7 @@ import type {
   SubmitManagerReviewQuestionResponse,
   SubmitManagerReviewPayload,
 } from "@/lib/api/types/hrisTypes";
+import Loader from "@/components/ui/Loader";
 
 export interface ManagerReviewProps {
   appraisalId?: string;
@@ -332,9 +333,7 @@ export default function ManagerReview({
 
         <div className="flex flex-col items-center justify-center py-16 text-slate-500 gap-3">
           <Loader2 size={24} className="animate-spin text-[#1677C8]" />
-          <p className="text-sm font-medium text-slate-600">
-            Loading manager review...
-          </p>
+          <Loader variant="section" label="Loading manager review" />
         </div>
       </section>
     );

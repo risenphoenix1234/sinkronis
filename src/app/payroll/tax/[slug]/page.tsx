@@ -13,6 +13,7 @@ import {
 } from "@/lib/api/payroll";
 import type { PayrollRecord } from "@/lib/api/types/payroll.types";
 import { currentMonth, isRemittedStatus, monthLabel, pickNum, pickText } from "@/lib/payroll-pick";
+import Loader from "@/components/ui/Loader";
 
 const naira = (n: number) => `₦${n.toLocaleString("en-NG")}`;
 
@@ -149,7 +150,7 @@ export default function StateTaxDetailPage() {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={5} className="py-10 text-center text-slate-400">Loading…</td>
+                <td colSpan={5} className="py-10 text-center text-slate-400"><Loader variant="inline" label="Loading" /></td>
               </tr>
             )}
             {!loading && filtered.length === 0 && (

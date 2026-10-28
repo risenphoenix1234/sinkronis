@@ -9,6 +9,7 @@ import {
   getApiErrorMessage,
 } from "@/lib/api/payroll";
 import type { CreateAllowanceTypeBody, PayrollSettingTypeRow } from "@/lib/api/types/payroll.types";
+import Loader from "@/components/ui/Loader";
 
 export default function AllowanceTypes() {
   const [allowances, setAllowances] = useState<PayrollSettingTypeRow[]>([]);
@@ -169,7 +170,7 @@ export default function AllowanceTypes() {
         </div>
 
         {loading && (
-          <div className="px-4 py-6 text-center text-sm text-[#8191a1]">Loading...</div>
+          <Loader variant="section" label="Loading" />
         )}
 
         {!loading && allowances.length === 0 && (

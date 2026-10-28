@@ -15,6 +15,7 @@ import {
   MyPlanPaymentMethodData,
   MyPlanCountryOption,
 } from "@/lib/api/types/admin.types";
+import Loader from "@/components/ui/Loader";
 
 export default function PaymentMethodPage() {
   const [paymentData, setPaymentData] = useState<MyPlanPaymentMethodData | null>(null);
@@ -143,7 +144,7 @@ export default function PaymentMethodPage() {
   };
 
   if (loading) {
-    return <p className="text-sm text-slate-400">Loading payment method...</p>;
+    return <Loader variant="page" label="Loading payment method" />;
   }
 
   if (error && !paymentData) {

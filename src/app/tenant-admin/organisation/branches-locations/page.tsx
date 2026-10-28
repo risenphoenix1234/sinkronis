@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getBranchesTable, createBranch, deleteBranch } from "@/lib/api/admin";
 import { BranchTableRow } from "@/lib/api/types/admin.types";
+import Loader from "@/components/ui/Loader";
 
 const emptyForm = { name: "", address: "", city: "", state: "", country: "NG", phone: "" };
 
@@ -90,7 +91,7 @@ export default function BranchesLocationsPage() {
 
       <div className="space-y-3">
         {loading && (
-          <p className="py-8 text-center text-sm text-slate-400">Loading branches...</p>
+          <Loader variant="section" label="Loading branches" />
         )}
 
         {!loading &&

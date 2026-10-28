@@ -6,6 +6,7 @@ import { FiZap, FiPlus, FiDownload, FiX, FiUsers, FiDollarSign, FiBookOpen } fro
 import { getMyPlanOverview, cancelSubscription } from "@/lib/api/admin";
 import { MyPlanOverviewData } from "@/lib/api/types/admin.types";
 import CancelSubscriptionModal from "@/components/modals/CancelSubscriptionModal";
+import Loader from "@/components/ui/Loader";
 
 const moduleIcons: Record<string, typeof FiUsers> = {
   hris: FiUsers,
@@ -63,7 +64,7 @@ export default function MyPlanOverviewPage() {
   };
 
   if (loading) {
-    return <p className="p-6 text-sm text-slate-400">Loading your plan...</p>;
+    return <Loader variant="page" label="Loading your plan" />;
   }
 
   if (error || !data) {

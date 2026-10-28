@@ -11,6 +11,7 @@ import {
   disbursePaymentRequest,
 } from "@/lib/api/accounting";
 import { PaymentRequestItem, PaymentRequestSummary } from "@/lib/api/types/accounting.types";
+import Loader from "@/components/ui/Loader";
 
 const statusStyles: Record<string, string> = {
   PENDING: "bg-amber-50 text-amber-700",
@@ -181,7 +182,7 @@ export default function PaymentRequestsPage() {
           <tbody className="divide-y divide-slate-100">
             {loading && (
               <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-sm text-slate-400">Loading requests...</td>
+                <td colSpan={7} className="px-6 py-8 text-center text-sm text-slate-400"><Loader variant="inline" label="Loading requests" /></td>
               </tr>
             )}
 

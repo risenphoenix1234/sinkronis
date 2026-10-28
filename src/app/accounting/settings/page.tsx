@@ -24,6 +24,7 @@ import {
 import InvoiceTemplateModal from "@/components/modals/InvoiceTemplateModal";
 import ExpenseCategoryModal from "@/components/modals/ExpenseCategoryModal";
 import ConfirmDeleteModal from "@/components/modals/ConfirmDeleteModal";
+import Loader from "@/components/ui/Loader";
 
 type Tab = "templates" | "categories" | "reminders";
 
@@ -259,7 +260,7 @@ export default function SettingsPage() {
           </div>
 
           {loadingTemplates ? (
-            <p className="py-10 text-center text-sm text-slate-400">Loading templates…</p>
+            <Loader variant="section" label="Loading templates" />
           ) : (
             <div className="grid grid-cols-2 gap-4">
               {templates.length === 0 && (
@@ -341,7 +342,7 @@ export default function SettingsPage() {
           </div>
 
           {loadingCategories ? (
-            <p className="py-10 text-center text-sm text-slate-400">Loading categories…</p>
+            <Loader variant="section" label="Loading categories" />
           ) : (
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
               <div className="divide-y divide-slate-100">
@@ -382,7 +383,7 @@ export default function SettingsPage() {
           )}
 
           {loadingReminders || !reminderSettings ? (
-            <p className="py-10 text-center text-sm text-slate-400">Loading reminder settings…</p>
+            <Loader variant="section" label="Loading reminder settings" />
           ) : (
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white divide-y divide-slate-100">
               <div className="flex items-center justify-between px-5 py-4">

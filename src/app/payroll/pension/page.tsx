@@ -7,6 +7,7 @@ import { FiCalendar, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { getApiErrorMessage, getPensionRemittances } from "@/lib/api/payroll";
 import type { PayrollPagination, PayrollRecord } from "@/lib/api/types/payroll.types";
 import { colorFor, currentMonth, initialsOf, monthLabel, pickNum, pickText } from "@/lib/payroll-pick";
+import Loader from "@/components/ui/Loader";
 
 const PAGE_SIZE = 10;
 const naira = (n: number) => `₦${n.toLocaleString("en-NG")}`;
@@ -73,7 +74,7 @@ export default function PayrollPensionPage() {
           <span>Total Amount</span>
           <span className="text-right">Action</span>
         </div>
-        {loading && <p className="px-4 py-10 text-center text-sm text-slate-400">Loading pension remittances…</p>}
+        {loading && <Loader variant="section" label="Loading pension remittances" />}
         {!loading && rows.length === 0 && (
           <p className="px-4 py-10 text-center text-sm text-slate-400">No pension remittances for {monthLabel(month)}.</p>
         )}

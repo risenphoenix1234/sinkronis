@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { getLoginActivity } from "@/lib/api/admin";
 import { LoginActivityEvent } from "@/lib/api/types/admin.types";
+import Loader from "@/components/ui/Loader";
 
 const statusStyles: Record<string, string> = {
   SUCCESS: "bg-emerald-50 text-emerald-700",
@@ -52,7 +53,7 @@ export default function LoginActivityPage() {
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4">
       {loading && (
-        <p className="py-8 text-center text-sm text-slate-400">Loading login activity...</p>
+        <Loader variant="section" label="Loading login activity" />
       )}
 
       {!loading && error && (

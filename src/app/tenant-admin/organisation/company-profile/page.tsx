@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getOrganizationProfile, updateOrganizationProfile, verifyCacNumber } from "@/lib/api/admin";
 import { CacVerificationData } from "@/lib/api/types/admin.types";
+import Loader from "@/components/ui/Loader";
 
 const industryOptions = [
   "Technology",
@@ -132,7 +133,7 @@ export default function CompanyProfilePage() {
   if (loading) {
     return (
       <div className="max-w-3xl rounded-lg border border-slate-200 bg-white p-6">
-        <p className="text-sm text-slate-400">Loading company profile...</p>
+        <Loader variant="section" label="Loading company profile" />
       </div>
     );
   }

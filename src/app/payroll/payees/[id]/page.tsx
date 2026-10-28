@@ -10,6 +10,7 @@ import EntriesTab from "@/components/payroll/payee-edit/EntriesTab";
 import ProRateTab from "@/components/payroll/payee-edit/ProRateTab";
 import { getApiErrorMessage, getPayeeGroups, getPayrollPayee } from "@/lib/api/payroll";
 import type { PayrollPayee, PayrollPayeeGroup } from "@/lib/api/types/payroll.types";
+import Loader from "@/components/ui/Loader";
 
 const tabs = [
   "Details",
@@ -70,7 +71,7 @@ export default function EditPayeePage() {
       </div>
 
       <div className="mt-6">
-        {loading && <p className="text-sm text-slate-400">Loading payee...</p>}
+        {loading && <Loader variant="section" label="Loading payee" />}
         {!loading && error && <p className="text-sm text-red-600">{error}</p>}
         {!loading && payee && (
           <>

@@ -9,6 +9,7 @@ import {
   getDeductionTypeRows,
 } from "@/lib/api/payroll";
 import type { PayrollSettingTypeRow } from "@/lib/api/types/payroll.types";
+import Loader from "@/components/ui/Loader";
 
 export default function DeductionTypes() {
   const [deductions, setDeductions] = useState<PayrollSettingTypeRow[]>([]);
@@ -148,7 +149,7 @@ export default function DeductionTypes() {
         </div>
 
         {loading && (
-          <div className="px-4 py-6 text-center text-sm text-[#8191a1]">Loading...</div>
+          <Loader variant="section" label="Loading" />
         )}
 
         {!loading && deductions.length === 0 && (

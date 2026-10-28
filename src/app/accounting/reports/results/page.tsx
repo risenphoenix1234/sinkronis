@@ -8,6 +8,7 @@ import { FiArrowLeft, FiDownload, FiX } from "react-icons/fi";
 import InvoiceTable from "@/components/reports/InvoiceTable";
 import { REPORT_FILTER_KEYS, exportCsv, exportPdf, filterLabels, getReports, naira } from "@/lib/api/accounting";
 import { Invoice, ReportFilters, ReportPagination, ReportSummary } from "@/lib/api/types/accounting.types";
+import Loader from "@/components/ui/Loader";
 
 const PAGE_SIZE = 20;
 
@@ -153,7 +154,7 @@ function ReportsResultsContent() {
       </div>
 
       {loading ? (
-        <p className="py-10 text-center text-sm text-slate-400">Loading invoices…</p>
+        <Loader variant="section" label="Loading invoices" />
       ) : (
         <InvoiceTable
           invoices={invoices}
@@ -173,7 +174,7 @@ function ReportsResultsContent() {
 
 export default function ReportsResultsPage() {
   return (
-    <Suspense fallback={<div className="p-6 text-sm text-slate-500">Loading results...</div>}>
+    <Suspense fallback={<Loader variant="section" label="Loading results" />}>
       <ReportsResultsContent />
     </Suspense>
   );

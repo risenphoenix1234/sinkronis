@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getApiErrorMessage, getPayeeGroups, updatePayeeGroup } from "@/lib/api/payroll";
+import Loader from "@/components/ui/Loader";
 
 const inputCls =
   "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-[#2183C6]";
@@ -75,7 +76,7 @@ export default function EditPayeeGroupPage() {
     }
   };
 
-  if (loading) return <div className="p-6 text-sm text-slate-400">Loading...</div>;
+  if (loading) return <Loader variant="page" label="Loading" />;
   if (missing) return <div className="p-6 text-sm text-slate-500">This payee group was not found.</div>;
 
   return (

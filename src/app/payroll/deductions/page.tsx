@@ -9,6 +9,7 @@ import LoanStatusBadge from "@/components/payroll/deductions/LoanStatusBadge";
 import { getApiErrorMessage, getLoansPage } from "@/lib/api/payroll";
 import { pickNum, pickText, type Rec } from "@/lib/payroll-pick";
 import type { PayrollLoansPage } from "@/lib/api/types/payroll.types";
+import Loader from "@/components/ui/Loader";
 
 const PAGE_SIZE = 10;
 const naira = (n: number) => `₦${n.toLocaleString("en-NG")}`;
@@ -92,7 +93,7 @@ export default function LoanDeductionsPage() {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={7} className="py-10 text-center text-slate-400">Loading loans…</td>
+                <td colSpan={7} className="py-10 text-center text-slate-400"><Loader variant="inline" label="Loading loans" /></td>
               </tr>
             )}
             {!loading && items.length === 0 && (

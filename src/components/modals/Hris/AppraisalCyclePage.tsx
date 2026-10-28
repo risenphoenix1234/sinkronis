@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import { getAppraisalCycles } from "@/lib/api/hris";
 import CycleCard from "../../hris/appraisal/CycleCard";
 import type { AppraisalCycleSummary } from "@/lib/api/types/hrisTypes";
+import Loader from "@/components/ui/Loader";
 
 type FilterStatus = "ALL" | "ACTIVE" | "DRAFT" | "COMPLETED";
 
@@ -78,9 +79,7 @@ export default function AppraisalCyclePage() {
 
       <div className="space-y-4">
         {loading && (
-          <div className="py-8 text-center text-sm text-[#94A3B8]">
-            Loading appraisal cycles…
-          </div>
+          <Loader variant="section" label="Loading appraisal cycles" />
         )}
 
         {!loading && error && (

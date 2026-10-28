@@ -9,6 +9,7 @@ import {
   impersonateTenant,
 } from "@/lib/api/platform-admin";
 import { PlatformUserRecord } from "@/lib/api/types/platform-admin.types";
+import Loader from "@/components/ui/Loader";
 
 const moduleStyles: Record<string, string> = {
   HRIS: "bg-sky-50 text-sky-600",
@@ -204,9 +205,7 @@ export default function UsersPage() {
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={7} className="px-5 py-10 text-center text-sm text-slate-400">
-                    Loading users...
-                  </td>
+                  <td colSpan={7} className="px-5 py-10 text-center text-sm text-slate-400"><Loader variant="inline" label="Loading users" /></td>
                 </tr>
               )}
 

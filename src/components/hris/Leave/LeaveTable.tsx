@@ -4,6 +4,7 @@ import { approveLeaveReq, rejectLeaveReq } from "@/lib/api/hris";
 import { LeaveRequestRecord } from "@/lib/api/types/hrisTypes";
 import { useState } from "react";
 import { toast } from "react-toastify";
+import Loader from "@/components/ui/Loader";
 
 interface LeaveTableProps {
   requests: LeaveRequestRecord[];
@@ -114,9 +115,7 @@ export default function LeaveTable({
 
   if (loading) {
     return (
-      <p className="text-sm text-gray-400 py-8 text-center">
-        Loading leave requests...
-      </p>
+      <Loader variant="section" label="Loading leave requests" />
     );
   }
 

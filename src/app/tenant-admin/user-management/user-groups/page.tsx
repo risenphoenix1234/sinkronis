@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import CreateGroupModal from "@/components/modals/CreateGroupModal";
 import { getUserGroups, createUserGroup, deleteUserGroup } from "@/lib/api/admin";
 import { TenantUserGroup } from "@/lib/api/types/admin.types";
+import Loader from "@/components/ui/Loader";
 
 const typeBadgeColor: Record<string, string> = {
   DEPARTMENT: "bg-emerald-50 text-emerald-700",
@@ -65,7 +66,7 @@ export default function UserGroupsPage() {
         </button>
       </div>
 
-      {loading && <p className="py-8 text-center text-sm text-slate-400">Loading groups...</p>}
+      {loading && <Loader variant="section" label="Loading groups" />}
 
       {!loading && error && <p className="py-8 text-center text-sm text-red-500">{error}</p>}
 

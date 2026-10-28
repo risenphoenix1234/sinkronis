@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { getApiErrorMessage, getStatutoryRates } from "@/lib/api/payroll";
 import type { StatutoryRatesData } from "@/lib/api/types/payroll.types";
+import Loader from "@/components/ui/Loader";
 
 type Row = { label: string; value: string };
 
@@ -180,7 +181,7 @@ export default function StatutoryRates() {
           </p>
         </header>
 
-        {loading && <p className="text-sm text-slate-500">Loading...</p>}
+        {loading && <Loader variant="section" label="Loading" />}
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         {rates && (

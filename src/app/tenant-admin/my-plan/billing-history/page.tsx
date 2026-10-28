@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { FiDownload } from "react-icons/fi";
 import { getBillingHistory, exportBillingHistoryCsv, getBillingAnalytics, downloadInvoicePdf2 } from "@/lib/api/admin";
 import { MyPlanBillingHistoryItem, MyPlanBillingAnalytics } from "@/lib/api/types/admin.types";
+import Loader from "@/components/ui/Loader";
 
 type YearFilter = "all" | number;
 
@@ -156,9 +157,7 @@ export default function BillingHistoryPage() {
           <tbody className="divide-y divide-slate-100">
             {loading && (
               <tr>
-                <td colSpan={5} className="px-6 py-10 text-center text-sm text-slate-400">
-                  Loading billing history...
-                </td>
+                <td colSpan={5} className="px-6 py-10 text-center text-sm text-slate-400"><Loader variant="inline" label="Loading billing history" /></td>
               </tr>
             )}
 

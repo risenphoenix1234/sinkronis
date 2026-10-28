@@ -17,6 +17,7 @@ import type { EmployeeAttendanceRecord } from "@/lib/api/hris";
 import type { GetEmployeeDetail } from "@/lib/api/types/hrisTypes";
 import StatusBadge from "@/components/ui/StatusBadge";
 import Button from "@/components/ui/Button";
+import Loader from "@/components/ui/Loader";
 
 interface PageProps {
   params: { id: string };
@@ -266,9 +267,7 @@ export default function EmployeeAttendanceDetailPage({ params }: PageProps) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center p-8 text-center">
         <FiRefreshCw className="h-8 w-8 animate-spin text-primary" />
-        <p className="mt-3 text-sm font-medium text-slate-600">
-          Loading employee attendance history…
-        </p>
+        <Loader variant="section" label="Loading employee attendance history" />
       </div>
     );
   }

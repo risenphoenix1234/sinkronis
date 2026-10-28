@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Users, BookOpen, DollarSign, ArrowRight, Zap } from "lucide-react";
 import { getAdminModules } from "@/lib/api/admin";
 import { AdminModuleCard, ModuleKey } from "@/lib/api/types/admin.types";
+import Loader from "@/components/ui/Loader";
 
 const iconMap: Record<ModuleKey, typeof Users> = {
   hris: Users,
@@ -158,7 +159,7 @@ export default function TenantModulesPage() {
       </div>
 
       {loading && (
-        <p className="py-10 text-center text-sm text-slate-400">Loading modules...</p>
+        <Loader variant="section" label="Loading modules" />
       )}
 
       {!loading && error && (

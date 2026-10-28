@@ -16,6 +16,7 @@ import {
 } from "recharts";
 import { getPlatformAnalytics, sendAtRiskCheckIn } from "@/lib/api/platform-admin";
 import { PlatformAnalyticsResponse } from "@/lib/api/types/platform-admin.types";
+import Loader from "@/components/ui/Loader";
 
 const naira = (n: number) => `₦${n.toLocaleString("en-NG")}`;
 
@@ -84,7 +85,7 @@ export default function AnalyticsPage() {
   if (loading) {
     return (
       <section className="p-6">
-        <p className="text-sm text-slate-400">Loading analytics...</p>
+        <Loader variant="section" label="Loading analytics" />
       </section>
     );
   }

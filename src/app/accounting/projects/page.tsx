@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import NewProjectModal from "@/components/modals/NewProjectModal";
 import { getProjects, createProject } from "@/lib/api/accounting";
 import { ProjectListItem, ProjectSummary, CreateProjectPayload } from "@/lib/api/types/accounting.types";
+import Loader from "@/components/ui/Loader";
 
 const statusStyles: Record<string, string> = {
   ACTIVE: "bg-emerald-50 text-emerald-700",
@@ -120,7 +121,7 @@ export default function ProjectsPage() {
           <tbody className="divide-y divide-slate-100">
             {loading && (
               <tr>
-                <td colSpan={8} className="px-6 py-8 text-center text-sm text-slate-400">Loading projects...</td>
+                <td colSpan={8} className="px-6 py-8 text-center text-sm text-slate-400"><Loader variant="inline" label="Loading projects" /></td>
               </tr>
             )}
 

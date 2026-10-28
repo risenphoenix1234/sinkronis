@@ -8,6 +8,7 @@ import {
   toggleNotificationCategory,
 } from "@/lib/api/admin";
 import { NotificationModulePrefs } from "@/lib/api/types/admin.types";
+import Loader from "@/components/ui/Loader";
 
 export default function InAppNotificationsPage() {
   const [modules, setModules] = useState<NotificationModulePrefs[]>([]);
@@ -60,7 +61,7 @@ export default function InAppNotificationsPage() {
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-6">
-      {loading && <p className="text-sm text-slate-400">Loading preferences...</p>}
+      {loading && <Loader variant="section" label="Loading preferences" />}
 
       {!loading && error && (
         <div className="mb-4 rounded-md bg-red-50 px-4 py-2.5 text-sm text-red-600">{error}</div>

@@ -7,6 +7,7 @@ import {
   markAllAnnouncementsRead,
 } from "@/lib/api/admin";
 import { Announcement } from "@/lib/api/types/admin.types";
+import Loader from "@/components/ui/Loader";
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-GB", {
@@ -98,7 +99,7 @@ export default function AnnouncementsPage() {
         )}
       </div>
 
-      {loading && <p className="py-8 text-center text-sm text-slate-400">Loading announcements...</p>}
+      {loading && <Loader variant="section" label="Loading announcements" />}
 
       {!loading && (
         <div className="space-y-3">

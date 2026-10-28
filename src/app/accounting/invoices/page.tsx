@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import CreateInvoiceModal from "@/components/modals/CreateInvoiceModal";
 import { getInvoices, createInvoice } from "@/lib/api/accounting";
 import { CreateInvoicePayload, Invoice } from "@/lib/api/types/accounting.types";
+import Loader from "@/components/ui/Loader";
 
 const statusStyles: Record<string, string> = {
   PAID: "bg-emerald-50 text-emerald-700",
@@ -91,7 +92,7 @@ export default function InvoicesPage() {
           <tbody className="divide-y divide-slate-100">
             {loading && (
               <tr>
-                <td colSpan={10} className="px-6 py-8 text-center text-sm text-slate-400">Loading invoices...</td>
+                <td colSpan={10} className="px-6 py-8 text-center text-sm text-slate-400"><Loader variant="inline" label="Loading invoices" /></td>
               </tr>
             )}
 

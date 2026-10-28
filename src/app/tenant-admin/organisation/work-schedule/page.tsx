@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { getWorkSchedule, saveWorkSchedule } from "@/lib/api/admin";
+import Loader from "@/components/ui/Loader";
 
 const allDays = [
   { key: "monday", label: "Mon" },
@@ -94,7 +95,7 @@ export default function WorkSchedulePage() {
   if (loading) {
     return (
       <div className="max-w-2xl rounded-lg border border-slate-200 bg-white p-6">
-        <p className="text-sm text-slate-400">Loading work schedule...</p>
+        <Loader variant="section" label="Loading work schedule" />
       </div>
     );
   }

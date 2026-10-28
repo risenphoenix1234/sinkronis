@@ -20,6 +20,7 @@ import {
 } from "@/lib/api/payroll";
 import { pickNum, pickText } from "@/lib/payroll-pick";
 import type { PayrollRecord } from "@/lib/api/types/payroll.types";
+import Loader from "@/components/ui/Loader";
 
 const naira = (n: number) => `₦${n.toLocaleString("en-NG")}`;
 const fmtDate = (iso: string | null) =>
@@ -111,7 +112,7 @@ export default function LoanDetailPage() {
         <FiArrowLeft size={13} /> Back to Loan Deductions
       </Link>
 
-      {loading && !loan && <p className="mt-6 text-sm text-slate-400">Loading loan…</p>}
+      {loading && !loan && <Loader variant="section" label="Loading loan" />}
       {error && <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>}
 
       {loan && (

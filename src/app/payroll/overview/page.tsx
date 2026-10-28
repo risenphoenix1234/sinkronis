@@ -8,6 +8,7 @@ import PayrollChart from "@/components/payroll/overview/PayrollChart";
 import PayeeGroupChart from "@/components/payroll/overview/PayeeGroupChart";
 import { getApiErrorMessage, getPayrollDashboard } from "@/lib/api/payroll";
 import type { PayrollDashboardData } from "@/lib/api/types/payroll.types";
+import Loader from "@/components/ui/Loader";
 
 const naira = (n: number) => `₦${n.toLocaleString("en-NG")}`;
 const nairaExact = (n: number) => `₦${n.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -48,7 +49,7 @@ export default function PayrollOverviewPage() {
     URL.revokeObjectURL(url);
   };
 
-  if (loading) return <div className="p-6 text-sm text-slate-400">Loading overview…</div>;
+  if (loading) return <Loader variant="page" label="Loading overview" />;
   if (!data) return <div className="p-6 text-sm text-red-600">{error || "No data."}</div>;
 
   const lastNet = moneyOf(data.summary.lastRunNetPay);

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getTenantDashboard } from "@/lib/api/admin";
 import { TenantDashboardResponse } from "@/lib/api/types/admin.types";
+import Loader from "@/components/ui/Loader";
 
 const moduleIconStyles: Record<string, { bg: string; color: string; icon: string }> = {
   admin: { bg: "bg-slate-100", color: "text-slate-600", icon: "⚙" },
@@ -64,7 +65,7 @@ export default function TenantAdminDashboardPage() {
   if (loading) {
     return (
       <section className="p-6">
-        <p className="text-sm text-slate-400">Loading dashboard...</p>
+        <Loader variant="section" label="Loading dashboard" />
       </section>
     );
   }

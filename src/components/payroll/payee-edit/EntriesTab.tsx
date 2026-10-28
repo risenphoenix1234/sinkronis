@@ -20,6 +20,7 @@ import {
 } from "@/lib/api/payroll";
 import { pickNum, pickText } from "@/lib/payroll-pick";
 import type { PayrollPayee, PayrollRecord } from "@/lib/api/types/payroll.types";
+import Loader from "@/components/ui/Loader";
 
 export type EntryKind = "bonus" | "deduction";
 
@@ -206,7 +207,7 @@ export default function EntriesTab({ kind, payee }: { kind: EntryKind; payee: Pa
         <tbody>
           {loading && (
             <tr>
-              <td colSpan={headers.length} className="py-10 text-center text-slate-400">Loading...</td>
+              <td colSpan={headers.length} className="py-10 text-center text-slate-400"><Loader variant="inline" label="Loading" /></td>
             </tr>
           )}
           {!loading && rows.length === 0 && (

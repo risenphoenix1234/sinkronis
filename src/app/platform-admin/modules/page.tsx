@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Box } from "lucide-react";
 import { getModuleManagement, enableTenantModule, disableTenantModule } from "@/lib/api/platform-admin";
 import { ModuleManagementAnalyticsItem, TenantModuleRow } from "@/lib/api/types/platform-admin.types";
+import Loader from "@/components/ui/Loader";
 
 const ALL_MODULES = ["HRIS", "ACCOUNTING", "PAYROLL"];
 
@@ -80,7 +81,7 @@ export default function ModuleManagementPage() {
   if (loading) {
     return (
       <section className="p-6">
-        <p className="text-sm text-slate-400">Loading modules...</p>
+        <Loader variant="section" label="Loading modules" />
       </section>
     );
   }

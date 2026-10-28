@@ -17,6 +17,7 @@ import {
 } from "@/lib/api/accounting";
 import { WalletSummary, WalletTransactionItem } from "@/lib/api/types/accounting.types";
 import Link from "next/link";
+import Loader from "@/components/ui/Loader";
 
 
 type ModalStep = "closed" | "method" | "gateway" | "manual";
@@ -229,7 +230,7 @@ export default function WalletPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {loading && <tr><td colSpan={5} className="px-6 py-8 text-center text-sm text-slate-400">Loading transactions...</td></tr>}
+            {loading && <tr><td colSpan={5} className="px-6 py-8 text-center text-sm text-slate-400"><Loader variant="inline" label="Loading transactions" /></td></tr>}
             {!loading && error && <tr><td colSpan={5} className="px-6 py-8 text-center text-sm text-red-500">{error}</td></tr>}
             {!loading && !error && filteredTxns.map((t) => (
               <tr key={t.id} className="hover:bg-slate-50">

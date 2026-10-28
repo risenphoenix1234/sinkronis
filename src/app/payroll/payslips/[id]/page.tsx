@@ -10,6 +10,7 @@ import { downloadBlob } from "@/components/payroll/payee-edit/utils";
 import { downloadPayslipFile, getApiErrorMessage, getPayslipDetail } from "@/lib/api/payroll";
 import { pickNum, pickText } from "@/lib/payroll-pick";
 import type { PayrollRecord } from "@/lib/api/types/payroll.types";
+import Loader from "@/components/ui/Loader";
 
 const naira = (n: number) => `₦${n.toLocaleString("en-NG")}`;
 
@@ -128,7 +129,7 @@ export default function PayslipDetailPage() {
         <FiArrowLeft size={13} /> Back to Payslips
       </Link>
 
-      {loading && <p className="mt-6 text-sm text-slate-400">Loading payslip…</p>}
+      {loading && <Loader variant="section" label="Loading payslip" />}
       {error && <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>}
 
       {slip && (

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Loader from "@/components/ui/Loader";
 
 export default function EditEmployeeRedirectPage({
   params,
@@ -19,7 +20,7 @@ export default function EditEmployeeRedirectPage({
     <div className="flex h-64 items-center justify-center p-6 text-sm text-slate-500">
       <div className="flex flex-col items-center gap-3">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-sky-600 border-t-transparent" />
-        <p>Loading employee editor…</p>
+        <Loader variant="section" label="Loading employee editor" />
       </div>
     </div>
   );

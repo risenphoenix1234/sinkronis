@@ -7,6 +7,7 @@ import { ConductRecord } from "@/lib/api/types/hrisTypes";
 import { getConductRecords } from "@/lib/api/hris";
 import { resolveDepartmentName } from "@/utils/department";
 import SuspensionDrawer from "@/components/hris/conduct/SuspensionDrawer";
+import Loader from "@/components/ui/Loader";
 
 interface EmployeeConductSuspensionProps {
   records?: ConductRecord[];
@@ -115,9 +116,7 @@ export default function EmployeeConductSuspension({
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={8} className="py-12 text-center text-sm text-slate-500">
-                  Loading suspension records...
-                </td>
+                <td colSpan={8} className="py-12 text-center text-sm text-slate-500"><Loader variant="inline" label="Loading suspension records" /></td>
               </tr>
             ) : error ? (
               <tr>

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { FiDownload, FiEdit2, FiPlus } from "react-icons/fi";
 import { getApiErrorMessage, getPayeeGroups } from "@/lib/api/payroll";
 import type { PayrollPayeeGroup } from "@/lib/api/types/payroll.types";
+import Loader from "@/components/ui/Loader";
 
 function StatusPill({ active }: { active: boolean }) {
   return (
@@ -98,9 +99,7 @@ export default function PayeeGroupPage() {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={5} className="py-10 text-center text-slate-400">
-                  Loading payee groups...
-                </td>
+                <td colSpan={5} className="py-10 text-center text-slate-400"><Loader variant="inline" label="Loading payee groups" /></td>
               </tr>
             )}
             {!loading && !error && groups.length === 0 && (

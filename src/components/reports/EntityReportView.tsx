@@ -8,6 +8,7 @@ import EntityHeader from "@/components/reports/EntityHeader";
 import InvoiceTable from "@/components/reports/InvoiceTable";
 import { entityFilters, exportCsv, exportPdf, getEntityReport } from "@/lib/api/accounting";
 import { EntityDetail, ReportEntityKind } from "@/lib/api/types/accounting.types";
+import Loader from "@/components/ui/Loader";
 
 const PAGE_SIZE = 20;
 
@@ -82,7 +83,7 @@ export default function EntityReportView({ kind, id }: { kind: ReportEntityKind;
         </div>
       )}
 
-      {loading && !detail && <p className="text-center text-sm text-slate-400">Loading…</p>}
+      {loading && !detail && <Loader variant="section" label="Loading" />}
 
       {detail && (
         <>

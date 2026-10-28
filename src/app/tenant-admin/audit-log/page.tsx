@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { FiDownload, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { getAuditLog, exportAuditLogCsv } from "@/lib/api/admin";
 import { AuditLogRecord, AuditLogFilters } from "@/lib/api/types/admin.types";
+import Loader from "@/components/ui/Loader";
 
 const badgePalette = [
   "bg-sky-50 text-sky-700",
@@ -267,9 +268,7 @@ export default function AuditLogPage() {
           <tbody className="divide-y divide-slate-100">
             {loading && (
               <tr>
-                <td colSpan={6} className="px-6 py-10 text-center text-sm text-slate-400">
-                  Loading audit log...
-                </td>
+                <td colSpan={6} className="px-6 py-10 text-center text-sm text-slate-400"><Loader variant="inline" label="Loading audit log" /></td>
               </tr>
             )}
 

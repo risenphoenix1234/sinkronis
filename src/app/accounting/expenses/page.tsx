@@ -8,6 +8,7 @@ import EditExpenseModal from "@/components/modals/EditExpenseModal";
 import DeleteExpenseModal from "@/components/modals/DeleteExpenseModal";
 import { getExpenses, createExpense, updateExpense, voidExpense, getExpenseCategories } from "@/lib/api/accounting";
 import { ExpenseItem, ExpensesSummary, CreateExpensePayload, UpdateExpensePayload, ExpenseCategory } from "@/lib/api/types/accounting.types";
+import Loader from "@/components/ui/Loader";
 
 function naira(value: number | string) {
   return `₦${Number(value).toLocaleString()}`;
@@ -194,7 +195,7 @@ export default function ExpensesPage() {
           <tbody className="divide-y divide-slate-100">
             {loading && (
               <tr>
-                <td colSpan={8} className="px-6 py-8 text-center text-sm text-slate-400">Loading expenses...</td>
+                <td colSpan={8} className="px-6 py-8 text-center text-sm text-slate-400"><Loader variant="inline" label="Loading expenses" /></td>
               </tr>
             )}
 

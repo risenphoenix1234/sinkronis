@@ -16,6 +16,7 @@ import type {
   BankUpdateRequestItem,
   BankUpdateRequestsResponse,
 } from "@/lib/api/hris";
+import Loader from "@/components/ui/Loader";
 
 const PAGE_SIZE = 10;
 
@@ -234,9 +235,7 @@ export default function BankRequestsPage() {
               <tbody>
                 {loading && !result ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-sm text-slate-500">
-                      Loading requests...
-                    </td>
+                    <td colSpan={7} className="py-12 text-center text-sm text-slate-500"><Loader variant="inline" label="Loading requests" /></td>
                   </tr>
                 ) : error ? (
                   <tr>

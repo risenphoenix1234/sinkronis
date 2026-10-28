@@ -14,6 +14,7 @@ import {
   HistoricalAppraisalDetailData,
 } from "@/lib/api/types/employeeTypes";
 import AcknowledgeAppraisalModal from "./AcknowledgeAppraisalModal";
+import Loader from "@/components/ui/Loader";
 
 export interface AppraisalDetailData {
   cycle: string;
@@ -231,9 +232,7 @@ export default function ViewMyAppraisal({
           {loading ? (
             <div className="flex flex-col items-center justify-center space-y-3 py-12 text-gray-400">
               <Loader2 className="h-7 w-7 animate-spin text-[#1683D8]" />
-              <p className="text-xs font-medium text-gray-500">
-                Loading completed appraisal details...
-              </p>
+              <Loader variant="section" label="Loading completed appraisal details" />
             </div>
           ) : (
             <>

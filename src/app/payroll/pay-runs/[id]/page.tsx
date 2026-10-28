@@ -14,6 +14,7 @@ import {
   rejectPayRun,
 } from "@/lib/api/payroll";
 import type { PayrollPagination, PayrollPayRun, PayrollPayRunItem } from "@/lib/api/types/payroll.types";
+import Loader from "@/components/ui/Loader";
 
 const PAGE_SIZE = 20;
 const naira = (n: number) => `₦${n.toLocaleString("en-NG")}`;
@@ -115,7 +116,7 @@ export default function PayRunDetailPage() {
   const total = pagination?.total ?? 0;
   const start = (page - 1) * PAGE_SIZE;
 
-  if (loading && !run) return <div className="p-6 text-sm text-slate-400">Loading payroll…</div>;
+  if (loading && !run) return <Loader variant="page" label="Loading payroll" />;
   if (!run) return <div className="p-6 text-sm text-red-600">{error || "Payroll not found."}</div>;
 
   const canApprove = run.canApprove ?? run.availableActions.includes("APPROVE");

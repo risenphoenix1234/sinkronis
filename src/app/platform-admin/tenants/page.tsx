@@ -6,6 +6,7 @@ import { Search, Plus, Eye, Ban } from "lucide-react";
 import { getTenants, createTenant, suspendTenant } from "@/lib/api/platform-admin";
 import { Tenant } from "@/lib/api/types/platform-admin.types";
 import AddTenantModal, { NewTenantInput } from "@/components/modals/AddTenantModal";
+import Loader from "@/components/ui/Loader";
 
 const ALL_MODULES = ["HRIS", "Accounting", "Payroll"];
 
@@ -164,9 +165,7 @@ export default function TenantsPage() {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={8} className="px-5 py-10 text-center text-sm text-slate-400">
-                  Loading tenants...
-                </td>
+                <td colSpan={8} className="px-5 py-10 text-center text-sm text-slate-400"><Loader variant="inline" label="Loading tenants" /></td>
               </tr>
             )}
 

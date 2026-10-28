@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getInvoices } from "@/lib/api/accounting";
 import { Invoice } from "@/lib/api/types/accounting.types";
+import Loader from "@/components/ui/Loader";
 
 function naira(value: number) {
   return `₦${value.toLocaleString()}`;
@@ -74,7 +75,7 @@ export default function TaxPage() {
         </p>
       </div>
 
-      {loading && <p className="text-sm text-slate-400">Loading tax data...</p>}
+      {loading && <Loader variant="section" label="Loading tax data" />}
       {!loading && error && <p className="text-sm text-red-500">{error}</p>}
 
       {!loading && !error && (

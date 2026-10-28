@@ -10,6 +10,7 @@ import {
   removeIpAllowlistEntry,
 } from "@/lib/api/admin";
 import { SecurityIpAllowlistEntry } from "@/lib/api/types/admin.types";
+import Loader from "@/components/ui/Loader";
 
 export default function IpRestrictionPage() {
   const [enabled, setEnabled] = useState(false);
@@ -91,7 +92,7 @@ export default function IpRestrictionPage() {
   if (loading) {
     return (
       <div className="max-w-2xl rounded-lg border border-slate-200 bg-white p-6">
-        <p className="text-sm text-slate-400">Loading IP allowlist...</p>
+        <Loader variant="section" label="Loading IP allowlist" />
       </div>
     );
   }

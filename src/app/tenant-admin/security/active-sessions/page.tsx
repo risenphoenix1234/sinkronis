@@ -8,6 +8,7 @@ import {
   revokeAllOtherSessions,
 } from "@/lib/api/admin";
 import { SecuritySession } from "@/lib/api/types/admin.types";
+import Loader from "@/components/ui/Loader";
 
 function formatRelative(dateStr: string) {
   const date = new Date(dateStr);
@@ -80,7 +81,7 @@ export default function ActiveSessionsPage() {
   if (loading) {
     return (
       <div className="rounded-lg border border-slate-200 bg-white p-4">
-        <p className="py-8 text-center text-sm text-slate-400">Loading sessions...</p>
+        <Loader variant="section" label="Loading sessions" />
       </div>
     );
   }

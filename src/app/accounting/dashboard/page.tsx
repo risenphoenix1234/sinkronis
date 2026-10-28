@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getAccountingDashboard } from "@/lib/api/accounting";
 import { AccountingDashboardResponse } from "@/lib/api/types/accounting.types";
+import Loader from "@/components/ui/Loader";
 
 function naira(value: number) {
   return `₦${value.toLocaleString()}`;
@@ -49,7 +50,7 @@ export default function AccountingDashboardPage() {
   if (loading) {
     return (
       <section className="p-6">
-        <p className="text-sm text-slate-400">Loading dashboard...</p>
+        <Loader variant="section" label="Loading dashboard" />
       </section>
     );
   }

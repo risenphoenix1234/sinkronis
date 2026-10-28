@@ -8,6 +8,7 @@ import EditClientModal from "@/components/modals/EditClientModal";
 import DeleteClientModal from "@/components/modals/DeleteClientModal";
 import { getCustomers, createCustomer, updateCustomer, deleteCustomer } from "@/lib/api/accounting";
 import { Customer, CustomerSummary, UpdateCustomerPayload } from "@/lib/api/types/accounting.types";
+import Loader from "@/components/ui/Loader";
 
 type StatusFilter = "ALL" | "ACTIVE" | "INACTIVE";
 
@@ -162,7 +163,7 @@ const handleEdit = async (id: string, updates: UpdateCustomerPayload) => {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={8} className="px-6 py-8 text-center text-sm text-slate-400">Loading clients...</td>
+                <td colSpan={8} className="px-6 py-8 text-center text-sm text-slate-400"><Loader variant="inline" label="Loading clients" /></td>
               </tr>
             )}
 

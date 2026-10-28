@@ -10,6 +10,7 @@ import {
   RenewalPeriodPolicy,
   SubscriptionPaymentAttempt,
 } from "@/lib/api/types/renewal.types";
+import Loader from "@/components/ui/Loader";
 
 interface RenewalPreview {
   planName: string;
@@ -191,7 +192,7 @@ export default function RenewSubscriptionPage() {
     }
   };
 
-  if (loading) return <p className="p-6 text-sm text-slate-400">Loading renewal...</p>;
+  if (loading) return <Loader variant="page" label="Loading renewal" />;
 
   if (!overview) {
     return <p className="p-6 text-sm text-red-500">{error || "Something went wrong."}</p>;

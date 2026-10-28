@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Toggle from "@/components/ui/Toggle";
 import { getSecurityPolicy, updateTwoFactorPolicy } from "@/lib/api/admin";
+import Loader from "@/components/ui/Loader";
 
 type MethodKey = "authenticatorApp" | "sms" | "emailOtp";
 
@@ -87,7 +88,7 @@ export default function TwoFactorAuthPage() {
   if (loading) {
     return (
       <div className="max-w-2xl rounded-lg border border-slate-200 bg-white p-6">
-        <p className="text-sm text-slate-400">Loading two-factor settings...</p>
+        <Loader variant="section" label="Loading two-factor settings" />
       </div>
     );
   }

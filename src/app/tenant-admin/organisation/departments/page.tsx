@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { FiPlus, FiX } from "react-icons/fi";
 import { getDepartmentsTable, createDepartment } from "@/lib/api/admin";
 import { DepartmentTableRow } from "@/lib/api/types/admin.types";
+import Loader from "@/components/ui/Loader";
 
 const emptyForm = { name: "", description: "" };
 
@@ -112,9 +113,7 @@ export default function DepartmentsPage() {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-sm text-slate-400">
-                  Loading departments...
-                </td>
+                <td colSpan={4} className="px-4 py-8 text-center text-sm text-slate-400"><Loader variant="inline" label="Loading departments" /></td>
               </tr>
             )}
 

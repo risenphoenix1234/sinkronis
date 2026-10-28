@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Toggle from "@/components/ui/Toggle";
 import { getSecurityPolicy, updatePasswordPolicy } from "@/lib/api/admin";
+import Loader from "@/components/ui/Loader";
 
 type ComplexityKey = "uppercase" | "lowercase" | "number" | "specialChar";
 
@@ -92,7 +93,7 @@ export default function PasswordPolicyPage() {
   if (loading) {
     return (
       <div className="max-w-2xl rounded-lg border border-slate-200 bg-white p-6">
-        <p className="text-sm text-slate-400">Loading password policy...</p>
+        <Loader variant="section" label="Loading password policy" />
       </div>
     );
   }

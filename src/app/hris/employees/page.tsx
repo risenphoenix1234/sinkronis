@@ -16,6 +16,7 @@ import {
 
 import ChangeEmployeeStatusModal from "@/components/modals/Hris/ChangeEmployeeStatusModal";
 import FilterEmployeeModal from "@/components/modals/Hris/FilterEmployeeModal";
+import Loader from "@/components/ui/Loader";
 
 interface EmployeeRow {
   id: string;
@@ -238,9 +239,7 @@ export default function EmployeeListPage() {
 
         <div className="overflow-x-auto">
           {loading ? (
-            <p className="px-4 py-12 text-center text-[#667085]">
-              Loading employees…
-            </p>
+            <Loader variant="section" label="Loading employees" />
           ) : loadError ? (
             <div className="px-4 py-12 text-center">
               <p className="text-[#B42318]">{loadError}</p>

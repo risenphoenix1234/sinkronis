@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { ClipboardList, ExternalLink, Loader2 } from "lucide-react";
 import type { AppraisalReview } from "@/lib/api/types/hrisTypes";
 import StatusBadge from "../ui/StatusBadge";
+import Loader from "@/components/ui/Loader";
 
 type ReviewsTableProps = {
   reviews: AppraisalReview[];
@@ -60,9 +61,7 @@ export default function ReviewsTable({
                 <td colSpan={COLUMN_COUNT} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center justify-center gap-3">
                     <Loader2 className="h-7 w-7 animate-spin text-sky-600" />
-                    <p className="text-sm font-medium text-slate-500">
-                      Loading appraisal reviews…
-                    </p>
+                    <Loader variant="section" label="Loading appraisal reviews" />
                   </div>
                 </td>
               </tr>

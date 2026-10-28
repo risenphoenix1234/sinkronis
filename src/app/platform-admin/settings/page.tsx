@@ -18,6 +18,7 @@ import {
   MaintenanceMode,
 } from "@/lib/api/types/platform-admin.types";
 import EditEmailTemplateModal from "@/components/modals/EditEmailTemplateModal";
+import Loader from "@/components/ui/Loader";
 
 function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
   return (
@@ -151,7 +152,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <section className="p-6">
-        <p className="text-sm text-slate-400">Loading settings...</p>
+        <Loader variant="section" label="Loading settings" />
       </section>
     );
   }

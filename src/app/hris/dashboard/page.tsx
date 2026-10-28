@@ -7,6 +7,7 @@ import type { HrisDashboardData } from "@/lib/api/types/hrisTypes";
 import { timeAgo } from "@/utils/timeAgo";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import Loader from "@/components/ui/Loader";
 
 type ApiError = {
   response?: {
@@ -100,7 +101,7 @@ export default function HRISDashboardPage() {
     }
   };
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <Loader variant="page" label="Loading" />;
   if (error) return <p className="text-red-500">{error}</p>;
   if (!data) return null;
 

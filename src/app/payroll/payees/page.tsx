@@ -11,6 +11,7 @@ import type {
   PayrollPayeeLifecycleStatus,
   PayrollPayeesSummary,
 } from "@/lib/api/types/payroll.types";
+import Loader from "@/components/ui/Loader";
 
 const tabs: { key: PayrollPayeeLifecycleStatus; label: string }[] = [
   { key: "ACTIVE", label: "Active" },
@@ -185,9 +186,7 @@ export default function PayeesPage() {
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-slate-400">
-                    Loading payees...
-                  </td>
+                  <td colSpan={5} className="px-4 py-10 text-center text-slate-400"><Loader variant="inline" label="Loading payees" /></td>
                 </tr>
               )}
               {!loading && !error && payees.length === 0 && (

@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { getInvitations, resendInvitation } from "@/lib/api/admin";
 import { TenantInvitation } from "@/lib/api/types/admin.types";
+import Loader from "@/components/ui/Loader";
 
 const moduleBadgeColor: Record<string, string> = {
   HRIS: "bg-emerald-50 text-emerald-700",
@@ -71,9 +72,7 @@ export default function PendingInvitationsPage() {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-sm text-slate-400">
-                  Loading invitations...
-                </td>
+                <td colSpan={6} className="px-4 py-8 text-center text-sm text-slate-400"><Loader variant="inline" label="Loading invitations" /></td>
               </tr>
             )}
 

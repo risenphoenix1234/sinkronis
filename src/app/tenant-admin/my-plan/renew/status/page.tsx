@@ -9,6 +9,7 @@ import {
   SubscriptionPaymentAttempt,
   SubscriptionPaymentStatus,
 } from "@/lib/api/types/renewal.types";
+import Loader from "@/components/ui/Loader";
 
 const PAYMENT_REF_KEY = "sinkronis:renewal-reference";
 const INTENT_PREFIX = "sinkronis:renewal-intent:";
@@ -214,7 +215,7 @@ function StatusContent() {
 
 export default function RenewalStatusPage() {
   return (
-    <Suspense fallback={<p className="p-6 text-sm text-slate-400">Loading...</p>}>
+    <Suspense fallback={<Loader variant="section" label="Loading" />}>
       <StatusContent />
     </Suspense>
   );

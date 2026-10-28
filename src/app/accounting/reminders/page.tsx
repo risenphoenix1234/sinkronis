@@ -6,6 +6,7 @@ import ConfigureRemindersModal from "@/components/modals/ConfigureRemindersModal
 import ViewReminderModal from "@/components/modals/ViewReminderModal";
 import { Reminder, mapReminderItem, statusStyles, RemindersSummary, ReminderFilter } from "@/types/reminder";
 import { getReminders, markReminderRead, markAllRemindersRead } from "@/lib/api/accounting";
+import Loader from "@/components/ui/Loader";
 
 type Filter = "All" | "Unread" | "Upcoming" | "Overdue";
 
@@ -156,7 +157,7 @@ export default function RemindersPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {loading && <tr><td colSpan={7} className="px-6 py-8 text-center text-sm text-slate-400">Loading reminders...</td></tr>}
+            {loading && <tr><td colSpan={7} className="px-6 py-8 text-center text-sm text-slate-400"><Loader variant="inline" label="Loading reminders" /></td></tr>}
             {!loading && error && <tr><td colSpan={7} className="px-6 py-8 text-center text-sm text-red-500">{error}</td></tr>}
             {!loading && !error && reminders.map((rem) => (
               <tr key={rem.id} className="hover:bg-slate-50">

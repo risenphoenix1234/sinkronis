@@ -21,6 +21,7 @@ import {
   processPayRun,
 } from "@/lib/api/payroll";
 import type { PayrollEligiblePayee, PayrollPayeeGroup } from "@/lib/api/types/payroll.types";
+import Loader from "@/components/ui/Loader";
 
 const PAGE_SIZE = 10;
 const naira = (n: number) => `₦${n.toLocaleString("en-NG")}`;
@@ -394,7 +395,7 @@ export default function CreatePayrollPage() {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={6} className="py-10 text-center text-slate-400">Loading employees…</td>
+                <td colSpan={6} className="py-10 text-center text-slate-400"><Loader variant="inline" label="Loading employees" /></td>
               </tr>
             )}
             {!loading && view.length === 0 && (

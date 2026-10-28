@@ -12,6 +12,7 @@ import {
 } from "@/lib/api/payroll";
 import type { PayrollRecord } from "@/lib/api/types/payroll.types";
 import { isRemittedStatus, monthLabel, pickNum, pickText } from "@/lib/payroll-pick";
+import Loader from "@/components/ui/Loader";
 
 const naira = (n: number) => `₦${n.toLocaleString("en-NG")}`;
 const today = () => new Date().toISOString().slice(0, 10);
@@ -67,7 +68,7 @@ export default function PfaDetailPage() {
     return rows.filter((r) => !q || (pickText(r, ["employeeName", "name", "employee"]) ?? "").toLowerCase().includes(q));
   }, [rows, search]);
 
-  if (loading && !remittance) return <div className="p-6 text-sm text-slate-400">Loading…</div>;
+  if (loading && !remittance) return <Loader variant="page" label="Loading" />;
   if (!remittance) return <div className="p-6 text-sm text-red-600">{error || "Remittance not found."}</div>;
 
   const pfaName = pickText(remittance, ["pfaName", "pfa", "name"]) ?? "PFA";

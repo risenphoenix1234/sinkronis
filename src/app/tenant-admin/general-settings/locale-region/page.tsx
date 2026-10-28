@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { getLocaleSettings, saveLocaleSettings, getLocaleOptions } from "@/lib/api/admin";
 import { GeneralLocaleSettings, GeneralLocaleOptions } from "@/lib/api/types/admin.types";
+import Loader from "@/components/ui/Loader";
 
 function formatPreviewDate(format: string) {
   const d = new Date();
@@ -83,7 +84,7 @@ export default function LocaleRegionPage() {
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white p-6">
-        {loading && <p className="text-sm text-slate-500">Loading…</p>}
+        {loading && <Loader variant="section" label="Loading" />}
         {error && (
           <p className="mb-3 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-600">{error}</p>
         )}

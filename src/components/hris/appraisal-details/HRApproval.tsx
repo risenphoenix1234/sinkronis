@@ -18,6 +18,7 @@ import type {
   HrApprovalDecision,
   SubmitHrApprovalData,
 } from "@/lib/api/types/hrisTypes";
+import Loader from "@/components/ui/Loader";
 
 export interface HRApprovalProps {
   appraisalId?: string;
@@ -250,9 +251,7 @@ export default function HRApproval({
         </div>
         <div className="flex flex-col items-center justify-center py-10 text-slate-500 gap-2">
           <Loader2 size={22} className="animate-spin text-[#946B00]" />
-          <p className="text-xs font-medium text-slate-600">
-            Loading HR approval view...
-          </p>
+          <Loader variant="section" label="Loading HR approval view" />
         </div>
       </section>
     );

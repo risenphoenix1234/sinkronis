@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Users, Zap, Calculator, Layers, Check } from "lucide-react";
 import { getPricingPlans } from "@/lib/api/platform-admin";
 import { PricingModule, PricingOverview } from "@/lib/api/types/platform-admin.types";
+import Loader from "@/components/ui/Loader";
 
 const moduleIcons: Record<string, { icon: React.ElementType; bg: string; color: string }> = {
   hris: { icon: Users, bg: "bg-green-50", color: "text-green-600" },
@@ -51,7 +52,7 @@ export default function PricingPlansPage() {
   if (loading) {
     return (
       <section className="p-6">
-        <p className="text-sm text-slate-400">Loading pricing...</p>
+        <Loader variant="section" label="Loading pricing" />
       </section>
     );
   }

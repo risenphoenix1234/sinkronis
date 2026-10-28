@@ -1,3 +1,4 @@
+import Loader from "@/components/ui/Loader";
 // src/components/manager/TableState.tsx
 interface TableStateProps {
   loading: boolean;
@@ -15,7 +16,7 @@ export default function TableState({
   onRetry,
 }: TableStateProps) {
   if (loading) {
-    return <p className="px-5 py-10 text-center text-sm text-gray-400">Loading...</p>;
+    return <Loader variant="section" label="Loading" />;
   }
   if (error) {
     return (

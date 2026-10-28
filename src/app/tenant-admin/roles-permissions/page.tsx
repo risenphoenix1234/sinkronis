@@ -5,6 +5,7 @@ import Toggle from "@/components/ui/Toggle";
 import CreateRoleModal from "@/components/modals/CreateRoleModal";
 import { getRoleDetails, getRoleTemplates, createRole, updateRole } from "@/lib/api/admin";
 import { RoleDetail, RoleTemplate, PermissionItem } from "@/lib/api/types/admin.types";
+import Loader from "@/components/ui/Loader";
 
 export default function RolesPermissionsPage() {
   const [roles, setRoles] = useState<RoleDetail[]>([]);
@@ -121,7 +122,7 @@ const { moduleList, actionList, permByModuleAction } = useMemo(() => {
   if (loading) {
     return (
       <section className="p-6">
-        <p className="text-sm text-slate-400">Loading roles...</p>
+        <Loader variant="section" label="Loading roles" />
       </section>
     );
   }

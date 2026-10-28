@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getCustomerDetail } from "@/lib/api/accounting";
 import { CustomerDetail } from "@/lib/api/types/accounting.types";
+import Loader from "@/components/ui/Loader";
 
 type Tab = "invoices" | "projects" | "payments";
 
@@ -67,7 +68,7 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
   if (loading) {
     return (
       <section className="p-6">
-        <p className="text-sm text-slate-400">Loading customer...</p>
+        <Loader variant="section" label="Loading customer" />
       </section>
     );
   }

@@ -14,6 +14,7 @@ import {
 import { PlatformSupportTicket, SupportTicketDetail } from "@/lib/api/types/platform-admin.types";
 import OpenTicketModal, { NewTicketInput } from "@/components/modals/OpenTicketModal";
 import TicketDetailPanel from "@/components/modals/TicketDetailPanel";
+import Loader from "@/components/ui/Loader";
 
 type Tab = "All" | "OPEN" | "IN_PROGRESS" | "RESOLVED";
 
@@ -194,9 +195,7 @@ export default function SupportPage() {
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={8} className="px-5 py-10 text-center text-sm text-slate-400">
-                    Loading tickets...
-                  </td>
+                  <td colSpan={8} className="px-5 py-10 text-center text-sm text-slate-400"><Loader variant="inline" label="Loading tickets" /></td>
                 </tr>
               )}
 

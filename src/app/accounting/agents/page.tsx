@@ -7,6 +7,7 @@ import { AgentListItem, AgentSummary, InviteAgentPayload, InviteAgentsBulkPayloa
 import EditAgentModal from "@/components/modals/EditAgentModal";
 import { updateAgent } from "@/lib/api/accounting";
 import { UpdateAgentPayload } from "@/lib/api/types/accounting.types";
+import Loader from "@/components/ui/Loader";
 
 
 
@@ -158,7 +159,7 @@ export default function AgentsPage() {
           <tbody className="divide-y divide-slate-100">
             {loading && (
               <tr>
-                <td colSpan={9} className="px-6 py-8 text-center text-sm text-slate-400">Loading agents...</td>
+                <td colSpan={9} className="px-6 py-8 text-center text-sm text-slate-400"><Loader variant="inline" label="Loading agents" /></td>
               </tr>
             )}
 

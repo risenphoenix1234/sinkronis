@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { getPlatformDashboard } from "@/lib/api/platform-admin";
 import { PlatformDashboard } from "@/lib/api/types/platform-admin.types";
+import Loader from "@/components/ui/Loader";
 
 function formatNaira(value: number) {
   return `₦${(value / 1_000_000).toFixed(1)}M`;
@@ -133,7 +134,7 @@ export default function PlatformAdminOverviewPage() {
   if (loading) {
     return (
       <section className="p-6">
-        <p className="text-sm text-slate-400">Loading dashboard...</p>
+        <Loader variant="section" label="Loading dashboard" />
       </section>
     );
   }

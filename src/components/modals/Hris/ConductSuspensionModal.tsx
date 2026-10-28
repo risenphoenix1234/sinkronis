@@ -5,6 +5,7 @@ import { Pencil } from "lucide-react";
 import { ConductRecord } from "@/lib/api/types/hrisTypes";
 import EmptyState from "@/components/shared/EmptyState";
 import { resolveDepartmentName } from "@/utils/department";
+import Loader from "@/components/ui/Loader";
 
 interface Props {
   records: ConductRecord[];
@@ -44,9 +45,7 @@ export default function ConductSuspensionModal({
               <td
                 colSpan={7}
                 className="py-12 text-center text-sm text-slate-500"
-              >
-                Loading records...
-              </td>
+              ><Loader variant="inline" label="Loading records" /></td>
             </tr>
           ) : error ? (
             <tr>

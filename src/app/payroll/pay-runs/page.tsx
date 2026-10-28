@@ -7,6 +7,7 @@ import { FiChevronLeft, FiChevronRight, FiFileText } from "react-icons/fi";
 import { getApiErrorMessage, getPayRuns } from "@/lib/api/payroll";
 import StatusBadge, { statusLabel } from "@/components/payroll/pay-run/StatusBadge";
 import type { PayrollPagination, PayrollPayRun } from "@/lib/api/types/payroll.types";
+import Loader from "@/components/ui/Loader";
 
 const PAGE_SIZE = 10;
 const naira = (n: number) => `₦${n.toLocaleString("en-NG")}`;
@@ -110,7 +111,7 @@ export default function PayrollHistoryPage() {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={10} className="py-10 text-center text-slate-400">Loading payroll history…</td>
+                <td colSpan={10} className="py-10 text-center text-slate-400"><Loader variant="inline" label="Loading payroll history" /></td>
               </tr>
             )}
             {!loading && runs.length === 0 && (

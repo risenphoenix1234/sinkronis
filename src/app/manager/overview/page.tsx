@@ -6,6 +6,7 @@ import Link from "next/link";
 import axios from "axios";
 import { getAppraisals } from "@/lib/api/hris";
 import { AppraisalReview } from "@/lib/api/types/hrisTypes";
+import Loader from "@/components/ui/Loader";
 
 interface Counts {
   total: number;
@@ -74,7 +75,7 @@ export default function ManagerOverviewPage() {
         </p>
       </div>
 
-      {loading && <p className="text-sm text-slate-400">Loading...</p>}
+      {loading && <Loader variant="section" label="Loading" />}
       {error && <p className="text-sm text-red-500">{error}</p>}
 
       {counts && (

@@ -25,6 +25,7 @@ import {
   TenantActivityResponse,
   TenantSupportResponse,
 } from "@/lib/api/types/platform-admin.types";
+import Loader from "@/components/ui/Loader";
 
 type Tab = "overview" | "users" | "modules" | "billing" | "activity" | "support";
 
@@ -156,7 +157,7 @@ const handleDisableModule = async (moduleKey: string, moduleName: string) => {
   if (loading) {
     return (
       <section className="p-6">
-        <p className="text-sm text-slate-400">Loading tenant...</p>
+        <Loader variant="section" label="Loading tenant" />
       </section>
     );
   }

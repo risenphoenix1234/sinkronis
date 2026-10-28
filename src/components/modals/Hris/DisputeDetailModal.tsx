@@ -17,6 +17,7 @@ import {
 import { getAttendanceDisputeId, resolveDispute } from "@/lib/api/hris";
 import type { AttendanceDisputeDetail } from "@/lib/api/types/hrisTypes";
 import StatusBadge from "@/components/ui/StatusBadge";
+import Loader from "@/components/ui/Loader";
 
 interface DisputeDetailModalProps {
   isOpen: boolean;
@@ -166,9 +167,7 @@ export default function DisputeDetailModal({
           {loading ? (
             <div className="flex h-48 flex-col items-center justify-center gap-3">
               <Loader2 className="animate-spin text-blue-600" size={32} />
-              <p className="text-xs font-medium text-slate-500">
-                Loading dispute details...
-              </p>
+              <Loader variant="section" label="Loading dispute details" />
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-red-200 bg-red-50 p-6 text-center">

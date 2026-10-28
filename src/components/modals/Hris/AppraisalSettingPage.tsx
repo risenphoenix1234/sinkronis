@@ -22,6 +22,7 @@ import type {
   AppraisalTemplateSummary,
   CreateAppraisalCyclePayload,
 } from "@/lib/api/types/hrisTypes";
+import Loader from "@/components/ui/Loader";
 
 const RATING_SCALE_BANDS = [
   {
@@ -246,7 +247,7 @@ export default function AppraisalSettings() {
 
           <div className="mt-5 space-y-3">
             {templatesLoading ? (
-              <p className="text-sm text-[#94A3B8]">Loading templates…</p>
+              <Loader variant="section" label="Loading templates" />
             ) : templates.length === 0 && !templatesError ? (
               <p className="rounded-md border border-dashed border-[#E5E9EF] py-8 text-center text-sm text-[#94A3B8]">
                 No templates yet. Create one to get started.
@@ -406,9 +407,7 @@ function RatingScale({
             Updating review frequency…
           </p>
         ) : loading ? (
-          <p className="mt-2 text-xs text-[#94A3B8]">
-            Loading current setting…
-          </p>
+          <Loader variant="section" label="Loading current setting" />
         ) : null}
       </div>
     </section>
