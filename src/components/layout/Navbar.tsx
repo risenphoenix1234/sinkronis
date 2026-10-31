@@ -71,7 +71,7 @@ export default function Navbar({
   }, [pathname]);
 
   return (
-    <header className="flex h-20 w-full shrink-0 items-center border-b border-slate-200 bg-white px-6">
+    <header className="sticky top-0 z-40 flex h-20 w-full shrink-0 items-center border-b border-slate-200 bg-white px-6">
       {/* =====================================================
           LEFT — LOGO
       ====================================================== */}
