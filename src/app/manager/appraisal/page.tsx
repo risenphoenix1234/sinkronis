@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, ClipboardList, Loader2, RefreshCw } from "lucide-react";
 import { getAppraisals } from "@/lib/api/hris";
+import Loader from "@/components/ui/Loader";
 import type { AppraisalReview } from "@/lib/api/types/hrisTypes";
 
 const STAGE_LABELS: Record<string, string> = {
@@ -101,10 +102,7 @@ export default function ManagerAppraisalPage() {
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
         {loading ? (
-          <div className="flex items-center justify-center gap-2 py-16 text-sm text-slate-500">
-            <Loader2 size={18} className="animate-spin text-[#2183C6]" />
-            <span>Loading appraisals...</span>
-          </div>
+          <Loader variant="section" label="Loading appraisals" />
         ) : error ? (
           <div className="flex items-center justify-between gap-3 p-5 text-sm text-red-700">
             <span className="flex items-center gap-2">

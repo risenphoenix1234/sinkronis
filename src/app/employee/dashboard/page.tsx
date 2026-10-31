@@ -11,6 +11,7 @@ import StatsGrid from "@/components/employee/dashboard/StatsGrid";
 import WelcomeCard from "@/components/employee/dashboard/welcomeCard";
 import { clockIn, clockOut, getEmployeeDashboard } from "@/lib/api/employee";
 import { DashboardData } from "@/lib/api/types/employeeTypes";
+import Loader from "@/components/ui/Loader";
 
 export default function DashboardPage() {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
@@ -72,11 +73,7 @@ export default function DashboardPage() {
   }
 
   if (loading) {
-    return (
-      <main className="min-h-screen bg-[#F5F7FA] p-6 text-center text-sm text-gray-500">
-        Loading dashboard…
-      </main>
-    );
+    return <Loader variant="page" label="Loading dashboard" />;
   }
 
   if (error || !dashboard) {
