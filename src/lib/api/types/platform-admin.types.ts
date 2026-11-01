@@ -70,12 +70,45 @@ export interface TenantListResponse {
 
 export type SubscriptionPlan = "HRIS" | "PAYROLL" | "ACCOUNTING" | "ALL_IN_ONE";
 
+export type CompanyRegistrationType = "RC" | "BN" | "LP" | "LLP";
+
+export interface VerifyCompanyPayload {
+  companyName: string;
+  registrationType: CompanyRegistrationType;
+  registrationNumber: string;
+  idempotencyKey: string;
+}
+
+export interface VerifyCompanyData {
+  verificationStatus: string;
+  verified: boolean;
+  replayed: boolean;
+  registeredCompanyName: string | null;
+  registrationType: CompanyRegistrationType;
+  registrationNumber: string;
+  registryStatus: string | null;
+  provider: string;
+  verificationReference: string | null;
+  expiresAt: string | null;
+  reasonCode: string;
+  outcomeCertain: boolean;
+}
+
+export interface VerifyCompanyResponse {
+  success: boolean;
+  message: string;
+  data: VerifyCompanyData;
+}
+
 export interface CreateTenantDto {
   companyName: string;
   adminEmail: string;
   subscriptionPlan: SubscriptionPlan;
   country: string;
   industry?: string;
+  registrationType?: CompanyRegistrationType;
+  registrationNumber?: string;
+  verificationReference?: string;
 }
 
 export interface CreateTenantAdminSummary {

@@ -1,10 +1,11 @@
+// src/app/accounting/reminders/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { IoCheckmarkDone, IoSettingsOutline } from "react-icons/io5";
 import ConfigureRemindersModal from "@/components/modals/ConfigureRemindersModal";
 import ViewReminderModal from "@/components/modals/ViewReminderModal";
-import { Reminder, mapReminderItem, statusStyles, RemindersSummary, ReminderFilter } from "@/types/reminder";
+import { Reminder, mapReminderItem, RemindersSummary, ReminderFilter } from "@/types/reminder";
 import { getReminders, markReminderRead, markAllRemindersRead } from "@/lib/api/accounting";
 import Loader from "@/components/ui/Loader";
 
@@ -15,6 +16,12 @@ const filterToApi: Record<Filter, ReminderFilter> = {
   Unread: "UNREAD",
   Upcoming: "UPCOMING",
   Overdue: "OVERDUE",
+};
+
+const pillStyles: Record<string, string> = {
+  overdue: "bg-[#FFE5E5] text-[#FF3B30]",
+  due: "bg-[#FFF3CD] text-[#856404]",
+  upcoming: "bg-[#E3F2FD] text-[#2183C6]",
 };
 
 const emptySummary: RemindersSummary = { unread: 0, overdue: 0, upcoming: 0 };
@@ -83,127 +90,140 @@ export default function RemindersPage() {
   };
 
   return (
-    <section className="space-y-6 p-6">
+    <section className="min-h-[calc(100vh-5rem)] space-y-6 bg-[#F4F6F8] p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Reminders</h1>
-          <p className="mt-1 text-sm text-slate-500">Upcoming and overdue invoice payment alerts</p>
+          <h1 className="text-4xl font-bold text-[#212B36]">Reminders</h1>
+          <p className="mt-2 text-sm text-[#637381]">Upcoming and overdue invoice payment alerts</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={handleMarkAllRead} className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleMarkAllRead}
+            className="flex items-center gap-2 rounded-md border border-[#E5E8EB] bg-[#F9FAFB] px-4 py-3 text-sm font-medium text-[#212B36] hover:bg-white"
+          >
             <IoCheckmarkDone size={16} />
             Mark all read
           </button>
-          <button onClick={() => setIsConfigureOpen(true)} className="flex items-center gap-1.5 rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">
+          <button
+            onClick={() => setIsConfigureOpen(true)}
+            className="flex items-center gap-2 rounded-md bg-[#2183C6] px-4 py-3 text-sm font-medium text-white hover:bg-[#1976B8]"
+          >
             <IoSettingsOutline size={16} />
             Configure Reminders
           </button>
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <span className="flex items-center gap-1.5 rounded-full bg-sky-50 px-4 py-1.5 text-sm font-medium text-sky-700">
-          Unread <span className="font-semibold">{summary.unread}</span>
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="flex items-center gap-2 rounded bg-[#E3F2FD] px-4 py-3 text-sm text-[#2183C6]">
+          Unread <span className="text-base font-bold">{summary.unread}</span>
         </span>
-        <span className="flex items-center gap-1.5 rounded-full bg-rose-50 px-4 py-1.5 text-sm font-medium text-rose-600">
-          Overdue <span className="font-semibold">{summary.overdue}</span>
+        <span className="flex items-center gap-2 rounded bg-[#FFE5E5] px-4 py-3 text-sm text-[#FF3B30]">
+          Overdue <span className="text-base font-bold">{summary.overdue}</span>
         </span>
-        <span className="flex items-center gap-1.5 rounded-full bg-amber-50 px-4 py-1.5 text-sm font-medium text-amber-700">
-          Upcoming <span className="font-semibold">{summary.upcoming}</span>
+        <span className="flex items-center gap-2 rounded bg-[#FFF3CD] px-4 py-3 text-sm text-[#856404]">
+          Upcoming <span className="text-base font-bold">{summary.upcoming}</span>
         </span>
       </div>
 
-    <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
-  {filters.map((f) => {
-    const isActive = filter === f.label;
+      <div className="flex items-center gap-8 overflow-x-auto border-b border-[#E5E8EB]">
+        {filters.map((f) => {
+          const isActive = filter === f.label;
+          return (
+            <button
+              key={f.label}
+              onClick={() => setFilter(f.label)}
+              className={`-mb-px flex items-center gap-2 border-b-2 px-2 py-4 text-sm transition-colors ${
+                isActive
+                  ? "border-[#2183C6] font-medium text-[#2183C6]"
+                  : "border-transparent text-[#637381] hover:text-[#212B36]"
+              }`}
+            >
+              {f.label}
+              <span
+                className={`rounded-full px-1.5 text-[11px] ${
+                  isActive ? "bg-[#E3F2FD] text-[#2183C6]" : "text-[#919EAB]"
+                }`}
+              >
+                {f.count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
-    return (
-      <button
-        key={f.label}
-        onClick={() => setFilter(f.label)}
-        className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-all ${
-          isActive
-            ? "bg-sky-50 text-sky-700"
-            : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
-        }`}
-      >
-        {f.label}
-
-        <span
-          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
-            isActive
-              ? "bg-sky-100 text-sky-700"
-              : "bg-slate-100 text-slate-500"
-          }`}
-        >
-          {f.count}
-        </span>
-      </button>
-    );
-  })}
-</div>
-
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="min-w-full text-left">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
-            <tr>
-              <th className="px-6 py-3 font-medium">Invoice</th>
-              <th className="px-6 py-3 font-medium">Client</th>
-              <th className="px-6 py-3 font-medium">Amount</th>
-              <th className="px-6 py-3 font-medium">Status</th>
-              <th className="px-6 py-3 font-medium">Channel</th>
-              <th className="px-6 py-3 font-medium">Sent</th>
-              <th className="px-6 py-3 font-medium text-right">Actions</th>
+      <div className="overflow-x-auto rounded-md border border-[#F2F3F5] bg-white">
+        <table className="min-w-full text-left text-[13px]">
+          <thead>
+            <tr className="border-b border-dotted border-[#EBEEF0] text-[#637381]">
+              <th className="py-3.5 pl-10 pr-3 font-normal">Invoice</th>
+              <th className="px-3 py-3.5 font-normal">Client</th>
+              <th className="px-3 py-3.5 font-normal">Amount</th>
+              <th className="px-3 py-3.5 font-normal">Status</th>
+              <th className="px-3 py-3.5 font-normal">Channel</th>
+              <th className="px-3 py-3.5 font-normal">Sent</th>
+              <th className="px-3 py-3.5 pr-4 font-normal"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
-            {loading && <tr><td colSpan={7} className="px-6 py-8 text-center text-sm text-slate-400"><Loader variant="inline" label="Loading reminders" /></td></tr>}
-            {!loading && error && <tr><td colSpan={7} className="px-6 py-8 text-center text-sm text-red-500">{error}</td></tr>}
-            {!loading && !error && reminders.map((rem) => (
-              <tr key={rem.id} className="hover:bg-slate-50">
-                <td className="px-6 py-3 text-sm font-medium text-sky-600 whitespace-nowrap">
-                  <span className="flex items-center gap-2">
-                    {!rem.read && <span className="h-2 w-2 rounded-full bg-sky-500" />}
-                    {rem.invoice}
-                  </span>
-                </td>
-                <td className="px-6 py-3 text-base text-slate-800 whitespace-nowrap">{rem.client}</td>
-                <td className="px-6 py-3 text-base tabular-nums font-medium text-slate-800 whitespace-nowrap">{rem.amount}</td>
-                <td className="px-6 py-3 whitespace-nowrap">
-                  <span className={`inline-block rounded-full px-3 py-1 text-sm font-medium ${statusStyles[rem.status]}`}>
-                    {rem.statusLabel}
-                  </span>
-                </td>
-                <td className="px-6 py-3 text-sm text-slate-500 whitespace-nowrap">{rem.channel}</td>
-                <td className="px-6 py-3 text-sm text-slate-500 whitespace-nowrap">{rem.sent}</td>
-                <td className="px-6 py-3 text-right whitespace-nowrap">
-                  {!rem.read && (
-                    <button onClick={() => handleMarkRead(rem.id)} className="mr-2 rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
-                      Mark read
-                    </button>
-                  )}
-                  <button onClick={() => handleViewReminder(rem)} className="rounded-md bg-sky-50 px-3 py-1.5 text-sm font-medium text-sky-700 hover:bg-sky-100">
-                    View →
-                  </button>
+          <tbody>
+            {loading && (
+              <tr>
+                <td colSpan={7} className="px-6 py-8 text-center text-sm text-[#919EAB]">
+                  <Loader variant="inline" label="Loading reminders" />
                 </td>
               </tr>
-            ))}
+            )}
+            {!loading && error && (
+              <tr>
+                <td colSpan={7} className="px-6 py-8 text-center text-sm text-[#FF3B30]">
+                  {error}
+                </td>
+              </tr>
+            )}
+            {!loading &&
+              !error &&
+              reminders.map((rem) => (
+                <tr key={rem.id} className={`even:bg-[#F2F2F7] ${rem.read ? "text-[#919EAB]" : "text-[#212B36]"}`}>
+                  <td className="relative whitespace-nowrap py-3.5 pl-10 pr-3 font-medium text-[#2183C6]">
+                    {!rem.read && <span className="absolute left-4 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-[#2183C6]" />}
+                    {rem.invoice}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3.5">{rem.client}</td>
+                  <td className="whitespace-nowrap px-3 py-3.5 font-medium tabular-nums text-[#212B36]">{rem.amount}</td>
+                  <td className="whitespace-nowrap px-3 py-3.5">
+                    <span className={`inline-block whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ${pillStyles[rem.status]}`}>
+                      {rem.statusLabel}
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3.5 text-[#637381]">{rem.channel}</td>
+                  <td className="whitespace-nowrap px-3 py-3.5 text-[#919EAB]">{rem.sent}</td>
+                  <td className="whitespace-nowrap px-3 py-3.5 pr-4 text-right">
+                    {!rem.read && (
+                      <button
+                        onClick={() => handleMarkRead(rem.id)}
+                        className="mr-2 rounded bg-[#F4F6F8] px-3 py-1.5 text-xs font-medium text-[#212B36] hover:bg-[#E5E8EB]"
+                      >
+                        Mark read
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleViewReminder(rem)}
+                      className="rounded bg-[#E3F2FD] px-3 py-1.5 text-xs font-medium text-[#2183C6] hover:bg-[#D2E9FB]"
+                    >
+                      View →
+                    </button>
+                  </td>
+                </tr>
+              ))}
             {!loading && !error && reminders.length === 0 && (
-              <tr><td colSpan={7} className="px-6 py-8 text-center text-sm text-slate-400">No reminders to show.</td></tr>
+              <tr>
+                <td colSpan={7} className="px-6 py-8 text-center text-sm text-[#919EAB]">
+                  No reminders to show.
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
-
-        <div className="flex items-center justify-between border-t border-slate-100 px-6 py-3">
-          <p className="text-sm text-slate-500">
-            Showing {reminders.length === 0 ? 0 : 1}–{reminders.length} of {reminders.length}
-          </p>
-          <div className="flex items-center gap-1">
-            <button className="rounded px-2 py-1 text-sm text-slate-400 hover:bg-slate-100">‹</button>
-            <button className="rounded bg-sky-600 px-3 py-1 text-sm font-medium text-white">1</button>
-            <button className="rounded px-2 py-1 text-sm text-slate-400 hover:bg-slate-100">›</button>
-          </div>
-        </div>
       </div>
 
       <ConfigureRemindersModal isOpen={isConfigureOpen} onClose={() => setIsConfigureOpen(false)} />

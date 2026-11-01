@@ -1,3 +1,4 @@
+// src/components/modals/InviteAgentModal.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -16,9 +17,10 @@ type Props = {
   onClose: () => void;
   onInvite: (payload: InviteAgentPayload) => Promise<void>;
   onBulkInvite: (payload: InviteAgentsBulkPayload) => Promise<InviteAgentsBulkResponse>;
+  initialMode?: Mode;
 };
 
-export default function InviteAgentModal({ open, onClose, onInvite, onBulkInvite }: Props) {
+export default function InviteAgentModal({ open, onClose, onInvite, onBulkInvite, initialMode = "single" }: Props) {
   const [mode, setMode] = useState<Mode>("single");
   const [roles, setRoles] = useState<AdminRole[]>([]);
   const [roleId, setRoleId] = useState("");
@@ -35,10 +37,11 @@ export default function InviteAgentModal({ open, onClose, onInvite, onBulkInvite
 
   useEffect(() => {
     if (!open) return;
+    setMode(initialMode);
     getAccountingRoles()
       .then((r) => setRoles(r))
       .catch(() => setRoles([]));
-  }, [open]);
+  }, [open, initialMode]);
 
   if (!open) return null;
 

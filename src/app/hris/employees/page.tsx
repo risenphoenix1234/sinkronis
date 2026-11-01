@@ -187,7 +187,7 @@ export default function EmployeeListPage() {
           <button
             type="button"
             onClick={() => router.push("/hris/employees/add")}
-            className="flex h-10 items-center gap-1.5 rounded-lg bg-[#2563EB] px-4 text-[14px] font-semibold text-white transition hover:bg-[#1D4ED8]"
+            className="flex h-10 items-center gap-1.5 rounded-lg bg-[#2183C6] px-4 text-[14px] font-semibold text-white transition hover:bg-[#1976B8]"
           >
             <BiPlus className="h-4 w-4" />
             New Employee

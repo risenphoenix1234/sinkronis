@@ -1,3 +1,4 @@
+// src/components/landing/Hero.tsx
 "use client";
 
 import Image from "next/image";
@@ -20,44 +21,48 @@ export default function Hero() {
 
         <div
           className="relative z-10 mx-auto max-w-[1440px]
-                     pt-[60px] pb-[60px] px-6
+                     pt-[40px] pb-[48px] px-4
+                     sm:px-6 sm:pt-[60px] sm:pb-[60px]
                      lg:pt-[100px] lg:pr-[80px] lg:pb-[80px] lg:pl-[80px]
                      lg:h-[648px]"
         >
-          <div className="grid h-full grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-[80px]">
+          <div className="grid h-full grid-cols-1 items-center gap-10 sm:gap-12 lg:grid-cols-2 lg:gap-[80px]">
           {/* Left column */}
           <div className="max-w-[630px] animate-slide-in-left">
             {/* Badge */}
-            <div className="inline-flex items-center rounded-full border border-[#C7E2F5] bg-[#F5FAFE] px-5 py-2">
+            <div className="inline-flex items-center rounded-full border border-[#C7E2F5] bg-[#F5FAFE] px-4 py-1.5 sm:px-5 sm:py-2">
               <div className="mr-2 h-[6px] w-[6px] rounded-full bg-[#2388D0]" />
-              <span className="text-[11px] font-semibold tracking-[0.18em] text-[#2388D0] uppercase">
+              <span className="text-[10px] font-semibold tracking-[0.14em] sm:text-[11px] sm:tracking-[0.18em] text-[#2388D0] uppercase">
                 Compact ERP Platform
               </span>
             </div>
 
             {/* Heading — REMOVED custom font, kept all other styles */}
             <h1
-              className="mt-10 flex flex-col gap-1 pb-4 font-bold
-                         text-[52px] leading-[58.24px] tracking-[0%] text-[#1F2937]"
+              className="mt-6 flex flex-col gap-1 pb-4 font-bold
+                         text-[28px] leading-[34px] tracking-[0%] text-[#1F2937]
+                         sm:mt-8 sm:text-[40px] sm:leading-[46px]
+                         md:text-[46px] md:leading-[52px]
+                         lg:mt-10 lg:text-[52px] lg:leading-[58.24px]"
             >
               <span className="block">Manage Your People.</span>
               <span className="block">Run Your Numbers.</span>
           <span className="block">
   <span className="text-[#2183C6]">Scale Your</span>{" "}
-  <span className="inline-block -rotate-[2deg] bg-[#2183C6] px-3 py-1 text-white">
+  <span className="inline-block -rotate-[2deg] bg-[#2183C6] px-2 py-1 text-white sm:px-3">
     Business.
   </span>
 </span>
             </h1>
 
             {/* Subtitle */}
-            <p className="mt-7 max-w-[360px] text-[20px] font-normal text-[#667085]">
+            <p className="mt-4 max-w-[360px] text-[16px] font-normal sm:mt-7 sm:text-[20px] text-[#667085]">
               Smart HR, payroll and accounting
             </p>
 
             {/* Buttons */}
-            <div className="mt-10 flex items-center gap-10">
-              <button className="flex h-[56px] items-center rounded-lg bg-gradient-to-r from-[#1F88C7] to-[#0CB4D1] px-8 font-semibold text-white transition hover:opacity-90">
+            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4 sm:mt-10 sm:gap-10">
+              <button className="flex h-[48px] items-center rounded-lg bg-gradient-to-r from-[#1F88C7] to-[#0CB4D1] px-6 text-sm font-semibold sm:h-[56px] sm:px-8 sm:text-base text-white transition hover:opacity-90">
                 Start Free Trial
                 <ArrowRight className="ml-3 h-5 w-5" />
               </button>
@@ -71,7 +76,7 @@ export default function Hero() {
             </div>
 
             {/* Features */}
-            <div className="mt-10 flex flex-wrap items-center gap-8 text-[14px] text-[#667085]">
+            <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3 text-[13px] text-[#667085] sm:mt-10 sm:gap-8 sm:text-[14px]">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-[#2388D0]" strokeWidth={1.7} />
                 Secure &amp; private
@@ -89,7 +94,7 @@ export default function Hero() {
 
           {/* Right column — woman photo + floating icons */}
           <div className="relative z-10 mx-auto flex justify-center animate-slide-in-right">
-            <div className="relative h-[500px] w-[500px] max-w-full">
+            <div className="relative h-[300px] w-[300px] max-w-full sm:h-[400px] sm:w-[400px] lg:h-[500px] lg:w-[500px]">
               <Image
                 src="/hero-main.png"
                 alt="Sinkronis platform user"
@@ -99,20 +104,20 @@ export default function Hero() {
               />
 
               {/* floating avatar cards */}
-              <div className="absolute left-[-10px] top-[26%] h-24 w-56 animate-slide-in-right" style={{ animationDelay: "0.3s" }}>
+              <div className="absolute left-[-6px] top-[26%] h-14 w-32 animate-slide-in-right sm:left-[-10px] sm:h-24 sm:w-56" style={{ animationDelay: "0.3s" }}>
                 <Image src="/avatar-1.png" alt="User avatar" fill className="object-contain" />
               </div>
 
-              <div className="absolute bottom-[4%] right-[-6px] h-24 w-56 animate-slide-in-right" style={{ animationDelay: "0.45s" }}>
+              <div className="absolute bottom-[4%] right-[-6px] h-14 w-32 animate-slide-in-right sm:h-24 sm:w-56" style={{ animationDelay: "0.45s" }}>
                 <Image src="/avatar-2.png" alt="User avatar" fill className="object-contain" />
               </div>
 
               {/* floating folder icon */}
-            <div className="absolute left-[24%] top-[20%] h-16 w-16 rotate-[-6deg] z-20 animate-slide-in-right" style={{ animationDelay: "0.6s" }}>
+            <div className="absolute left-[24%] top-[20%] h-10 w-10 rotate-[-6deg] sm:h-16 sm:w-16 z-20 animate-slide-in-right" style={{ animationDelay: "0.6s" }}>
               <Image src="/file.png" alt="" fill className="object-contain" />
             </div>
 
-            <div className="absolute bottom-[16%] right-[-3%] h-14 w-14 rotate-[8deg] z-20 animate-slide-in-right" style={{ animationDelay: "0.75s" }}>
+            <div className="absolute bottom-[16%] right-[-3%] h-10 w-10 rotate-[8deg] sm:h-14 sm:w-14 z-20 animate-slide-in-right" style={{ animationDelay: "0.75s" }}>
               <Image src="/bell.png" alt="" fill className="object-contain" />
             </div>
             </div>
@@ -122,9 +127,9 @@ export default function Hero() {
       </section>
 
       {/* Trusted-by strip */}
-      <section className="w-full bg-[#0B3A63] py-8">
-        <div className="mx-auto flex max-w-[1440px] flex-col items-center gap-4 px-6 lg:flex-row lg:justify-between lg:px-[80px]">
-          <p className="whitespace-nowrap text-[14px] font-medium text-[#9FC2DE]">
+      <section className="w-full bg-[#0B3A63] py-6 sm:py-8">
+        <div className="mx-auto flex max-w-[1440px] flex-col items-center gap-4 px-4 sm:px-6 lg:flex-row lg:justify-between lg:px-[80px]">
+          <p className="text-center text-[13px] font-medium text-[#9FC2DE] sm:text-[14px] lg:whitespace-nowrap">
             Built for African Businesses
           </p>
 

@@ -244,7 +244,7 @@ export default function Sidebar({ title, items }: SidebarProps) {
   };
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-slate-200 bg-white">
+    <aside className="sticky top-20 flex h-[calc(100vh-5rem)] w-64 shrink-0 flex-col self-start border-r border-slate-200 bg-white">
       {/* Module title */}
       <div className="flex h-10 shrink-0 items-center border-b border-slate-100 px-4 text-xs font-medium uppercase tracking-wide text-slate-400">
         {title}

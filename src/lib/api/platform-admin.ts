@@ -5,6 +5,8 @@ import {
   TenantListResponse,
   CreateTenantDto,
   CreateTenantResponse,
+  VerifyCompanyPayload,
+  VerifyCompanyResponse,
   TenantModule,
   PlatformDashboardResponse,
   TenantDetailResponse,
@@ -68,6 +70,15 @@ export const getTenantOverview = async (tenantId: string) => {
 
 export const createTenant = async (payload: CreateTenantDto) => {
   const { data } = await api.post<CreateTenantResponse>(`${BASE}/tenants`, payload);
+  return data;
+};
+
+export const verifyCompany = async (payload: VerifyCompanyPayload) => {
+  const { data } = await api.post<VerifyCompanyResponse>(
+    `${BASE}/tenants/verify-company`,
+    payload,
+    { timeout: 30000 }
+  );
   return data;
 };
 

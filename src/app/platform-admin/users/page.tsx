@@ -1,3 +1,4 @@
+// src/app/platform-admin/users/page.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -11,18 +12,15 @@ import {
 import { PlatformUserRecord } from "@/lib/api/types/platform-admin.types";
 import Loader from "@/components/ui/Loader";
 
-const moduleStyles: Record<string, string> = {
-  HRIS: "bg-sky-50 text-sky-600",
-  ACCOUNTING: "bg-purple-50 text-purple-600",
-  PAYROLL: "bg-orange-50 text-orange-600",
+const statusStyles: Record<string, string> = {
+  ACTIVE: "bg-[#E8F5E9] text-[#2E7D32]",
+  INACTIVE: "bg-[#F4F6F8] text-[#637381]",
+  LOCKED: "bg-[#FFF8E1] text-[#F57F17]",
+  SUSPENDED: "bg-[#FFEBEE] text-[#C62828]",
 };
 
-const statusStyles: Record<string, string> = {
-  ACTIVE: "bg-emerald-50 text-emerald-700",
-  INACTIVE: "bg-slate-100 text-slate-500",
-  LOCKED: "bg-amber-50 text-amber-700",
-  SUSPENDED: "bg-red-50 text-red-700",
-};
+const statusLabel = (status: string) =>
+  status ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase() : "—";
 
 function formatDate(value: string | null) {
   if (!value) return "—";
@@ -119,28 +117,28 @@ export default function UsersPage() {
   };
 
   return (
-    <section className="space-y-4 bg-slate-50 p-6">
+    <section className="min-h-[calc(100vh-5rem)] space-y-4 bg-[#F4F6F8] p-6">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">All Users</h1>
-        <p className="mt-1 text-sm text-slate-500">All users across every tenant on the platform</p>
+        <h1 className="text-2xl font-semibold text-[#212B36]">All Users</h1>
+        <p className="mt-1 text-sm text-[#637381]">All users across every tenant on the platform</p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-[2fr_1fr_1fr_1fr]">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#919EAB]" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by name or email..."
-            className="w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+            className="w-full rounded-md border border-[#F2F3F5] bg-white py-2 pl-9 pr-3 text-sm text-[#212B36] outline-none placeholder:text-[#919EAB] focus:border-[#2183C6] focus:ring-1 focus:ring-[#2183C6]"
           />
         </div>
 
         <select
           value={tenantFilter}
           onChange={(e) => setTenantFilter(e.target.value)}
-          className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+          className="rounded-md border border-[#F2F3F5] bg-white px-3 py-2 text-sm text-[#637381] outline-none focus:border-[#2183C6] focus:ring-1 focus:ring-[#2183C6]"
         >
           <option value="">All Tenants</option>
           {tenantOptions.map(([id, name]) => (
@@ -153,7 +151,7 @@ export default function UsersPage() {
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
-          className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+          className="rounded-md border border-[#F2F3F5] bg-white px-3 py-2 text-sm text-[#637381] outline-none focus:border-[#2183C6] focus:ring-1 focus:ring-[#2183C6]"
         >
           <option value="">All Roles</option>
           {roleOptions.map(([id, name]) => (
@@ -166,7 +164,7 @@ export default function UsersPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+          className="rounded-md border border-[#F2F3F5] bg-white px-3 py-2 text-sm text-[#637381] outline-none focus:border-[#2183C6] focus:ring-1 focus:ring-[#2183C6]"
         >
           <option value="">All Statuses</option>
           <option value="ACTIVE">Active</option>
@@ -177,41 +175,41 @@ export default function UsersPage() {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <div className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600">
-          Total users: <span className="font-semibold text-slate-900">{analytics.totalUsers}</span>
+        <div className="rounded-md border border-[#F2F3F5] bg-white px-4 py-2 text-sm text-[#637381]">
+          Total users: <span className="font-semibold text-[#212B36]">{analytics.totalUsers}</span>
         </div>
-        <div className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600">
-          Active: <span className="font-semibold text-emerald-600">{analytics.activeUsers}</span>
+        <div className="rounded-md border border-[#F2F3F5] bg-white px-4 py-2 text-sm text-[#637381]">
+          Active: <span className="font-semibold text-[#2E7D32]">{analytics.activeUsers}</span>
         </div>
-        <div className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600">
-          Inactive: <span className="font-semibold text-red-500">{analytics.inactiveUsers}</span>
+        <div className="rounded-md border border-[#F2F3F5] bg-white px-4 py-2 text-sm text-[#637381]">
+          Inactive: <span className="font-semibold text-[#C62828]">{analytics.inactiveUsers}</span>
         </div>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div className="rounded-lg border border-[#F2F3F5] bg-white p-6 shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[920px] text-left text-sm">
+          <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-100 text-xs text-slate-500">
-                <th className="px-5 py-3 font-medium">Name</th>
-                <th className="px-5 py-3 font-medium">Tenant</th>
-                <th className="px-5 py-3 font-medium">Role</th>
-                <th className="px-5 py-3 font-medium">Module Access</th>
-                <th className="px-5 py-3 font-medium">Last Active</th>
-                <th className="px-5 py-3 font-medium">Status</th>
-                <th className="px-5 py-3 font-medium">Actions</th>
+              <tr className="border-b border-[#EBEEF0] text-xs text-[#637381]">
+                <th className="px-2 py-3 font-medium">Name</th>
+                <th className="px-2 py-3 font-medium">Tenant</th>
+                <th className="px-2 py-3 font-medium">Role</th>
+                <th className="px-2 py-3 font-medium">Module Access</th>
+                <th className="px-2 py-3 font-medium">Last Active</th>
+                <th className="px-2 py-3 font-medium">Status</th>
+                <th className="px-2 py-3 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={7} className="px-5 py-10 text-center text-sm text-slate-400"><Loader variant="inline" label="Loading users" /></td>
+                  <td colSpan={7} className="px-3 py-10 text-center text-sm text-[#919EAB]"><Loader variant="inline" label="Loading users" /></td>
                 </tr>
               )}
 
               {!loading && error && (
                 <tr>
-                  <td colSpan={7} className="px-5 py-10 text-center text-sm text-red-500">
+                  <td colSpan={7} className="px-3 py-10 text-center text-sm text-red-500">
                     {error}
                   </td>
                 </tr>
@@ -220,39 +218,39 @@ export default function UsersPage() {
               {!loading &&
                 !error &&
                 users.map((u) => (
-                  <tr key={u.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
-                    <td className="px-5 py-3">
-                      <p className="font-medium text-slate-800">{u.name}</p>
-                      <p className="text-xs text-slate-400">{u.email}</p>
+                  <tr key={u.id} className="even:bg-[#F2F2F7]">
+                    <td className="px-2 py-3">
+                      <p className="font-medium text-[#212B36]">{u.name}</p>
+                      <p className="text-[11px] text-[#919EAB]">{u.email}</p>
                     </td>
-                    <td className="px-5 py-3 text-slate-700">{u.tenant.name}</td>
-                    <td className="px-5 py-3 text-slate-700">{u.role.name}</td>
-                    <td className="px-5 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        {u.moduleAccess.length === 0 && <span className="text-xs text-slate-400">—</span>}
+                    <td className="px-2 py-3 text-[#212B36]">{u.tenant.name}</td>
+                    <td className="px-2 py-3 text-[#637381]">{u.role.name}</td>
+                    <td className="px-2 py-3">
+                      <div className="flex items-center gap-1">
+                        {u.moduleAccess.length === 0 && <span className="text-xs text-[#919EAB]">—</span>}
                         {u.moduleAccess.map((mod) => (
                           <span
                             key={mod}
-                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${moduleStyles[mod] ?? "bg-slate-100 text-slate-600"}`}
+                            className="whitespace-nowrap rounded-full bg-[#E3F2FD] px-2 py-0.5 text-[11px] font-medium text-[#2183C6]"
                           >
                             {mod}
                           </span>
                         ))}
                       </div>
                     </td>
-                    <td className="px-5 py-3 text-slate-500">{formatDate(u.lastActive)}</td>
-                    <td className="px-5 py-3">
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusStyles[u.status]}`}>
-                        {u.status}
+                    <td className="whitespace-nowrap px-2 py-3 text-[#637381]">{formatDate(u.lastActive)}</td>
+                    <td className="px-2 py-3">
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${statusStyles[u.status] ?? "bg-[#F4F6F8] text-[#637381]"}`}>
+                        {statusLabel(u.status)}
                       </span>
                     </td>
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-3">
+                    <td className="px-2 py-3">
+                      <div className="flex items-center gap-1.5">
                         {u.actions.canDeactivate && (
                           <button
                             onClick={() => handleDeactivate(u.tenant.id, u.id)}
                             disabled={actionLoading}
-                            className="text-xs font-medium text-red-600 hover:underline disabled:opacity-60"
+                            className="whitespace-nowrap rounded bg-[#FFEBEE] px-2 py-1 text-[11px] font-medium text-[#C62828] hover:bg-[#fcdde2] disabled:opacity-60"
                           >
                             Deactivate
                           </button>
@@ -261,7 +259,7 @@ export default function UsersPage() {
                           <button
                             onClick={() => handleResetPassword(u.tenant.id, u.id)}
                             disabled={actionLoading}
-                            className="text-xs font-medium text-sky-600 hover:underline disabled:opacity-60"
+                            className="whitespace-nowrap rounded bg-[#E3F2FD] px-2 py-1 text-[11px] font-medium text-[#2183C6] hover:bg-[#d3e9fb] disabled:opacity-60"
                           >
                             Reset PW
                           </button>
@@ -270,7 +268,7 @@ export default function UsersPage() {
                           <button
                             onClick={() => handleImpersonate(u.tenant.id)}
                             disabled={actionLoading}
-                            className="text-xs font-medium text-purple-600 hover:underline disabled:opacity-60"
+                            className="whitespace-nowrap rounded bg-[#F3E5F5] px-2 py-1 text-[11px] font-medium text-[#7B1FA2] hover:bg-[#ebd5ef] disabled:opacity-60"
                           >
                             Impersonate
                           </button>
@@ -282,7 +280,7 @@ export default function UsersPage() {
 
               {!loading && !error && users.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-5 py-10 text-center text-sm text-slate-400">
+                  <td colSpan={7} className="px-3 py-10 text-center text-sm text-[#919EAB]">
                     No users match your filters.
                   </td>
                 </tr>

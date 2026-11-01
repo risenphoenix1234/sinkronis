@@ -14,10 +14,10 @@ import { PaymentRequestItem, PaymentRequestSummary } from "@/lib/api/types/accou
 import Loader from "@/components/ui/Loader";
 
 const statusStyles: Record<string, string> = {
-  PENDING: "bg-amber-50 text-amber-700",
-  APPROVED: "bg-sky-50 text-sky-700",
-  COMPLETED: "bg-emerald-50 text-emerald-700",
-  DECLINED: "bg-rose-50 text-rose-700",
+  PENDING: "bg-[#FFF3CD] text-[#856404]",
+  APPROVED: "bg-[#E3F2FD] text-[#2183C6]",
+  COMPLETED: "bg-[#D8F3DC] text-[#1B7A34]",
+  DECLINED: "bg-[#FFE5E5] text-[#FF3B30]",
 };
 
 const statusLabels: Record<string, string> = {
@@ -122,43 +122,41 @@ export default function PaymentRequestsPage() {
   };
 
   return (
-    <section className="space-y-6 p-6">
+    <section className="min-h-[calc(100vh-5rem)] space-y-6 bg-[#F4F6F8] p-6">
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Payment Requests</h1>
-        </div>
+        <h1 className="text-4xl font-bold text-[#212B36]">Payment Requests</h1>
         <button
           onClick={() => setModalOpen(true)}
-          className="rounded-md bg-sky-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-sky-700 whitespace-nowrap"
+          className="whitespace-nowrap rounded-md bg-[#2183C6] px-4 py-3 text-sm font-medium text-white hover:bg-[#1976B8]"
         >
           + New Request
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <div className="rounded-xl border border-slate-200 bg-white px-5 py-4">
-          <p className="text-sm text-slate-500">Pending Approval</p>
-          <p className="mt-1 text-3xl font-semibold text-slate-900">{summary.pendingApproval}</p>
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+        <div className="rounded-md border border-[#F2F3F5] bg-white p-6">
+          <p className="text-sm text-[#637381]">Pending Approval</p>
+          <p className="mt-4 text-3xl font-bold text-[#856404]">{summary.pendingApproval}</p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white px-5 py-4">
-          <p className="text-sm text-slate-500">Total Completed</p>
-         <p className="mt-1 text-3xl font-semibold text-slate-900">{naira(summary.totalCompleted)}</p>
+        <div className="rounded-md border border-[#F2F3F5] bg-white p-6">
+          <p className="text-sm text-[#637381]">Total Completed</p>
+          <p className="mt-4 text-3xl font-bold text-[#1B7A34]">{naira(summary.totalCompleted)}</p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white px-5 py-4">
-          <p className="text-sm text-slate-500">Declined</p>
-          <p className="mt-1 text-3xl font-semibold text-slate-900">{summary.declined}</p>
+        <div className="rounded-md border border-[#F2F3F5] bg-white p-6">
+          <p className="text-sm text-[#637381]">Declined</p>
+          <p className="mt-4 text-3xl font-bold text-[#FF3B30]">{summary.declined}</p>
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-8 overflow-x-auto border-b border-[#E5E8EB]">
         {filters.map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`rounded-full border px-4 py-2 text-sm transition-colors ${
+            className={`-mb-px border-b-2 px-3 py-4 text-sm transition-colors ${
               filter === f
-                ? "border-sky-200 bg-sky-50 font-medium text-sky-700"
-                : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                ? "border-[#2183C6] font-medium text-[#2183C6]"
+                : "border-transparent text-[#637381] hover:text-[#212B36]"
             }`}
           >
             {f === "All" ? "All" : statusLabels[f]}
@@ -166,110 +164,121 @@ export default function PaymentRequestsPage() {
         ))}
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="min-w-full text-left">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
-            <tr>
-              <th className="px-6 py-3 font-medium">Request</th>
-              <th className="px-6 py-3 font-medium">Requested By</th>
-              <th className="px-6 py-3 font-medium">Amount</th>
-              <th className="px-6 py-3 font-medium">Description</th>
-              <th className="px-6 py-3 font-medium">Status</th>
-              <th className="px-6 py-3 font-medium">Raised</th>
-              <th className="px-6 py-3 font-medium text-right">Actions</th>
+      <div className="overflow-x-auto rounded-md border border-[#F2F3F5] bg-white">
+        <table className="min-w-full text-left text-[13px]">
+          <thead>
+            <tr className="border-b border-dotted border-[#EBEEF0] text-[#637381] [&>th:first-child]:pl-4 [&>th:last-child]:pr-4">
+              <th className="px-3 py-3.5 font-normal">Request</th>
+              <th className="px-3 py-3.5 font-normal">Requested By</th>
+              <th className="px-3 py-3.5 font-normal">Amount</th>
+              <th className="px-3 py-3.5 font-normal">Description</th>
+              <th className="px-3 py-3.5 font-normal">Status</th>
+              <th className="px-3 py-3.5 font-normal">Raised</th>
+              <th className="px-3 py-3.5 text-right font-normal">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody>
             {loading && (
               <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-sm text-slate-400"><Loader variant="inline" label="Loading requests" /></td>
+                <td colSpan={7} className="px-6 py-8 text-center text-sm text-[#919EAB]">
+                  <Loader variant="inline" label="Loading requests" />
+                </td>
               </tr>
             )}
 
             {!loading && error && (
               <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-sm text-red-500">{error}</td>
+                <td colSpan={7} className="px-6 py-8 text-center text-sm text-[#FF3B30]">{error}</td>
               </tr>
             )}
 
-            {!loading && !error && filtered.map((req) => (
-              <tr key={req.id} className="hover:bg-slate-50">
-                <td className="px-6 py-3">
-  <p className="text-sm font-medium text-sky-600">{req.title}</p>
-  {req.vendorName && <p className="text-xs text-slate-500">{req.vendorName}</p>}
-</td>
-                <td className="px-6 py-3 text-base text-slate-800 whitespace-nowrap">{req.requestedBy}</td>
-              <td className="px-6 py-3 text-base tabular-nums font-medium text-slate-800 whitespace-nowrap">
-  {naira(req.amount)}
-</td>
-                <td className="px-6 py-3 text-sm text-slate-500 max-w-xs">{req.description ?? "—"}</td>
-                <td className="px-6 py-3">
-                  <span className={`inline-block rounded-full px-3 py-1 text-sm font-medium ${statusStyles[req.status]}`}>
-                    {statusLabels[req.status]}
-                  </span>
-                </td>
-                <td className="px-6 py-3 text-base text-slate-600 whitespace-nowrap">{formatDate(req.createdAt)}</td>
-                <td className="px-6 py-3 text-right whitespace-nowrap">
-                  {(() => {
-                    const canApprove = req.canApprove ?? req.status === "PENDING";
-                    const canDecline = req.canReject ?? req.status === "PENDING";
-                    const canDisburse = req.canInitiatePayment ?? req.status === "APPROVED";
-                    const blockedReason =
-                      (req.status === "PENDING" && !canApprove) || (req.status === "APPROVED" && !canDisburse)
-                        ? blockedText(req.approvalBlockedReason)
-                        : null;
-                    return (
-                      <>
-                        {canApprove && (
-                          <button
-                            onClick={() => handleApprove(req.id)}
-                            disabled={actionLoading === req.id}
-                            className="mr-2 rounded-md bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-60"
-                          >
-                            Approve
-                          </button>
-                        )}
-                        {canDecline && (
-                          <button
-                            onClick={() => handleDecline(req.id)}
-                            disabled={actionLoading === req.id}
-                            className="rounded-md border border-rose-200 px-3 py-1.5 text-sm font-medium text-rose-500 hover:bg-rose-50 disabled:opacity-60"
-                          >
-                            Decline
-                          </button>
-                        )}
-                        {canDisburse && (
-                          <button
-                            onClick={() => handleDisburse(req.id)}
-                            disabled={actionLoading === req.id}
-                            className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
-                          >
-                            {actionLoading === req.id ? "Disbursing..." : "Disburse"}
-                          </button>
-                        )}
-                        {blockedReason && (
-                          <span className="ml-auto block max-w-[220px] whitespace-normal text-right text-xs text-amber-600">
-                            {blockedReason}
-                          </span>
-                        )}
-                        {!canApprove && !canDecline && !canDisburse && !blockedReason && (
-                          <span className="text-sm text-slate-400">—</span>
-                        )}
-                      </>
-                    );
-                  })()}
-                </td>
-              </tr>
-            ))}
+            {!loading &&
+              !error &&
+              filtered.map((req) => (
+                <tr
+                  key={req.id}
+                  className="text-[#212B36] even:bg-[#F2F2F7] [&>td:first-child]:pl-4 [&>td:last-child]:pr-4"
+                >
+                  <td className="px-3 py-3.5">
+                    <p className="font-medium text-[#2183C6]">{req.title}</p>
+                    {req.vendorName && <p className="text-xs text-[#919EAB]">{req.vendorName}</p>}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3.5">{req.requestedBy}</td>
+                  <td className="whitespace-nowrap px-3 py-3.5 font-semibold tabular-nums">{naira(req.amount)}</td>
+                  <td className="max-w-xs px-3 py-3.5 text-[#637381]">{req.description ?? "—"}</td>
+                  <td className="px-3 py-3.5">
+                    <span
+                      className={`inline-block whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ${statusStyles[req.status]}`}
+                    >
+                      {statusLabels[req.status]}
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3.5 text-[#637381]">{formatDate(req.createdAt)}</td>
+                  <td className="whitespace-nowrap px-3 py-3.5 text-right">
+                    {(() => {
+                      const canApprove = req.canApprove ?? req.status === "PENDING";
+                      const canDecline = req.canReject ?? req.status === "PENDING";
+                      const canDisburse = req.canInitiatePayment ?? req.status === "APPROVED";
+                      const blockedReason =
+                        (req.status === "PENDING" && !canApprove) || (req.status === "APPROVED" && !canDisburse)
+                          ? blockedText(req.approvalBlockedReason)
+                          : null;
+                      return (
+                        <>
+                          {canApprove && (
+                            <button
+                              onClick={() => handleApprove(req.id)}
+                              disabled={actionLoading === req.id}
+                              className="mr-2 whitespace-nowrap rounded bg-[#2183C6] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#1976B8] disabled:opacity-60"
+                            >
+                              Approve
+                            </button>
+                          )}
+                          {canDecline && (
+                            <button
+                              onClick={() => handleDecline(req.id)}
+                              disabled={actionLoading === req.id}
+                              className="whitespace-nowrap rounded border border-[#FFC9C5] bg-white px-3 py-1.5 text-xs font-medium text-[#FF3B30] hover:bg-[#FFF5F5] disabled:opacity-60"
+                            >
+                              Decline
+                            </button>
+                          )}
+                          {canDisburse && (
+                            <button
+                              onClick={() => handleDisburse(req.id)}
+                              disabled={actionLoading === req.id}
+                              className="whitespace-nowrap rounded bg-[#1B7A34] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#166A2C] disabled:opacity-60"
+                            >
+                              {actionLoading === req.id ? "Disbursing..." : "Disburse"}
+                            </button>
+                          )}
+                          {blockedReason && (
+                            <span className="ml-auto block max-w-[220px] whitespace-normal text-right text-xs text-[#856404]">
+                              {blockedReason}
+                            </span>
+                          )}
+                          {!canApprove && !canDecline && !canDisburse && !blockedReason && (
+                            <span className="text-sm text-[#919EAB]">—</span>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </td>
+                </tr>
+              ))}
 
             {!loading && !error && filtered.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-sm text-slate-400">No payment requests yet.</td>
+                <td colSpan={7} className="px-6 py-8 text-center text-sm text-[#919EAB]">No payment requests yet.</td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
+
+      <p className="text-sm text-[#637381]">
+        Showing {filtered.length === 0 ? 0 : 1}–{filtered.length} of {filtered.length}
+      </p>
 
       <CreatePaymentRequestModal open={modalOpen} onClose={() => setModalOpen(false)} onCreate={handleCreate} />
     </section>

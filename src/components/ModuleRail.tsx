@@ -1,18 +1,25 @@
 // src/components/ModuleRail.tsx
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FiCreditCard, FiDollarSign, FiUsers } from "react-icons/fi";
+import { FiCreditCard, FiDollarSign, FiHome, FiUsers } from "react-icons/fi";
 
-type ModuleKey = "hris" | "accounting" | "payroll";
+type ModuleKey = "tenant-admin" | "hris" | "accounting" | "payroll";
 
 type Module = {
   key: ModuleKey;
   href: string;
   icon: ReactNode;
   label: string;
+};
+
+const adminModule: Module = {
+  key: "tenant-admin",
+  href: "/tenant-admin/overview",
+  icon: <FiHome size={18} />,
+  label: "Admin Setup",
 };
 
 const modules: readonly Module[] = [
@@ -36,27 +43,45 @@ const modules: readonly Module[] = [
   },
 ];
 
-function getActiveModule(pathname: string): ModuleKey | null {
-  return (
-    modules.find((module) => pathname.startsWith(`/${module.key}`))?.key ?? null
-  );
+function getActiveModule(
+  pathname: string,
+  list: readonly Module[]
+): ModuleKey | null {
+  return list.find((module) => pathname.startsWith(`/${module.key}`))?.key ?? null;
 }
 
 export default function ModuleRail() {
   const pathname = usePathname();
-  const activeModule = getActiveModule(pathname);
+  const [showAdmin, setShowAdmin] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("user");
+      const user = raw ? JSON.parse(raw) : null;
+      setShowAdmin(
+        user?.accountType === "TENANT_USER" &&
+          !pathname.startsWith("/employee") &&
+          !pathname.startsWith("/manager")
+      );
+    } catch {
+      setShowAdmin(false);
+    }
+  }, [pathname]);
+
+  const visibleModules = showAdmin ? [adminModule, ...modules] : modules;
+  const activeModule = getActiveModule(pathname, visibleModules);
 
   return (
     <nav
       aria-label="Application modules"
-      className="sticky top-0 flex h-screen w-28 shrink-0 flex-col items-center bg-[var(--brand-rail)]"
+      className="sticky top-20 flex h-[calc(100vh-5rem)] w-28 shrink-0 flex-col items-center self-start bg-[var(--brand-rail)]"
     >
       {/* Divider */}
       <div className="mt-2 h-px w-12 bg-white/20" />
 
       {/* Module navigation */}
       <div className="flex flex-1 flex-col items-center gap-3 pt-3">
-        {modules.map((module) => {
+        {visibleModules.map((module) => {
           const isActive = activeModule === module.key;
 
           return (

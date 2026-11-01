@@ -1,3 +1,4 @@
+// src/app/hris/dashboard/page.tsx
 "use client";
 
 import AttendanceMetricCard from "@/components/hris/dashboard/AttendanceMetricCard";
@@ -108,10 +109,10 @@ export default function HRISDashboardPage() {
   const hires = data.newHires;
   const hiresTrendClass =
     hires.trend === "UP"
-      ? "text-green-800"
+      ? "text-[#2E7D32]"
       : hires.trend === "DOWN"
-        ? "text-red-600"
-        : "text-gray-500";
+        ? "text-[#C62828]"
+        : "text-[#637381]";
   const hiresTrendText =
     hires.trend === "UP"
       ? `+${Math.abs(hires.difference)} vs last month`
@@ -120,62 +121,62 @@ export default function HRISDashboardPage() {
         : "No change vs last month";
 
   return (
-    <section className="p-6">
+    <section className="min-h-[calc(100vh-5rem)] bg-[#F4F6F8] p-6">
       <div>
-        <div className="mb-8 flex justify-between items-center">
-          <h1 className="text-4xl font-bold text-[#1D2939]">Welcome Back</h1>
+        <div className="mb-8 flex items-center justify-between">
+          <h1 className="text-4xl font-bold text-[#212B36]">Welcome Back</h1>
 
-          <div className="flex items-center font-light gap-3">
-            <p>
+          <div className="flex items-center gap-3 font-light">
+            <p className="text-xs text-[#637381]">
               {data.currentDate} ({data.timeZone})
             </p>
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-6 mb-4">
-          <div className="bg-white p-4 w-full">
-            <p className="text-xs text-gray-500">Total Employees</p>
-            <h2 className="text-3xl font-bold mt-1">
+        <div className="mb-7 grid grid-cols-2 gap-5 lg:grid-cols-4">
+          <div className="rounded-md bg-white p-5">
+            <p className="text-xs text-[#637381]">Total Employees</p>
+            <h2 className="mt-1 text-3xl font-bold text-[#212B36]">
               {data.employeeOverview.totalEmployees}
             </h2>
           </div>
 
-          <div className="bg-white p-4 w-full">
-            <p className="text-xs text-gray-500">Active</p>
-            <h2 className="text-3xl font-bold mt-1">
+          <div className="rounded-md bg-white p-5">
+            <p className="text-xs text-[#637381]">Active Employees</p>
+            <h2 className="mt-1 text-3xl font-bold text-[#212B36]">
               {data.employeeOverview.activeEmployees}
             </h2>
-            <p className="text-xs text-green-800 mt-1">
+            <p className="mt-1 text-xs text-[#2E7D32]">
               {data.employeeOverview.activeEmployeePercentage}% of total
             </p>
           </div>
 
-          <div className="bg-white p-4 w-full">
-            <p className="text-xs text-gray-500">On Leave Today</p>
-            <h2 className="text-3xl font-bold mt-1">
+          <div className="rounded-md bg-white p-5">
+            <p className="text-xs text-[#637381]">On Leave Today</p>
+            <h2 className="mt-1 text-3xl font-bold text-[#212B36]">
               {data.employeeOverview.employeesOnLeave}
             </h2>
-            <p className="text-xs text-green-800 mt-1">
+            <p className="mt-1 text-xs text-[#2E7D32]">
               {data.employeeOverview.pendingLeaveApprovals} pending approval
             </p>
           </div>
 
-          <div className="bg-white p-4 w-full">
-            <p className="text-xs text-gray-500">New Hires (MTD)</p>
-            <h2 className="text-3xl font-bold mt-1">{hires.currentMonth}</h2>
-            <p className={`text-xs mt-1 ${hiresTrendClass}`}>
+          <div className="rounded-md bg-white p-5">
+            <p className="text-xs text-[#637381]">New Hires (MTD)</p>
+            <h2 className="mt-1 text-3xl font-bold text-[#212B36]">{hires.currentMonth}</h2>
+            <p className={`mt-1 text-xs ${hiresTrendClass}`}>
               {hiresTrendText}
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-12 gap-4 mb-4">
-          <div className="col-span-8 bg-white rounded-lg p-6 border border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-800 mb-8">
+        <div className="mb-5 grid grid-cols-12 items-start gap-5">
+          <div className="col-span-8 rounded-md bg-white p-5">
+            <h3 className="mb-8 text-sm font-semibold text-[#212B36]">
               Today&apos;s Attendance
             </h3>
 
-            <div className="grid grid-cols-3 gap-y-10">
+            <div className="grid grid-cols-3 gap-y-8">
               <AttendanceMetricCard
                 label="On Time"
                 metric={data.attendanceOverview.onTime}
@@ -203,25 +204,25 @@ export default function HRISDashboardPage() {
             </div>
           </div>
 
-          <div className="col-span-4 bg-white rounded-lg p-6 border border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-800 mb-5">
+          <div className="col-span-4 rounded-md bg-white p-5">
+            <h3 className="mb-5 text-sm font-semibold text-[#212B36]">
               Recent Activity
             </h3>
 
-            <div className="space-y-5 h-48 overflow-y-auto">
+            <div className="max-h-64 space-y-5 overflow-y-auto">
               {data.recentActivity && data.recentActivity.length > 0 ? (
                 data.recentActivity.map((activity) => (
                   <div key={activity.id}>
-                    <p className="text-xs text-gray-700">
+                    <p className="text-xs text-[#212B36]">
                       {activity.description}
                     </p>
-                    <p className="text-[11px] text-gray-400">
+                    <p className="text-[11px] text-[#919EAB]">
                       {timeAgo(activity.createdAt)}
                     </p>
                   </div>
                 ))
               ) : (
-                <p className="text-xs text-gray-400 py-6 text-center">
+                <p className="py-6 text-center text-xs text-[#919EAB]">
                   No recent activity
                 </p>
               )}
@@ -229,40 +230,48 @@ export default function HRISDashboardPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-8 bg-white rounded-lg p-6 border border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-800 mb-4">
+        <div className="grid grid-cols-12 items-start gap-5">
+          <div className="col-span-8 rounded-md bg-white p-5">
+            <h3 className="mb-4 text-sm font-semibold text-[#212B36]">
               Pending Leave Requests
             </h3>
 
-            <table className="w-full text-sm">
+            <table className="w-full text-xs">
               <thead>
-                <tr className="border-b text-left text-gray-500">
-                  <th className="pb-3 font-medium">Employee</th>
-                  <th className="pb-3 font-medium">Department</th>
-                  <th className="pb-3 font-medium">Type</th>
-                  <th className="pb-3 font-medium">Days</th>
-                  <th className="pb-3 font-medium">From</th>
-                  <th className="pb-3"></th>
+                <tr className="border-b border-dotted border-[#EBEEF0] text-left text-[#919EAB]">
+                  <th className="px-3 pb-3 font-normal">Employee</th>
+                  <th className="px-3 pb-3 font-normal">Department</th>
+                  <th className="px-3 pb-3 font-normal">Type</th>
+                  <th className="px-3 pb-3 font-normal">Days</th>
+                  <th className="px-3 pb-3 font-normal">From</th>
+                  <th className="px-3 pb-3"></th>
                 </tr>
               </thead>
 
               <tbody>
                 {data.pendingLeaveRequests.map((item) => (
-                  <tr
-                    key={item.id}
-                    className="border-b border-gray-50 last:border-0"
-                  >
-                    <td className="py-4">{item.employee?.name || "—"}</td>
-                    <td>{item.department?.name || "—"}</td>
-                    <td>{item.type?.replace(/_/g, " ") || item.type}</td>
-                    <td>{item.days}</td>
-                    <td>{item.from}</td>
+                  <tr key={item.id} className="even:bg-[#F2F2F7]">
+                    <td className="px-3 py-3 text-[#212B36]">
+                      {item.employee?.name || "—"}
+                    </td>
+                    <td className="px-3 py-3 text-[#637381]">
+                      {item.department?.name || "—"}
+                    </td>
+                    <td className="px-3 py-3 text-[#637381]">
+                      {item.type?.replace(/_/g, " ") || item.type}
+                    </td>
+                    <td className="px-3 py-3 font-semibold text-[#212B36]">
+                      {item.days}d
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-3 text-[#637381]">
+                      {item.from}
+                    </td>
 
-                    <td>
+                    <td className="px-3 py-3">
                       <div className="flex gap-2">
                         <Button
                           size="sm"
+                          className="h-7 px-3 text-xs"
                           disabled={
                             approvingId === item.id || rejectingId === item.id
                           }
@@ -273,6 +282,7 @@ export default function HRISDashboardPage() {
                         <Button
                           size="sm"
                           variant="outline"
+                          className="h-7 border-[#EBEEF0] px-3 text-xs text-[#212B36]"
                           disabled={
                             rejectingId === item.id || approvingId === item.id
                           }
@@ -288,14 +298,14 @@ export default function HRISDashboardPage() {
             </table>
 
             {data.pendingLeaveRequests.length === 0 && (
-              <p className="text-xs text-gray-400 py-6 text-center">
+              <p className="py-6 text-center text-xs text-[#919EAB]">
                 No pending leave requests
               </p>
             )}
           </div>
 
-          <div className="col-span-4 bg-white rounded-lg p-6 border border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-800 mb-6">
+          <div className="col-span-4 rounded-md bg-white p-5">
+            <h3 className="mb-6 text-sm font-semibold text-[#212B36]">
               Headcount by Department
             </h3>
 
@@ -309,16 +319,16 @@ export default function HRISDashboardPage() {
 
                 return (
                   <div key={dept.departmentId}>
-                    <div className="flex justify-between text-xs mb-2">
-                      <span className="text-gray-600">
+                    <div className="mb-2 flex justify-between text-xs">
+                      <span className="text-[#212B36]">
                         {dept.departmentName}
                       </span>
-                      <span className="text-gray-500">{dept.headcount}</span>
+                      <span className="text-[#637381]">{dept.headcount}</span>
                     </div>
 
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-1.5 overflow-hidden rounded-full bg-[#EDEFF2]">
                       <div
-                        className="h-full bg-blue-500 rounded-full"
+                        className="h-full rounded-full bg-[#2183C6]"
                         style={{ width: `${percent}%` }}
                       />
                     </div>
@@ -328,7 +338,7 @@ export default function HRISDashboardPage() {
             </div>
 
             {data.headcountByDepartment.length === 0 && (
-              <p className="text-xs text-gray-400 py-6 text-center">
+              <p className="py-6 text-center text-xs text-[#919EAB]">
                 No department data available
               </p>
             )}
