@@ -76,7 +76,8 @@ export function isPublicRoute(pathname: string): boolean {
   }
   const publicPrefixes = [
     "/login",
-    "/register",
+        "/register",
+    "/contact",
     "/forgot-password",
     "/reset-password",
     "/setup-password",

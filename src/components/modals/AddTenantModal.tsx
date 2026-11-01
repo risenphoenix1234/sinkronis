@@ -32,9 +32,6 @@ const REGISTRATION_TYPES: { value: CompanyRegistrationType; label: string }[] = 
   { value: "LLP", label: "LLP – Limited liability partnership" },
 ];
 
-// Mandatory CAC enforcement stays off until the backend and Mono are ready.
-const CAC_REQUIRED = process.env.NEXT_PUBLIC_CAC_VERIFICATION_REQUIRED === "true";
-
 const VERIFY_TIMEOUT_MS = 30000;
 const EVIDENCE_VALIDITY_MS = 30 * 60 * 1000;
 
@@ -316,11 +313,6 @@ export default function AddTenantModal({ open, onClose, onAdd }: AddTenantModalP
       return;
     }
 
-    if (CAC_REQUIRED && verify.kind !== "verified") {
-      setFormError("Verify the company's CAC registration before creating the tenant.");
-      return;
-    }
-
     setFormError(null);
     setSubmitting(true);
     try {
@@ -412,11 +404,7 @@ export default function AddTenantModal({ open, onClose, onAdd }: AddTenantModalP
             <div className="flex items-center justify-between gap-2">
               <label className="text-xs font-medium text-slate-700">
                 CAC Registration{" "}
-                {CAC_REQUIRED ? (
-                  <span className="text-red-500">*</span>
-                ) : (
-                  <span className="font-normal text-slate-400">(optional)</span>
-                )}
+                <span className="font-normal text-slate-400">(optional)</span>
               </label>
               <span
                 className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${statusBadge.className}`}
@@ -513,12 +501,12 @@ export default function AddTenantModal({ open, onClose, onAdd }: AddTenantModalP
 
             {verify.kind === "expired" && (
               <div className={`mt-3 rounded-md px-3 py-2 text-xs ${TONE_STYLES.amber}`}>
-                The verification has expired. Verify the company again before creating
-                the tenant.
+                The verification has expired. Verify the company again, or create the
+                tenant without it.
               </div>
             )}
 
-            {!CAC_REQUIRED && verify.kind !== "verified" && (
+            {verify.kind !== "verified" && (
               <p className="mt-3 text-[11px] text-slate-400">
                 You can create the tenant without CAC verification for now.
               </p>

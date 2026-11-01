@@ -1,3 +1,4 @@
+// src/app/(auth)/login/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -280,14 +281,6 @@ export default function LoginPage() {
           >
             Forgot password?
           </Link>
-          {mode === "admin" && (
-            <Link
-              href="/register"
-              className="hover:text-[#2388D0] hover:underline"
-            >
-              Create account
-            </Link>
-          )}
         </div>
       </div>
     </main>

@@ -1,10 +1,11 @@
+// src/components/landing/Pricingsection.tsx
 "use client";
 
 import { useState } from "react";
 import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-type Plan = {
+export type Plan = {
   name: string;
   subtitle: string;
   price: string;
@@ -12,7 +13,7 @@ type Plan = {
   highlight?: boolean;
 };
 
-const plans: Plan[] = [
+export const plans: Plan[] = [
   {
     name: "HRIS",
     subtitle: "Human Resource Information System",
@@ -68,12 +69,12 @@ const plans: Plan[] = [
   },
 ];
 
-const BASE_PLAN_NAMES = ["HRIS", "Payroll", "Accounting"];
+export const BASE_PLAN_NAMES = ["HRIS", "Payroll", "Accounting"];
 
 // "₦150,000" -> 150000
-const parsePrice = (price: string) => Number(price.replace(/[^\d]/g, ""));
+export const parsePrice = (price: string) => Number(price.replace(/[^\d]/g, ""));
 
-const formatPrice = (amount: number) => `₦${amount.toLocaleString("en-NG")}`;
+export const formatPrice = (amount: number) => `₦${amount.toLocaleString("en-NG")}`;
 
 export default function Pricing() {
   const router = useRouter();
@@ -108,8 +109,7 @@ export default function Pricing() {
 
   const handleProceed = () => {
     if (selected.length === 0) return;
-    const params = encodeURIComponent(selected.join(","));
-    router.push(`/register?plans=${params}`);
+    router.push(`/contact?plans=${encodeURIComponent(selected.join(","))}`);
   };
 
   return (
@@ -232,7 +232,7 @@ export default function Pricing() {
                 : "bg-gradient-to-r from-[#1F88C7] to-[#0CB4D1] hover:opacity-90"
             }`}
           >
-            Proceed to Get Started
+            Request Access
           </button>
         </div>
       </div>
