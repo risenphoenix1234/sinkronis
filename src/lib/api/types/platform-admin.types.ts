@@ -916,3 +916,84 @@ export interface ModuleManagementResponse {
     };
   };
 }
+
+export type AccessRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export interface AccessRequest {
+  requestId: string;
+  requestReference: string;
+  status: AccessRequestStatus;
+  version: number;
+  company: {
+    name: string;
+    country: string | null;
+    industry: string | null;
+    registrationType: string | null;
+    registrationNumber: string | null;
+    cacStatus: string | null;
+  };
+  applicant: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string | null;
+  };
+  requestedPlan: {
+    key: string;
+    billingCycle: string;
+    price: number;
+    currency: string;
+    snapshot?: {
+      name?: string;
+      price?: number;
+      includedModules?: string[];
+    };
+  };
+  message: string | null;
+  review: {
+    reviewerId: string | null;
+    reviewedAt: string | null;
+    decisionReason: string | null;
+  };
+  provisionedOrganizationId: string | null;
+  provisionedInvitationId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AccessRequestListParams {
+  status?: AccessRequestStatus;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface AccessRequestListResponse {
+  success: boolean;
+  message: string;
+  data: AccessRequest[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export interface AccessRequestDetailResponse {
+  success: boolean;
+  message: string;
+  data: AccessRequest;
+}
+
+export interface ApproveAccessRequestPayload {
+  expectedVersion: number;
+  acceptCurrentPricing: boolean;
+  verificationReference?: string;
+}
+
+export interface RejectAccessRequestPayload {
+  expectedVersion: number;
+  reason: string;
+}
+
+export interface AccessRequestActionResponse {
+  success: boolean;
+  message: string;
+  data?: unknown;
+}

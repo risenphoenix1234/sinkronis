@@ -9,6 +9,7 @@ export interface RenewSubscriptionBody {
   confirm: boolean;
   automaticRenewal: boolean;
   idempotencyKey: string;
+  freshLookupConfirmed?: boolean;
 }
 
 export type RenewalPeriodPolicy =

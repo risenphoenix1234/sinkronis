@@ -19,6 +19,11 @@ const sidebarItems: SidebarItem[] = [
     icon: "tenants",
   },
   {
+    label: "Access Requests",
+    href: "/platform-admin/access-requests",
+    icon: "inbox",
+  },
+  {
     label: "Pricing & Plans",
     href: "/platform-admin/plans",
     icon: "pricing",

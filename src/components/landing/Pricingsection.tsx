@@ -4,20 +4,29 @@
 import { useState } from "react";
 import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
+import {
+  ModuleKey,
+  MODULES,
+  formatMoney,
+  monthlyPrice,
+  planDisplayName,
+  planIdForModules,
+  usePublicPlans,
+} from "@/lib/plans";
 
-export type Plan = {
+type Card = {
+  id: "hris" | "payroll" | "accounting" | "all-in-one";
   name: string;
   subtitle: string;
-  price: string;
   features: string[];
   highlight?: boolean;
 };
 
-export const plans: Plan[] = [
+const cards: Card[] = [
   {
+    id: "hris",
     name: "HRIS",
     subtitle: "Human Resource Information System",
-    price: "₦80,000",
     features: [
       "Employee management & profiles",
       "Attendance & biometric integration",
@@ -28,9 +37,9 @@ export const plans: Plan[] = [
     ],
   },
   {
+    id: "payroll",
     name: "Payroll",
     subtitle: "Payroll Processing",
-    price: "₦10,000",
     features: [
       "Salary computation & pay runs",
       "PAYE & WHT tax management",
@@ -41,9 +50,9 @@ export const plans: Plan[] = [
     ],
   },
   {
+    id: "accounting",
     name: "Accounting",
     subtitle: "Accounting & Finance",
-    price: "₦80,000",
     features: [
       "Client & invoice management",
       "VAT & WHT tax compliance",
@@ -54,9 +63,9 @@ export const plans: Plan[] = [
     ],
   },
   {
+    id: "all-in-one",
     name: "All-in-One",
     subtitle: "Complete Suite — HRIS + Payroll + Accounting",
-    price: "₦150,000",
     highlight: true,
     features: [
       "Everything in HRIS",
@@ -69,128 +78,105 @@ export const plans: Plan[] = [
   },
 ];
 
-export const BASE_PLAN_NAMES = ["HRIS", "Payroll", "Accounting"];
-
-// "₦150,000" -> 150000
-export const parsePrice = (price: string) => Number(price.replace(/[^\d]/g, ""));
-
-export const formatPrice = (amount: number) => `₦${amount.toLocaleString("en-NG")}`;
-
 export default function Pricing() {
   const router = useRouter();
-  const [selected, setSelected] = useState<string[]>([]);
+  const { plans, loading, error } = usePublicPlans();
+  const [selected, setSelected] = useState<ModuleKey[]>([]);
 
-  const togglePlan = (name: string) => {
+  const toggleCard = (card: Card) => {
     setSelected((prev) => {
-      // Toggling the bundle itself: clear everything else, it supersedes them.
-      if (name === "All-in-One") {
-        return prev.includes(name) ? [] : ["All-in-One"];
+      if (card.id === "all-in-one") {
+        return prev.length === MODULES.length ? [] : MODULES.map((m) => m.key);
       }
-
-      const next = prev.includes(name)
-        ? prev.filter((p) => p !== name)
-        : [...prev.filter((p) => p !== "All-in-One"), name];
-
-      // Selecting all three base plans individually should collapse into
-      // the bundle rather than summing three separate prices.
-      const hasAllBase = BASE_PLAN_NAMES.every((p) => next.includes(p));
-      if (hasAllBase) {
-        return ["All-in-One"];
-      }
-
-      return next;
+      return prev.includes(card.id) ? prev.filter((m) => m !== card.id) : [...prev, card.id];
     });
   };
 
-  const totalPrice = selected.reduce((sum, name) => {
-    const plan = plans.find((p) => p.name === name);
-    return sum + (plan ? parsePrice(plan.price) : 0);
-  }, 0);
+  const priceFor = (planId: string) => {
+    const p = monthlyPrice(plans.find((x) => x.id === planId));
+    return p ? formatMoney(p.price, p.currency) : null;
+  };
+
+  const resolvedPlanId = planIdForModules(selected);
+  const resolvedPlan = plans.find((p) => p.id === resolvedPlanId);
+  const resolvedPrice = resolvedPlanId ? priceFor(resolvedPlanId) : null;
+  const canProceed = Boolean(resolvedPlanId && resolvedPlan && resolvedPrice);
 
   const handleProceed = () => {
-    if (selected.length === 0) return;
-    router.push(`/contact?plans=${encodeURIComponent(selected.join(","))}`);
+    if (!resolvedPlanId || !canProceed) return;
+    router.push(`/contact?plan=${encodeURIComponent(resolvedPlanId)}`);
   };
 
   return (
     <section id="pricing" className="bg-white px-6 py-24">
       <div className="mx-auto max-w-[1440px] lg:px-[80px]">
-        {/* Heading */}
         <div className="mx-auto max-w-[720px] text-center">
           <h2 className="text-[44px] font-bold leading-[52px] text-[#1F2937]">
             Simple, transparent pricing
           </h2>
           <p className="mt-5 text-[18px] leading-[28px] text-[#667085]">
-            No set up fee, no hidden charge, subscribe based on your business
-            need
+            No set up fee, no hidden charge, subscribe based on your business need
           </p>
         </div>
 
-        {/* Cards */}
         <div className="mt-16 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {plans.map((plan) => {
-            const isSelected = selected.includes(plan.name);
-            // Grey out base plans once the bundle has taken over.
-            const isSuperseded =
-              selected.includes("All-in-One") && plan.name !== "All-in-One";
+          {cards.map((card) => {
+            const isSelected =
+              card.id === "all-in-one"
+                ? selected.length === MODULES.length
+                : selected.includes(card.id);
+            const price = priceFor(card.id);
 
             return (
               <div
-                key={plan.name}
+                key={card.id}
                 className={`flex h-full flex-col rounded-2xl bg-white transition ${
-                  plan.highlight
+                  card.highlight
                     ? "border-2 border-[#2388D0] pt-0"
                     : isSelected
                     ? "border-2 border-[#2388D0] p-8"
                     : "border border-[#E5E9F0] p-8"
-                } ${isSelected ? "ring-2 ring-[#2388D0]/20" : ""} ${
-                  isSuperseded ? "opacity-50" : ""
-                }`}
+                } ${isSelected ? "ring-2 ring-[#2388D0]/20" : ""}`}
               >
-                {/* Best value badge */}
-                {plan.highlight && (
+                {card.highlight && (
                   <div className="rounded-t-xl bg-gradient-to-r from-[#1F88C7] to-[#0CB4D1] py-2.5 text-center">
-                    <span className="text-[11px] font-bold tracking-[0.14em] text-white uppercase">
+                    <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-white">
                       Best Value — All-in-One
                     </span>
                   </div>
                 )}
 
-                <div className={plan.highlight ? "flex flex-1 flex-col p-8" : "flex flex-1 flex-col"}>
-                  {/* Name + subtitle */}
-                  <h3 className="text-[22px] font-bold text-[#2388D0]">
-                    {plan.name}
-                  </h3>
-                  <p className="mt-1 text-[14px] text-[#98A2B3]">
-                    {plan.subtitle}
-                  </p>
+                <div className={card.highlight ? "flex flex-1 flex-col p-8" : "flex flex-1 flex-col"}>
+                  <h3 className="text-[22px] font-bold text-[#2388D0]">{card.name}</h3>
+                  <p className="mt-1 text-[14px] text-[#98A2B3]">{card.subtitle}</p>
 
-                  {/* Price */}
                   <div className="mt-6 flex items-baseline gap-1">
-                    <span className="text-[36px] font-extrabold text-[#1F2937]">
-                      {plan.price}
-                    </span>
-                    <span className="text-[15px] text-[#98A2B3]">/month</span>
+                    {price ? (
+                      <>
+                        <span className="text-[36px] font-extrabold text-[#1F2937]">{price}</span>
+                        <span className="text-[15px] text-[#98A2B3]">/month</span>
+                      </>
+                    ) : (
+                      <span className="text-[20px] font-semibold text-[#98A2B3]">
+                        {loading ? "Loading price…" : "Price unavailable"}
+                      </span>
+                    )}
                   </div>
 
-                  {/* Features */}
                   <div className="mt-7 flex flex-col gap-4">
-                    {plan.features.map((feature) => (
+                    {card.features.map((feature) => (
                       <div key={feature} className="flex items-start gap-3">
                         <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border border-[#2388D0]">
                           <Check className="h-3 w-3 text-[#2388D0]" strokeWidth={3} />
                         </span>
-                        <span className="text-[15px] leading-[22px] text-[#475467]">
-                          {feature}
-                        </span>
+                        <span className="text-[15px] leading-[22px] text-[#475467]">{feature}</span>
                       </div>
                     ))}
                   </div>
 
-                  {/* Select toggle — pinned to bottom via mt-auto so all four align */}
                   <button
                     type="button"
-                    onClick={() => togglePlan(plan.name)}
+                    onClick={() => toggleCard(card)}
                     aria-pressed={isSelected}
                     className="mt-auto pt-8"
                   >
@@ -211,23 +197,30 @@ export default function Pricing() {
           })}
         </div>
 
-        {/* Unified proceed CTA */}
         <div className="mt-12 flex flex-col items-center gap-3">
-          {selected.length > 0 && (
+          {error && (
+            <p className="text-[14px] text-[#D92D20]">
+              We couldn&apos;t load current prices. Please refresh the page.
+            </p>
+          )}
+          {resolvedPlanId && (
             <p className="text-[14px] text-[#667085]">
-              {selected.length} plan{selected.length > 1 ? "s" : ""} selected:{" "}
-              <span className="font-semibold text-[#1F2937]">
-                {selected.join(", ")}
-              </span>{" "}
-              — <span className="font-semibold text-[#1F2937]">{formatPrice(totalPrice)}/month</span>
+              Your plan:{" "}
+              <span className="font-semibold text-[#1F2937]">{planDisplayName(resolvedPlanId, plans)}</span>
+              {resolvedPrice && (
+                <>
+                  {" "}
+                  — <span className="font-semibold text-[#1F2937]">{resolvedPrice}/month</span>
+                </>
+              )}
             </p>
           )}
           <button
             type="button"
             onClick={handleProceed}
-            disabled={selected.length === 0}
+            disabled={!canProceed}
             className={`flex h-[56px] w-full max-w-[400px] items-center justify-center rounded-lg px-8 font-semibold text-white transition ${
-              selected.length === 0
+              !canProceed
                 ? "cursor-not-allowed bg-[#98A2B3]"
                 : "bg-gradient-to-r from-[#1F88C7] to-[#0CB4D1] hover:opacity-90"
             }`}

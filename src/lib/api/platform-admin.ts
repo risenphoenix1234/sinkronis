@@ -40,6 +40,12 @@ import {
   UpdateTicketStatusPayload,
   PlatformAnalyticsResponse,
   ModuleManagementResponse,
+  AccessRequestListParams,
+  AccessRequestListResponse,
+  AccessRequestDetailResponse,
+  ApproveAccessRequestPayload,
+  RejectAccessRequestPayload,
+  AccessRequestActionResponse,
 } from "./types/platform-admin.types";
 
 const BASE = "/platform-admin";
@@ -304,5 +310,30 @@ export const sendAtRiskCheckIn = async (tenantId: string) => {
 };
 export const getModuleManagement = async (params?: { page?: number; limit?: number }) => {
   const { data } = await api.get<ModuleManagementResponse>(`${BASE}/modules`, { params });
+  return data;
+};
+export const getAccessRequests = async (params?: AccessRequestListParams) => {
+  const { data } = await api.get<AccessRequestListResponse>(`${BASE}/tenant-access-requests`, { params });
+  return data;
+};
+
+export const getAccessRequestById = async (requestId: string) => {
+  const { data } = await api.get<AccessRequestDetailResponse>(`${BASE}/tenant-access-requests/${requestId}`);
+  return data;
+};
+
+export const approveAccessRequest = async (requestId: string, payload: ApproveAccessRequestPayload) => {
+  const { data } = await api.post<AccessRequestActionResponse>(
+    `${BASE}/tenant-access-requests/${requestId}/approve`,
+    payload,
+  );
+  return data;
+};
+
+export const rejectAccessRequest = async (requestId: string, payload: RejectAccessRequestPayload) => {
+  const { data } = await api.post<AccessRequestActionResponse>(
+    `${BASE}/tenant-access-requests/${requestId}/reject`,
+    payload,
+  );
   return data;
 };
